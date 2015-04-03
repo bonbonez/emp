@@ -1,0 +1,66 @@
+.createFontFace(@fontName, @fontPath, @fontStyle: ~'normal', @fontWeight: ~'normal', @svgName: @fontName) {
+  @font-face {
+    font-family: @fontName;
+    font-style: @fontStyle;
+    font-weight: @fontWeight;
+    src: url('@{fontPath}.svg#@{svgName}') format('svg'),
+         url('@{fontPath}.eot?'),
+         url('@{fontPath}.woff') format('woff'),
+         url('@{fontPath}.ttf') format('truetype'),;
+  }
+}
+
+/**
+ * Museo
+ */
+@grotesqueThinName:          "museo_sans_cyrl300";
+@grotesqueThinFile:          "/assets/museo/museosanscyrl-300-webfont";
+
+@grotesqueThinItalicName:    "museo_sans_cyrl300_italic";
+@grotesqueThinItalicFile:    "/assets/museo/museosanscyrl-300italic";
+
+@grotesqueRegularName:       "museo_sans_cyrl500";
+@grotesqueRegularFile:       "/assets/museo/museosanscyrl-500-webfont";
+
+@grotesqueRegularItalicName: "museo_sans_cyrl500_italic";
+@grotesqueRegularItalicFile: "/assets/museo/museosanscyrl-500italic-webfont";
+
+@grotesqueBolderName:        "museo_sans_cyrl300";
+@grotesqueBolderFile:        "/assets/museo/museosanscyrl-700-webfont";
+
+/**
+ * Lobster
+ */
+@lobsterRegularName:          "Lobster";
+@lobsterRegularFile:          "/assets/lobster/lobster-webfont";
+
+/**
+ * Icon
+ */
+@fontIconsName:                 "Icons";
+@fontIconsPath:                 "/assets/icons/icons-new3";
+
+/**
+ * Museo
+ */
+.createFontFace(@grotesqueThinName, @grotesqueThinFile,          normal, normal, @grotesqueThinName);
+.createFontFace(@grotesqueThinName, @grotesqueThinItalicFile,    italic, normal, @grotesqueThinItalicName);
+
+.createFontFace(@grotesqueThinName, @grotesqueRegularFile,       normal, bold,   @grotesqueRegularName);
+.createFontFace(@grotesqueThinName, @grotesqueRegularItalicFile, italic, bold,   @grotesqueRegularItalicName);
+
+.createFontFace(@grotesqueThinName, @grotesqueBolderFile,        normal, 900, @grotesqueBolderName);
+
+/**
+ * Lobster
+ */
+.createFontFace(@lobsterRegularName, @lobsterRegularFile,        normal, normal, @lobsterRegularFile);
+
+/**
+ * Icon
+ */
+.createFontFace(@fontIconsName, @fontIconsPath);
+
+@font-museo:    @grotesqueThinName, arial, sans-serif;
+@font-lobster:  @lobsterRegularName, arial, sans-serif;
+@font-icons:    @fontIconsName, arial, sans-serif;

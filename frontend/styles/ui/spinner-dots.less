@@ -1,0 +1,125 @@
+.bm-spinner {
+  .vertical-align-middle();
+  font-size: 0;
+  display: inline-block;
+  height: 47px;
+  position: relative;
+  width: 47px;
+}
+
+.bm-spinner-wrapper {
+  margin: 30px 0;
+  text-align: center;
+
+  &.screen-center {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    .transform(translate3d(-50%, -50%, 0));
+  }
+}
+
+[data-loading-horizontal]::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9998;
+}
+
+[data-loading-horizontal]::after {
+  -webkit-animation: spinner .2s steps(3) infinite;
+  -moz-animation: spinner .2s steps(3) infinite;
+  -o-animation: spinner .2s steps(3) infinite;
+  animation: spinner .2s steps(3) infinite;
+
+  background: transparent url(/assets/ui/preloader_horizontal_sprite.png);
+  content: '';
+  display: block;
+  height: 20px;
+  left: 50%;
+  margin: -23.5px 0 0 -23.5px;
+  position: absolute;
+  top: 50%;
+  width: 101.5px;
+  z-index: 9999;
+}
+
+@media @media-retina {
+  [data-loading-horizontal]::after {
+    background-image: url(/assets/ui/preloader_horizontal_sprite@2x.png);
+    background-size: cover;
+  }
+}
+
+@-webkit-keyframes spinner {
+  from {
+    background-position: 0;
+  }
+  to {
+    background-position: -564px;
+  }
+}
+
+@-moz-keyframes spinner {
+  from {
+    background-position: 0;
+  }
+  to {
+    background-position: -564px;
+  }
+}
+
+@-ms-keyframes spinner {
+  from {
+    background-position: 0;
+  }
+  to {
+    background-position: -564px;
+  }
+}
+
+@-o-keyframes spinner {
+  from {
+    background-position: 0;
+  }
+  to {
+    background-position: -564px;
+  }
+}
+
+@keyframes spinner {
+  from {
+    background-position: 0;
+  }
+  to {
+    background-position: -564px;
+  }
+}
+
+@media screen and (max-width: @breakpoint-mobile) {
+  .bm-spinner-wrapper {
+    margin: 30px 0;
+    text-align: center;
+
+    &.screen-center {
+      margin-top: -50px;
+    }
+  }
+}
+
+@media screen and (max-height: 350px) {
+  .bm-spinner-wrapper {
+    &.screen-center {
+      position: relative;
+      top: 0;
+      left: 0;
+      margin: 30px 0 5px;
+      .transform(translate3d(0, 0, 0));
+    }
+  }
+}

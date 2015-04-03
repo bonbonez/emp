@@ -1,0 +1,28 @@
+  .b-layout-top-categories-navigation {
+    height: 55px;
+    line-height: 55px;
+    text-align: center;
+    width: 100%;
+
+    &-item {
+      .vertical-align-middle();
+      .font(16px, 16px, bold);
+      color: @color-brown;
+      cursor: pointer;
+      //text-transform: uppercase;
+
+      &:not(:last-of-type) {
+        margin-right: 50px;
+      }
+
+      &:not(.m-current):hover {
+        color: @color-brown-lighter;
+      }
+
+      &.m-current {
+        //cursor: default;
+        font-weight: bold;
+        color: @color-blue-dark;
+      }
+    }
+  }

@@ -1,0 +1,50 @@
+.b-sharing {
+
+  &-buttons-wrapper {
+    margin-bottom: 100px;
+    text-align: center;
+  }
+
+  &-buttons {
+    height: 64px;
+    line-height: 64px;
+    width: 100%;
+
+    &-header {
+      .font(30px);
+      color: #000000;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    &-item {
+      .vertical-align-middle();
+      .transition-prop(opacity, 0.15s);
+      background-size: 100%;
+      background-repeat: no-repeat;
+      height: 64px;
+      text-decoration: none;
+      width: 64px;
+      
+      &:hover {
+        opacity: 0.8;
+      }
+
+      &:not(:last-of-type) {
+        margin-right: 50px;
+      }
+
+      &.m-item-vk {
+        background-image: url('/assets/ui/social/vk-rounded.png');
+      }
+
+      &.m-item-fb {
+        background-image: url('/assets/ui/social/fb-rounded.png');
+      }
+
+      &.m-item-tw {
+        background-image: url('/assets/ui/social/tw-rounded.png');
+      }
+    }
+  }
+}

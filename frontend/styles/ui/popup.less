@@ -1,0 +1,136 @@
+.bookmate-popup {
+  font-size: 0;
+
+  &-content {
+    .box-sizing(border-box);
+    padding: 20px;
+    width: 100%;
+    max-width: 390px;
+  }
+}
+
+.bm-popup {
+  display: block;
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  visibility: hidden;
+  width: 100%;
+  z-index: 3;
+
+  &[hidden=hidden] {
+    display: none;
+  }
+
+  &[visible=true] {
+    visibility: visible;
+
+    &-overlay {
+      //.animation(animation-popup-fade-in 0.3s);
+    }
+
+    &-content {
+      //.animation(animation-popup-fade-in 0.3s);
+    }
+  }
+
+  &[visible=false] {
+    visibility: visible;
+
+    .bm-popup-overlay {
+      .animation(animation-popup-fade-out 0.3s);
+    }
+
+    .bm-popup-content {
+      //.animation(animation-popup-fade-out 0.3s);
+    }
+  }
+
+  &-overlay {
+    background-color: rgba(0, 0, 0, 0.3);
+    height: 100%;
+    left: 0;
+    opacity: 1;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  &-header {
+    background-color: #f5f2e7;
+    font-size: 0;
+    height: 70px;
+    line-height: 70px;
+    position: relative;
+
+    &-text {
+      .transition(0.3s, ease);
+      .vertical-align-middle();
+      color: #333333;
+      cursor: default;
+      display: inline-block;
+      font-family: @font-museo;
+      font-weight: bold;
+      font-size: 16px;
+      left: 0;
+      line-height: normal;
+      margin-top: -10px;
+      position: absolute;
+      text-align: center;
+      top: 50%;
+      width: 100%;
+    }
+  }
+
+  &-content-wrapper {
+    height: 100%;
+    left: 0;
+    overflow: auto;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: 100%;
+  }
+
+  &-content {
+    .vertical-align-middle();
+    line-height: normal;
+    padding: 0px;
+    z-index: 3;
+    position: relative;
+  }
+
+  &-inner-content {
+    .box-sizing(border-box);
+    background-color: #ffffff;
+    padding: 20px;
+    width: 100%;
+  }
+
+  &-text {
+    color: #333333;
+    font-family: @font-museo;
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 1.4em;
+    text-align: center;
+    width: 100%;
+  }
+
+  &-subheader {
+    font-family: @font-museo;
+    font-size: 16px;
+    font-weight: normal;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+}
+
+.bm-popup-content {
+  &-subheader {
+
+  }
+}

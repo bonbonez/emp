@@ -1,0 +1,87 @@
+.b-carousel {
+
+  &-title {
+    color: @color-brown;
+    .font(30px, 30px, bold);
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  &-wrapper {
+    .box-sizing(border-box);
+    margin-bottom: 90px;
+    //overflow: hidden;
+    //padding: 0 45px;
+    position: relative;
+    width: 100%;
+  }
+
+  &-content {
+    overflow-y: scroll;
+    position: relative;
+    width: 100%;
+
+    &-arrow-left,
+    &-arrow-right {
+      //background-color: red;
+      height: 100%;
+      position: absolute;
+      top: 0px;
+      width: 36px;
+
+      &::before {
+        .transform(translateY(-50%));
+        background-repeat: no-repeat;
+        background-size: auto 100%;
+        content: ' ';
+        height: 45px;
+        //margin-top: -58px;
+        position: absolute;
+        top: 50%;
+        width: 21px;
+      }
+    }
+
+    &-arrow-left {
+      left: -45px;
+
+      &::before {
+        background-image: url('/assets/ui/arrow-left.svg');
+        left: 12px;
+      }
+    }
+
+    &-arrow-right {
+      right: -45px;
+
+      &::before {
+        background-image: url('/assets/ui/arrow-right.svg');
+        right: 12px;
+      }
+    }
+
+
+    &-items-wrapper {
+      white-space: nowrap;
+    }
+
+    &-item {
+      display: inline-block;
+      height: 180px;
+      line-height: 180px;
+      text-align: center;
+      width: 140px;
+
+      &:not(:last-of-type) {
+        margin-right: 23px;
+      }
+
+      &-image {
+        .vertical-align-middle();
+        max-height: 100%;
+        max-width: 100%;
+      }
+    }
+  }
+
+}

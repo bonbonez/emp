@@ -1,14 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Empressa</title>
-  <%= stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true %>
-  <%= javascript_include_tag "application", "data-turbolinks-track" => true %>
-  <%= csrf_meta_tags %>
+    <title>Woodlove</title>
+    <%#= stylesheet_link_tag    "application", :media => "all" %>
+    <%#= javascript_include_tag "application" %>
+    <%#= csrf_meta_tags %>
+    <link rel="stylesheet" href="/styles/global.css?<%= frontend_version %>" />
+
 </head>
-<body>
-
-<%= yield %>
-
+<body class="<%= @css_class_layout if @css_class_layout.present? %>" data-scripts="<%= @scripts_id if @scripts_id.present? %>"
+      data-cart-config="<%= @cart_config.to_json.to_s if @cart_config.present? %>">
+<%#= render partial: 'templates/item_popup_preview' %>
+<div class="b-layout">
+    <div class="b-layout-page">
+        <%#= render partial: 'application/header' %>
+        <%#= render partial: 'application/top_menu' %>
+        <%#= render partial: 'application/top_categories_navigation' %>
+        <div class="b-layout-content">
+            <%= yield %>
+        </div>
+    </div>
+    <%#= render partial: 'application/footer' %>
+</div>
+<script type="text/javascript" src="/javascript/core.js?<%= frontend_version %>"></script>
+<script type="text/javascript" src="/javascript/modules.js?<%= frontend_version %>"></script>
 </body>
 </html>

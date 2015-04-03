@@ -1,0 +1,36 @@
+.b-block-random {
+  .box-sizing(border-box);
+  .transition(0.4s);
+  background-color: #ffffff;
+  overflow: hidden;
+  //max-height: 9999px;
+  padding: 30px;
+  position: relative;
+  width: 100%;
+
+  &[data-visible="false"] {
+    //.transform(scale(0.8));
+    //height: 0;
+    opacity: 0;
+  }
+
+  &-header {
+    font-family: @font-museo;
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 30px;
+  }
+
+  &-content {
+    .box-sizing(border-box);
+    white-space: nowrap;
+    width: 100%;
+    //opacity: 0.1;
+
+    .b-item-card {
+      margin-bottom: 0px;
+      white-space: normal;
+      width: 225px;
+    }
+  }
+}
