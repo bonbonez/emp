@@ -7,9 +7,7 @@ group :assets do
   gem 'uglifier', '>= 1.0.3'
 end
 
-gem 'sqlite3'
 gem 'jquery-rails'
-gem 'mysql2'
 gem 'mysql'
 gem 'slim'
 gem 'paperclip'
@@ -18,8 +16,8 @@ gem 'aws-sdk'
 gem 'rack-rewrite'
 
 group :development do
-  #gem 'sqlite3'
   gem 'terminal-notifier'
+  gem 'mysql2'
 end
 
 group :production do

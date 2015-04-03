@@ -72,3 +72,5 @@ config/test.sphinx.conf
 public/javascript
 public/styles
 # config/frontend_version.yml
+.idea
+.idea/workspace.xml
