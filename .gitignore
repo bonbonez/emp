@@ -69,8 +69,6 @@ inplat/
 .tags_sorted_by_file
 vendor/bundle/
 config/test.sphinx.conf
-public/javascript
-public/styles
 # config/frontend_version.yml
 .idea
 .idea/workspace.xml
