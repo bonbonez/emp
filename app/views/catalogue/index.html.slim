@@ -1,0 +1,15 @@
+.bm-page-catalogue
+  .bm-page-catalogue-header
+    .bm-page-catalogue-content.m-offset-50
+      = render partial: 'application/header'
+      = render partial: 'application/top_menu'
+    .bm-page-catalogue-content
+      .bm-page-catalogue-item-group
+        .bm-header-50.m-white.bm-page-catalogue-item-group-header
+          | Классические моносорта
+        .bm-text-18.m-white.bm-page-catalogue-item-group-text
+          | Моносорт - это кофе, состоящий из 100% <a class="link" href="#">арабики</a>. Читайте о моносортах <a class="link" href="#">тут</a>.
+
+        .bm-page-catalogue-item-group-content
+          - (0..4).each do |i|
+            = render partial: 'catalogue/item'

@@ -1,6 +1,7 @@
 Empressa::Application.routes.draw do
 
   get "/" => "index#index"
+  get "/catalogue" => "catalogue#index"
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

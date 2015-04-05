@@ -1,18 +1,26 @@
-.bm-header-35 {
+.bm-header-base() {
   color: #000000;
-  font-size: 35px;
   font-family: @font-ptsans;
   font-weight: bold;
   text-align: center;
   width: 100%;
+
+  &.m-white {
+    color: #ffffff;
+  }
+}
+
+.bm-header-50 {
+  .bm-header-base();
+  font-size: 50px;
+}
+.bm-header-35 {
+  .bm-header-base();
+  font-size: 50px;
 }
 .bm-header-25 {
-  color: #000000;
+  .bm-header-base();
   font-size: 25px;
-  font-family: @font-ptsans;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
 }
 
 .bm-text-18 {
@@ -23,9 +31,20 @@
   font-weight: normal;
   line-height: 28px;
 
+  &.m-bold,
   .m-bold {
     font-weight: bold;
   }
+
+  &.m-white {
+    color: #ffffff;
+
+    .link {
+      color: #ffffff;
+    }
+  }
+
+
 
   .link {
     color: #000000;
