@@ -1,19 +1,26 @@
-div
-  == "yo"
+.bm-page-index
+  .bm-page-index-header
+    .bm-page-index-content
+      = render partial: 'application/header'
+      = render partial: 'application/top_menu'
 
-/.bm-header
-  .bm-header-logo
-    a.bm-header-logo-image href="/"
-    .bm-header-logo-text
-  .bm-header-contacts
-    .bm-header-contacts-phone
-    .bm-header-contacts-email
-  .bm-header-cart
-    .bm-header-cart-text
-    .bm-header-cart-count
+      .bm-page-index-header-text
+        == "Обжариваем кофе каждый день"
 
-  .bm-header-menu
-    .bm-header-menu-item ="купить кофе"
-    .bm-header-menu-item ="оплата"
-    .bm-header-menu-item ="доставка"
-    .bm-header-menu-item ="о нас"
+      .bm-page-index-header-info
+        .bm-page-index-header-info-image
+          /video.bm-page-index-header-info-image-video loop="true" controls="false" autoplay="true"
+            source src="/assets/video/roasting-coffee.mp4" type="video/mp4"
+        .bm-page-index-header-info-text
+          | Empressa – первый в России розничный магазин кофе, обжаривающий кофе в день заказа.
+            Мы обжариваем до 250 кг кофе еженедельно, и доставляем его по всей России.
+            В 2014 году мы обжарили 18 тонн кофе.
+
+  .bm-page-index-content
+    = render partial: 'shared/select_way'
+    .bm-index-separator
+    = render partial: 'shared/about_fresh_coffee'
+    .bm-index-separator
+    = render partial: 'shared/features'
+    .bm-index-separator
+    = render partial: 'shared/feedback_form'

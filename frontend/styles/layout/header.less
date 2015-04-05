@@ -1,221 +1,91 @@
-.b-layout-header {
-  @layout-height: 100px;
-
-  height: @layout-height;
+.bm-header {
+  .box-sizing(border-box);
+  //height: 140px;
+  //line-height: 140px;
+  text-align: center;
+  padding: 35px 0;
   position: relative;
+  width: 100%;
 
-  &-logo {
-    background-image: url('/assets/woodluv.svg');
-    background-repeat: no-repeat;
-    background-size: 100%;
-    height: 31px;
-    left: 50%;
-    margin: -19px 0 0 -100px;
-    position: absolute;
-    top: 50%;
-    width: 201px;
+  &.m-white {
+
   }
 
-  &-content-right {
-    height: @layout-height;
-    line-height: @layout-height;
-    text-align: right;
+  &.m-black {
 
-    &-cart,
-    &-cart-text,
-    &-button-buy {
-      .vertical-align-middle();
-      cursor: pointer;
-      font-family: @font-museo;
-      font-weight: bold;
-    }
-
-    &-cart {
-
-      &-text {
-        color: @color-brown;
-        font-size: 18px;
-        line-height: 18px;
-      }
-
-      &:hover {
-        .b-layout-header-content-right-cart-text {
-          color: @color-brown-lighter;
-        }
-      }
-
-      &-counter {
-        .transition();
-        background-color: #f1f1f1;
-        border-radius: 2px;
-        height: 25px;
-        line-height: 25px;
-        margin-top: -13.5px;
-        position: absolute;
-        text-align: center;
-        top: 50%;
-        right: -30px;
-        width: 22px;
-
-        &[data-visible=true] {
-          .transform(translateX(0));
-          opacity: 1;
-          z-index: 1;
-        }
-
-        &[data-visible=false] {
-          .transform(translateX(-10px));
-          opacity: 0;
-          z-index: -1;
-        }
-
-        &::before {
-          .transform(rotate(45deg));
-          background-color: #f1f1f1;
-          content: ' ';
-          height: 11px;
-          left: -3px;
-          position: absolute;
-          top: 50%;
-          margin-top: -5.5px;
-          width: 11px;
-        }
-
-        &-text {
-          .vertical-align-middle();
-          font-family: @font-museo;
-          font-size: 15px;
-          font-weight: normal;
-          color: #777777;
-          position: relative;
-          height: 15px;
-          top: -3px;
-          z-index: 1;
-        }
-      }
-    }
-
-    &-button-buy {
-      .transition-prop(opacity);
-      background-color: @color-blue-dark;
-      border-radius: 2px;
-      color: #ffffff;
-      font-size: 18px;
-      margin-right: 20px;
-      height: 30px;
-      line-height: 30px;
-      opacity: 0;
-      padding: 0 20px;
-      position: relative;
-      z-index: -1;
-
-      &:hover {
-        background-color: @color-blue-dark-lighter;
-      }
-
-      &[data-visible=false] {
-        opacity: 0;
-        z-index: -1;
-      }
-
-      &[data-visible=true] {
-        opacity: 1;
-        z-index: 1;
-      }
-    }
   }
 }
 
-.b-layout-header-fixed {
-  @header-fixed-height: 60px;
+.bm-header-logo {
+  display: block;
+  background-size: 100% auto;
+  background-position: 0 0;
+  height: 40px;
+  margin: 0 auto 3px auto;
+  width: 138px;
 
-  .transition-prop(top);
-  background-color: rgba(255, 255, 255, 0.9);
-  height: @header-fixed-height;
+  .bm-header.m-white & {
+    background-image: url('/assets/logo-white@2x.png');
+  }
+
+  .bm-header.m-black & {
+    background-image: url('/assets/logo-black@2x.png');
+  }
+}
+
+.bm-header-logo-text {
+  color: #ffffff;
+  font-family: @font-ptsans;
+  font-weight: normal;
+  font-size: 20px;
+
+  .bm-header.m-white & {
+    color: #ffffff;
+  }
+
+  .bm-header.m-black & {
+    color: #000000;
+  }
+}
+
+.bm-header-contacts {
   left: 0px;
-  position: fixed;
-  top: 0px;
-  width: 100%;
-  z-index: 2;
+  position: absolute;
+  text-align: left;
+  top: 15px;
+}
+.bm-header-contacts-phone {
+  color: #ffffff;
+  font-family: @font-ptsans;
+  font-size: 16px;
+  font-weight: normal;
+}
 
-  &[data-visible=false] {
-    top: (@header-fixed-height + 10px) * -1;
-  }
+.bm-header-contacts-email {
+  color: #ffffff;
+  font-family: @font-ptsans;
+  font-size: 12px;
+  font-weight: normal;
+}
 
-  &[data-visible=true] {
-    top: 0;
-  }
-
-  &-content {
-    height: @header-fixed-height;
-    line-height: @header-fixed-height;
-    margin: 0 auto;
-    position: relative;
-    width: @layout-max-width - @layout-padding * 2;
-
-    .logo {
-      .vertical-align-middle();
-      background-image: url('/assets/woodluv.svg');
-      background-repeat: no-repeat;
-      background-size: 100%;
-      height: 25px;
-      position: relative;
-      top: -2px;
-      width: 170px;
-    }
-
-    &-right {
-      height: @header-fixed-height;
-      line-height: @header-fixed-height;
-      position: absolute;
-      right: 0px;
-      top: 0px;
-
-      .cart {
-        .font(17px, 17px, bold);
-        .vertical-align-middle();
-        color: #333333;
-        cursor: pointer;
-
-        &:hover {
-          color: #777777;
-        }
-
-        &-counter {
-          background-color: #f1f1f1;
-          border-radius: 2px;
-          height: 25px;
-          line-height: 25px;
-          margin-top: -12.5px;
-          position: absolute;
-          text-align: center;
-          top: 50%;
-          right: -30px;
-          width: 22px;
-
-          &::before {
-            .transform(rotate(45deg));
-            background-color: #f1f1f1;
-            content: ' ';
-            height: 11px;
-            left: -3px;
-            position: absolute;
-            top: 50%;
-            margin-top: -5.5px;
-            width: 11px;
-          }
-
-          &-text {
-            .vertical-align-middle();
-            .font(15px);
-            color: #777777;
-            position: relative;
-            height: 15px;
-            top: -4px;
-            z-index: 1;
-          }
-        }
-      }
-    }
-  }
+.bm-header-cart {
+  right: 0px;
+  position: absolute;
+  text-align: right;
+  top: 15px;
+}
+.bm-header-cart-text {
+  color: #ffffff;
+  font-family: @font-ptsans;
+  font-size: 20px;
+  font-weight: normal;
+}
+.bm-header-cart-count {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: @font-ptsans;
+  font-size: 20px;
+  font-weight: normal;
+  position: absolute;
+  top: 1px;
+  right: -18px;
 }

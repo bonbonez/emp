@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Woodlove</title>
+    <%= csrf_meta_tags %>
+    <link rel="stylesheet" href="/styles/global.css?<%= frontend_version %>" />
+
+</head>
+<body class="<%= @css_class_layout if @css_class_layout.present? %>" data-scripts="<%= @scripts_id if @scripts_id.present? %>" data-cart-config="<%= @cart_config.to_json.to_s if @cart_config.present? %>">
+    <%= yield %>
+    <script type="text/javascript" src="/javascript/core.js?<%= frontend_version %>"></script>
+    <script type="text/javascript" src="/javascript/modules.js?<%= frontend_version %>"></script>
+</body>
+</html>

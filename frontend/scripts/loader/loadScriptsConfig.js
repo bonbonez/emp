@@ -19,6 +19,7 @@
 
     'default' : function() {
         modules.require('ui-modules');
+      console.log('hhh');
     },
 
     'item-show' : function() {

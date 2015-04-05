@@ -1,0 +1,56 @@
+.bm-about-fresh-coffee {
+  width: 100%;
+}
+
+.bm-about-fresh-coffee-header {
+  color: #000000;
+  font-family: @font-ptsans;
+  font-size: 35px;
+  font-weight: bold;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.bm-about-fresh-coffee-content {
+  .box-sizing(border-box);
+  padding-left: 245px;
+  position: relative;
+  width: 100%;
+}
+
+.bm-about-fresh-coffee-content-image {
+  background-image: url('/assets/coffee-package-sample.png');
+  background-size: auto 100%;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 245px;
+}
+
+.bm-about-fresh-coffee-content-text {
+  color: #000000;
+  font-family: @font-ptsans;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 28px;
+  padding-left: 25px;
+
+  .m-bold {
+    font-weight: bold;
+  }
+
+  .link {
+    color: #000000;
+    font-size: 18px;
+    font-weight: normal;
+    line-height: 28px;
+    text-decoration: underline;
+
+    .m-desktop &:hover {
+      text-decoration: none;
+    }
+  }
+}
