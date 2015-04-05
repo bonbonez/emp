@@ -765,10 +765,10 @@ h6 {
   width: 138px;
 }
 .bm-header.m-white .bm-header-logo {
-  background-image: url('/assets/logo-white@2x.png');
+  background-image: url('/images/logo-white@2x.png');
 }
 .bm-header.m-black .bm-header-logo {
-  background-image: url('/assets/logo-black@2x.png');
+  background-image: url('/images/logo-black@2x.png');
 }
 .bm-header-logo-text {
   color: #ffffff;
@@ -869,7 +869,7 @@ h6 {
   width: 980px;
 }
 .bm-page-index-header {
-  background-image: url('/assets/background/roasting-coffee.jpg');
+  background-image: url('/images/background/roasting-coffee.jpg');
   background-size: 115% auto;
   background-position: center bottom;
   min-height: 690px;
@@ -1015,19 +1015,19 @@ h6 {
   width: 74px;
 }
 .bm-select-way-item.m-choose .bm-select-way-item-image {
-  background-image: url('/assets/icon/search.png');
+  background-image: url('/images/icon/search.png');
   background-size: 60% auto;
   background-position: 50% 50%;
   background-repeat: no-repeat;
 }
 .bm-select-way-item.m-find .bm-select-way-item-image {
-  background-image: url('/assets/icon/check.png');
+  background-image: url('/images/icon/check.png');
   background-size: 60% auto;
   background-position: 50% 50%;
   background-repeat: no-repeat;
 }
 .bm-select-way-item.m-learn .bm-select-way-item-image {
-  background-image: url('/assets/icon/book.png');
+  background-image: url('/images/icon/book.png');
   background-size: 65% auto;
   background-position: 50% 50%;
   background-repeat: no-repeat;
@@ -1088,7 +1088,7 @@ h6 {
   width: 100%;
 }
 .bm-about-fresh-coffee-content-image {
-  background-image: url('/assets/coffee-package-sample.png');
+  background-image: url('/images/coffee-package-sample.png');
   background-size: auto 100%;
   background-position: 50% 50%;
   background-repeat: no-repeat;
@@ -1143,31 +1143,31 @@ h6 {
   margin: 0 auto 10px auto;
 }
 .bm-features-item.m-fresh .bm-features-item-image {
-  background-image: url('/assets/icon/fresh-coffee.png');
+  background-image: url('/images/icon/fresh-coffee.png');
   width: 148px;
 }
 .bm-features-item.m-fast .bm-features-item-image {
-  background-image: url('/assets/icon/truck.png');
+  background-image: url('/images/icon/truck.png');
   left: -15px;
   position: relative;
   width: 151px;
 }
 .bm-features-item.m-good .bm-features-item-image {
-  background-image: url('/assets/icon/thumbs-up.png');
+  background-image: url('/images/icon/thumbs-up.png');
   width: 60px;
 }
 .bm-features-item.m-discount .bm-features-item-image {
-  background-image: url('/assets/icon/gift.png');
+  background-image: url('/images/icon/gift.png');
   width: 70px;
 }
 .bm-features-item.m-stability .bm-features-item-image {
-  background-image: url('/assets/icon/cup-with-heart.png');
+  background-image: url('/images/icon/cup-with-heart.png');
   right: -7px;
   position: relative;
   width: 66px;
 }
 .bm-features-item.m-help .bm-features-item-image {
-  background-image: url('/assets/icon/lifebuoy.png');
+  background-image: url('/images/icon/lifebuoy.png');
   width: 52px;
 }
 .bm-features-item-header {
@@ -1182,7 +1182,7 @@ h6 {
   width: 100%;
 }
 .bm-feedback-image {
-  background-image: url('/assets/icon/envelope.png');
+  background-image: url('/images/icon/envelope.png');
   background-size: 100% 100%;
   background-position: 0 0;
   background-repeat: no-repeat;
@@ -1220,7 +1220,7 @@ h6 {
 .bm-form-textarea {
   box-sizing: border-box;
   -ms-box-sizing: border-box;
-  background-image: url('/assets/misc/form-bg.png');
+  background-image: url('/images/misc/form-bg.png');
   background-repeat: repeat;
   background-position: 0 0;
   border: 0;
