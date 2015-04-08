@@ -220,7 +220,7 @@ gulp.task('modules', function() {
 
 gulp.task('modules-local', function() {
   return gulp.src(paths.modules)
-    //.pipe(traceur({modules:'inline'}))
+    .pipe(traceur({modules:'inline'}))
     .on('error', function(err) {
       handleError('JS error', err);
     })

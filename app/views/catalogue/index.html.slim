@@ -1,15 +1,30 @@
-.bm-page-catalogue
+.bm-page-catalogue role="bm-catalogue-index"
+  .bm-catalogue-background role="bm-catalogue-background"
+    .bm-catalogue-background-item.m-fresh-coffee.m-visible data-item="first" data-size="120"
+    .bm-catalogue-background-item.m-aroma-coffee data-item="second" data-size="120"
+
   .bm-page-catalogue-header
     .bm-page-catalogue-content.m-offset-50
       = render partial: 'application/header'
       = render partial: 'application/top_menu'
-    .bm-page-catalogue-content
-      .bm-page-catalogue-item-group
-        .bm-header-50.m-white.bm-page-catalogue-item-group-header
-          | Классические моносорта
-        .bm-text-18.m-white.bm-page-catalogue-item-group-text
-          | Моносорт - это кофе, состоящий из 100% <a class="link" href="#">арабики</a>. Читайте о моносортах <a class="link" href="#">тут</a>.
+  .bm-page-catalogue-content
+    .bm-page-catalogue-item-group role="bm-catalogue-item-group bm-catalogue-item-group-classic" data-n="first"
+      .bm-header-50.m-white.bm-page-catalogue-item-group-header
+        | Классические моносорта
+      .bm-text-18.m-white.bm-page-catalogue-item-group-text
+        | Моносорт - это кофе, состоящий из 100% <a class="link" href="#">арабики</a>. Читайте о моносортах <a class="link" href="#">тут</a>.
 
-        .bm-page-catalogue-item-group-content
-          - (0..4).each do |i|
-            = render partial: 'catalogue/item'
+      .bm-page-catalogue-item-group-content
+        - (0..11).each do |i|
+          = render partial: 'catalogue/item'
+
+    .bm-page-catalogue-item-group role="bm-catalogue-item-group bm-catalogue-item-group-aroma" data-n="second"
+      .bm-header-50.m-white.bm-page-catalogue-item-group-header
+        | Ароматизированный кофе
+      .bm-text-18.m-white.bm-page-catalogue-item-group-text
+        | Кофе, обжаренный с добавлением натуральных ароматизаторов. <br/>
+          Узнать, как делается такой кофе можно <a class="link" href="#">тут</a>
+
+      .bm-page-catalogue-item-group-content
+        - (0..11).each do |i|
+          = render partial: 'catalogue/item'

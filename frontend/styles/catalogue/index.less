@@ -1,7 +1,7 @@
 .bm-layout-page-catalogue {
-  background-image: url('/images/background/fresh-coffee.jpg');
+  /*background-image: url('/images/background/fresh-coffee.jpg');
   background-position: center bottom;
-  background-size: cover;
+  background-size: cover;*/
 
 
   .b-layout-content {
@@ -19,8 +19,10 @@
   .box-sizing(border-box);
   max-width: 100%;
   margin: 0 auto;
+  position: relative;
   padding: 0 10px;
   width: 980px;
+  z-index: 1;
 
   &.m-offset-30 {
     margin-bottom: 30px;
@@ -36,7 +38,9 @@
 }
 
 .bm-page-catalogue-item-group {
-
+  &:not(:last-of-type) {
+    margin-bottom: 50px;
+  }
 }
 .bm-page-catalogue-item-group-header {
   text-shadow: 0px 0px 50px rgba(0, 0, 0, 0.4);

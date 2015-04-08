@@ -19,22 +19,11 @@
 
     'default' : function() {
         modules.require('ui-modules');
-      console.log('hhh');
     },
 
-    'item-show' : function() {
+    'catalogue-index' : function() {
         modules.require('ui-modules');
-        modules.require('moduleItemInit');
-    },
-
-    'cart-index' : function() {
-        modules.require('ui-modules');
-        modules.require('pageCartInit');
-    },
-
-    'survey-index' : function() {
-        modules.require('ui-modules');
-        modules.require('moduleSurveyInit');
+        modules.require('CatalogueInit');
     }
   };
 
