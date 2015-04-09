@@ -1,0 +1,40 @@
+.bm-catalogue-menu {
+  .transition();
+  background-color: rgba(255, 255, 255, 0.6);
+  font-size: 0;
+  height: 35px;
+  line-height: 35px;
+  position: relative;
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+  z-index: 2;
+
+  &.m-fixed {
+    background-color: rgba(255, 255, 255, 0.9);
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+}
+
+.bm-catalogue-menu-item {
+  .transition();
+  .vertical-align-middle();
+  color: #000000;
+  font-size: 18px;
+  font-family: @font-ptsans;
+  font-weight: normal;
+  opacity: 0.6;
+  position: relative;
+
+  &:not(:last-of-type) {
+    margin-right: 30px;
+  }
+
+  &.m-focused {
+    font-size: 23px;
+    opacity: 1;
+    top: -1px;
+  }
+}

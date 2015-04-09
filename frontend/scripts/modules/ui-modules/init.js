@@ -1,8 +1,9 @@
 (function(window, modules, $){
 
   modules.define('beforeUIModulesInit', [
-    'initCartProcessor'
+    'InitEventDispatcher'
   ], function( provide ){
+
     provide();
   });
 
@@ -15,14 +16,11 @@
     'initButtonsAddToCart'*/
 
   ], function(provide){
-
     if (BM.tools.client.isTouch()) {
       $('body').addClass('m-touch');
     } else {
       $('body').addClass('m-desktop');
     }
-
-
     provide();
   });
 

@@ -1,6 +1,6 @@
 (function(window, modules, $, BM){
 
-  modules.define('CatalogueBackground', ['extend', 'baseView'], function(provide, extend, BaseView) {
+  modules.define('CatalogueBackground', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
 
     var CatalogueBackground = extend(BaseView),
 
@@ -44,7 +44,7 @@
       },
 
       _bindEvents : function() {
-        $window.on('resize', function() {
+        EventDispatcher.on('window-resize', function() {
           this._updateBaseHeightValue();
           this._updateCurrentItemOffset();
         }.bind(this));
@@ -64,6 +64,8 @@
         item.elem.addClass('m-visible');
         this._currentItem.elem.removeClass('m-visible');
         this._currentItem = item;
+
+        this._notify('update', item.elem.data('item'));
       },
 
       _getCurrentItem : function() {
@@ -74,7 +76,7 @@
         if (!BM.tools.isNumber(value)) {
           return;
         }
-        console.log('imhere');
+
         value = Math.min(100, Math.max(0, value));
         this._setCurrentItemOffset(value);
       },

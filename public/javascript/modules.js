@@ -215,7 +215,7 @@ var $__catalogue_47_background_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/background.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueBackground', ['extend', 'baseView'], function(provide, extend, BaseView) {
+    modules.define('CatalogueBackground', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
       var CatalogueBackground = extend(BaseView),
           $class = CatalogueBackground,
           $super = $class.superclass,
@@ -247,7 +247,7 @@ var $__catalogue_47_background_46_js__ = (function() {
           };
         },
         _bindEvents: function() {
-          $window.on('resize', function() {
+          EventDispatcher.on('window-resize', function() {
             this._updateBaseHeightValue();
             this._updateCurrentItemOffset();
           }.bind(this));
@@ -264,13 +264,13 @@ var $__catalogue_47_background_46_js__ = (function() {
           item.elem.addClass('m-visible');
           this._currentItem.elem.removeClass('m-visible');
           this._currentItem = item;
+          this._notify('update', item.elem.data('item'));
         },
         _getCurrentItem: function() {},
         setProgress: function(value) {
           if (!BM.tools.isNumber(value)) {
             return ;
           }
-          console.log('imhere');
           value = Math.min(100, Math.max(0, value));
           this._setCurrentItemOffset(value);
         },
@@ -300,7 +300,7 @@ var $__catalogue_47_init_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/init.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueInit', ['extend', 'baseView', 'Paralax', 'CatalogueBackground'], function(provide, extend, BaseView, Paralax, Background) {
+    modules.define('CatalogueInit', ['extend', 'baseView', 'Paralax', 'CatalogueBackground', 'CatalogueMenu', 'EventDispatcher'], function(provide, extend, BaseView, Paralax, Background, CatalogueMenu, EventDispatcher) {
       var CatalogueInit = extend(BaseView),
           $class = CatalogueInit,
           $super = $class.superclass,
@@ -312,30 +312,44 @@ var $__catalogue_47_init_46_js__ = (function() {
             return ;
           }
           this._backgroundHandler = null;
-          this._timeoutUpdateBackground = null;
+          this._menuHandler = null;
           this.$elemBackground = this.$elem.find('@bm-catalogue-background');
+          this.$elemMenu = this.$elem.find('@bm-catalogue-menu');
           this._groupes = [this.$elemGroupClassic = this.$elem.find('@bm-catalogue-item-group-classic'), this.$elemGroupAroma = this.$elem.find('@bm-catalogue-item-group-aroma')];
           this._groupesRanges = [];
           this._saveGroupsRanges();
           this._initBackground();
+          this._initMenu();
           this._initParalax();
           this._bindEvents();
         },
         _bindEvents: function() {
-          $(window).on('resize', function() {
+          EventDispatcher.on('window-resize', function() {
             this._saveGroupsRanges();
           }.bind(this));
         },
         _initBackground: function() {
           if (BM.tools.isNull(this._backgroundHandler)) {
             this._backgroundHandler = new Background({element: this.$elemBackground});
+            this._backgroundHandler.on('update', function(itemName) {
+              this._onBackgroundUpdate(itemName);
+            }.bind(this));
+          }
+        },
+        _initMenu: function() {
+          if (BM.tools.isNull(this._menuHandler)) {
+            this._menuHandler = new CatalogueMenu({element: this.$elemMenu});
+          }
+        },
+        _onBackgroundUpdate: function(itemName) {
+          if (!BM.tools.isNull(this._menuHandler)) {
+            this._menuHandler.focusItem(itemName);
           }
         },
         _initParalax: function() {
-          this._timeoutUpdateBackground = setTimeout(function updateBackground() {
+          EventDispatcher.on('window-scroll', function() {
             this._updateBackground();
-            this._timeoutUpdateBackground = setTimeout(updateBackground.bind(this), 25);
-          }.bind(this), 250);
+          }.bind(this));
         },
         _saveGroupsRanges: function() {
           var previousTopRange = 0;
@@ -351,7 +365,6 @@ var $__catalogue_47_init_46_js__ = (function() {
             });
             previousTopRange = bottomRange + 1;
           }.bind(this));
-          console.log(this._groupesRanges);
         },
         _updateBackground: function() {
           var range = this._getCurrentRange();
@@ -370,7 +383,7 @@ var $__catalogue_47_init_46_js__ = (function() {
         },
         _updateImage: function($group) {
           if (!BM.tools.isNull(this._backgroundHandler)) {
-            this._backgroundHandler.setCurrentItem($group.data('n'));
+            this._backgroundHandler.setCurrentItem($group.data('name'));
           }
         },
         _getCurrentGroupByRange: function() {
@@ -400,11 +413,59 @@ var $__catalogue_47_init_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__catalogue_47_menu_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "catalogue/menu.js";
+  (function(window, modules, $, BM) {
+    modules.define('CatalogueMenu', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
+      var CatalogueMenu = extend(BaseView),
+          $class = CatalogueMenu,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.$elem) {
+            return ;
+          }
+          this.$elemsItems = this.$elem.find('@bm-catalogue-menu-item');
+          this._offsetTop = this.$elem.offset().top;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          EventDispatcher.on('window-scroll', function() {
+            this._updatePosition();
+          }.bind(this));
+        },
+        _updatePosition: function() {
+          if ($window.scrollTop() >= this._offsetTop) {
+            this.$elem.addClass('m-fixed');
+          } else {
+            this.$elem.removeClass('m-fixed');
+          }
+        },
+        focusItem: function(itemName) {
+          console.log(itemName);
+          var item = this.$elemsItems.filter('[data-item=' + itemName + ']');
+          console.log(this.$elemsItems);
+          if (item.length > 0) {
+            console.log('hh');
+            this.$elemsItems.removeClass('m-focused');
+            item.addClass('m-focused');
+          }
+        }
+      });
+      provide(CatalogueMenu);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_init_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/init.js";
   (function(window, modules, $) {
-    modules.define('beforeUIModulesInit', ['initCartProcessor'], function(provide) {
+    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
       provide();
     });
     modules.define('ui-modules', ['beforeUIModulesInit'], function(provide) {
@@ -545,6 +606,56 @@ var $__ui_45_modules_47_cart_47_cart_45_processor_46_js__ = (function() {
       provide();
     });
   }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
+  (function(window, modules, $, BM) {
+    var dispatcherInstance = null;
+    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
+      var EventDispatcher = extend(PubSub),
+          $class = EventDispatcher,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          this._timeoutNotifyResize = null;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          $window.one('resize', function onWindowResize() {
+            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
+              clearTimeout(this._timeoutNotifyResize);
+              this._timeoutNotifyResize = null;
+            }
+            this._timeoutNotifyResize = setTimeout(function() {
+              this._notify('window-resize');
+            }.bind(this), 200);
+            setTimeout(function() {
+              $window.one('resize', onWindowResize.bind(this));
+            }.bind(this), 50);
+          }.bind(this));
+          $window.one('scroll', function onWindowScroll() {
+            this._notify('window-scroll');
+            setTimeout(function() {
+              $window.one('scroll', onWindowScroll.bind(this));
+            }.bind(this), 25);
+          }.bind(this));
+        }
+      });
+      provide(EventDispatcher);
+    });
+    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
+      dispatcherInstance = new Dispatcher();
+      provide();
+    });
+    modules.define('EventDispatcher', [], function(provide) {
+      provide(dispatcherInstance);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
   return {};
 }).call(Reflect.global);
 
