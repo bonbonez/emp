@@ -1,81 +1,11 @@
-.createFontFace(@fontName, @fontPath, @fontStyle: ~'normal', @fontWeight: ~'normal', @svgName: @fontName) {
-  @font-face {
-    font-family: @fontName;
-    font-style: @fontStyle;
-    font-weight: @fontWeight;
-    src: url('@{fontPath}.svg#@{svgName}') format('svg'),
-         url('@{fontPath}.eot?'),
-         url('@{fontPath}.woff') format('woff'),
-         url('@{fontPath}.ttf') format('truetype'),;
-  }
-}
-
-/**
- * Museo
- */
-@grotesqueThinName:          "museo_sans_cyrl300";
-@grotesqueThinFile:          "/assets/museo/museosanscyrl-300-webfont";
-
-@grotesqueThinItalicName:    "museo_sans_cyrl300_italic";
-@grotesqueThinItalicFile:    "/assets/museo/museosanscyrl-300italic";
-
-@grotesqueRegularName:       "museo_sans_cyrl500";
-@grotesqueRegularFile:       "/assets/museo/museosanscyrl-500-webfont";
-
-@grotesqueRegularItalicName: "museo_sans_cyrl500_italic";
-@grotesqueRegularItalicFile: "/assets/museo/museosanscyrl-500italic-webfont";
-
-@grotesqueBolderName:        "museo_sans_cyrl300";
-@grotesqueBolderFile:        "/assets/museo/museosanscyrl-700-webfont";
-
-/**
- * Lobster
- */
-@lobsterRegularName:          "Lobster";
-@lobsterRegularFile:          "/assets/lobster/lobster-webfont";
-
-/**
- * Icon
- */
-@fontIconsName:                 "Icons";
-@fontIconsPath:                 "/assets/icons/icons-new3";
-
-/**
- * Museo
- */
-.createFontFace(@grotesqueThinName, @grotesqueThinFile,          normal, normal, @grotesqueThinName);
-.createFontFace(@grotesqueThinName, @grotesqueThinItalicFile,    italic, normal, @grotesqueThinItalicName);
-
-.createFontFace(@grotesqueThinName, @grotesqueRegularFile,       normal, bold,   @grotesqueRegularName);
-.createFontFace(@grotesqueThinName, @grotesqueRegularItalicFile, italic, bold,   @grotesqueRegularItalicName);
-
-.createFontFace(@grotesqueThinName, @grotesqueBolderFile,        normal, 900, @grotesqueBolderName);
-
-/**
- * Lobster
- */
-.createFontFace(@lobsterRegularName, @lobsterRegularFile,        normal, normal, @lobsterRegularFile);
-
-/**
- * Icon
- */
-.createFontFace(@fontIconsName, @fontIconsPath);
-
-@font-museo:    @grotesqueThinName, arial, sans-serif;
-@font-lobster:  @lobsterRegularName, arial, sans-serif;
-@font-icons:    @fontIconsName, arial, sans-serif;
-
-
-
-/* cyrillic-ext */
-@font-face {
+/* PT Sans */
+/*@font-face {
   font-family: 'PT Sans';
   font-style: normal;
   font-weight: 400;
   src: local('PT Sans'), local('PTSans-Regular'), url(http://fonts.gstatic.com/s/ptsans/v8/fhNmDCnjccoUYyU4ZASaLVKPGs1ZzpMvnHX-7fPOuAc.woff2) format('woff2');
   unicode-range: U+0460-052F, U+20B4, U+2DE0-2DFF, U+A640-A69F;
 }
-/* latin-ext */
 @font-face {
   font-family: 'PT Sans';
   font-style: normal;
@@ -83,8 +13,6 @@
   src: local('PT Sans'), local('PTSans-Regular'), url(http://fonts.gstatic.com/s/ptsans/v8/oysROHFTu1eTZ74Hcf8V-VKPGs1ZzpMvnHX-7fPOuAc.woff2) format('woff2');
   unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
 }
-
-/* cyrillic-ext */
 @font-face {
   font-family: 'PT Sans';
   font-style: normal;
@@ -92,13 +20,35 @@
   src: local('PT Sans Bold'), local('PTSans-Bold'), url(http://fonts.gstatic.com/s/ptsans/v8/kTYfCWJhlldPf5LnG4ZnHAsYbbCjybiHxArTLjt7FRU.woff2) format('woff2');
   unicode-range: U+0460-052F, U+20B4, U+2DE0-2DFF, U+A640-A69F;
 }
-/* latin-ext */
 @font-face {
   font-family: 'PT Sans';
   font-style: normal;
   font-weight: bold;
   src: local('PT Sans Bold'), local('PTSans-Bold'), url(http://fonts.gstatic.com/s/ptsans/v8/hpORcvLZtemlH8gI-1S-7gsYbbCjybiHxArTLjt7FRU.woff2) format('woff2');
   unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}*/
+
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: normal;
+  src: url('/fonts/ptsans/ptsans-regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'PT Sans';
+  font-style: normal;
+  font-weight: bold;
+  src: url('/fonts/ptsans/ptsans-regular.bold') format('woff');
+}
+
+/* Icons */
+@font-face {
+  font-family: Icons;
+  font-style: normal;
+  font-weight: normal;
+  src: url('/fonts/icons/icons.woff') format('woff');
 }
 
 @font-ptsans : 'PT Sans';
+@font-icons  : 'Icons';

@@ -5,18 +5,18 @@
     [
       'extend',
       'baseView',
-      'Paralax',
       'CatalogueBackground',
       'CatalogueMenu',
+      'CatalogueItem',
       'EventDispatcher'
     ],
     function(
       provide,
       extend,
       BaseView,
-      Paralax,
       Background,
-      CatalogueMenu,
+      Menu,
+      Item,
       EventDispatcher
       ) {
 
@@ -42,6 +42,8 @@
         this.$elemBackground          = this.$elem.find('@bm-catalogue-background');
         this.$elemMenu                = this.$elem.find('@bm-catalogue-menu');
 
+        this.$elemItemsWrapper        = this.$elem.find('@bm-catalogue-items-wrapper');
+
         this._groupes = [
           this.$elemGroupClassic      = this.$elem.find('@bm-catalogue-item-group-classic'),
           this.$elemGroupAroma        = this.$elem.find('@bm-catalogue-item-group-aroma')
@@ -52,7 +54,7 @@
         this._saveGroupsRanges();
         this._initBackground();
         this._initMenu();
-        this._initParalax();
+        this._initItems();
         this._bindEvents();
       },
 
@@ -70,12 +72,15 @@
             this._backgroundHandler.on('update', function(itemName) {
               this._onBackgroundUpdate(itemName);
             }.bind(this));
+            EventDispatcher.on('window-scroll', function() {
+              this._updateBackground();
+            }.bind(this));
           }
       },
 
       _initMenu : function() {
           if (BM.tools.isNull(this._menuHandler)) {
-            this._menuHandler = new CatalogueMenu({
+            this._menuHandler = new Menu({
               element: this.$elemMenu
             });
           }
@@ -87,10 +92,16 @@
           }
       },
 
-      _initParalax : function() {
-        EventDispatcher.on('window-scroll', function() {
-          this._updateBackground();
-        }.bind(this));
+      _initItems : function() {
+        var lastItem;
+        this.$elemItemsWrapper.each(function() {
+          $(this).find('@bm-catalogue-item').each(function() {
+            lastItem = new Item({
+              element: $(this)
+            });
+          })
+        });
+        lastItem.showPopup();
       },
 
       _saveGroupsRanges : function() {

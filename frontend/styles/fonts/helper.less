@@ -1,0 +1,10 @@
+.bm-font(@family : @font-ptsans, @size : 18px, @line: 1.4em, @weight : normal) {
+  font-family: @font-ptsans;
+  font-size: @size;
+  font-weight: @weight;
+  line-height: @line;
+}
+
+.bm-font-pt(@size : 18px, @line: 1.4em, @weight : normal) {
+  .bm-font(@font-ptsans, @size, @line, @weight);
+}

@@ -1,7 +1,7 @@
 .bm-page-catalogue role="bm-catalogue-index"
   .bm-catalogue-background role="bm-catalogue-background"
-    .bm-catalogue-background-item.m-fresh-coffee.m-visible data-item="mono" data-size="120"
-    .bm-catalogue-background-item.m-aroma-coffee data-item="aroma" data-size="120"
+    .bm-catalogue-background-item.m-fresh-coffee.m-visible data-item="mono" data-size="120" data-aspect="1.389"
+    .bm-catalogue-background-item.m-aroma-coffee data-item="aroma" data-size="120" data-aspect="1.499"
 
   .bm-page-catalogue-header
     .bm-page-catalogue-content.m-offset-50
@@ -16,7 +16,7 @@
       .bm-text-18.m-white.bm-page-catalogue-item-group-text
         | Моносорт - это кофе, состоящий из 100% <a class="link" href="#">арабики</a>. Читайте о моносортах <a class="link" href="#">тут</a>.
 
-      .bm-page-catalogue-item-group-content
+      .bm-page-catalogue-item-group-content role="bm-catalogue-items-wrapper"
         - (0..11).each do |i|
           = render partial: 'catalogue/item'
 
@@ -25,8 +25,10 @@
         | Ароматизированный кофе
       .bm-text-18.m-white.bm-page-catalogue-item-group-text
         | Кофе, обжаренный с добавлением натуральных ароматизаторов. <br/>
-          Узнать, как делается такой кофе можно <a class="link" href="#">тут</a>
+          Узнать, как делается такой кофе можно <a class="link" href="#">тут</a>.
 
-      .bm-page-catalogue-item-group-content
+      .bm-page-catalogue-item-group-content role="bm-catalogue-items-wrapper"
         - (0..11).each do |i|
           = render partial: 'catalogue/item'
+
+= render partial: 'templates/all'

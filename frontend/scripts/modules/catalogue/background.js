@@ -19,19 +19,24 @@
         }
 
         this._items = {
-          first:  this._getItem('first'),
-          second: this._getItem('second')
+          mono:  this._getItem('mono'),
+          aroma: this._getItem('aroma')
         };
+        this._itemsArr = [
+          this._items.mono,
+          this._items.aroma
+        ];
 
         this._baseHeight                = null;
-        this._currentItem               = this._items.first;
+        this._currentItem               = this._items.mono;
         this._lastOffsetValue           = null;
-        this._lastCalculatedOffsetValue = null;
 
-        window.b = this;
-
-        this._updateBaseHeightValue();
+        this._updateFull();
         this._bindEvents();
+
+        setTimeout(function() {
+          this._updateFull();
+        }.bind(this), 300)
       },
 
       _getItem : function(name) {
@@ -39,14 +44,14 @@
         return {
           elem :  $elem,
           size:   $elem.data('size'),
-          height: $elem.height()
+          height: $elem.height(),
+          aspect: parseFloat($elem.data('aspect'))
         };
       },
 
       _bindEvents : function() {
         EventDispatcher.on('window-resize', function() {
-          this._updateBaseHeightValue();
-          this._updateCurrentItemOffset();
+          this._updateFull();
         }.bind(this));
       },
 
@@ -81,6 +86,12 @@
         this._setCurrentItemOffset(value);
       },
 
+      _updateFull : function() {
+        this._updateOrientation();
+        this._updateBaseHeightValue();
+        this._updateCurrentItemOffset();
+      },
+
       _setCurrentItemOffset : function(value) {
         this._lastOffsetValue = value;
 
@@ -92,6 +103,17 @@
           });
         }.bind(this));
 
+      },
+
+      _updateOrientation : function() {
+        var windowAspect = window.innerWidth / window.innerHeight;
+        this._itemsArr.forEach(function(item) {
+          if (item.aspect >= windowAspect) {
+            item.elem.addClass('m-orientation-inverted');
+          } else {
+            item.elem.removeClass('m-orientation-inverted');
+          }
+        })
       },
 
       _updateBaseHeightValue : function() {

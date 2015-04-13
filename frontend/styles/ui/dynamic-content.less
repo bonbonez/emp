@@ -1,0 +1,20 @@
+.bm-dynamic-content {
+  display: block;
+  width: 100%;
+
+  &:not([data-no-transition=true]) {
+    .transition(0.15s);
+  }
+
+  &[visible=false] {
+    opacity: 0;
+  }
+
+  &-step {
+    width: 100%;
+
+    &:not(.visible) {
+      display: none;
+    }
+  }
+}

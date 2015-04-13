@@ -227,29 +227,31 @@ var $__catalogue_47_background_46_js__ = (function() {
             return ;
           }
           this._items = {
-            first: this._getItem('first'),
-            second: this._getItem('second')
+            mono: this._getItem('mono'),
+            aroma: this._getItem('aroma')
           };
+          this._itemsArr = [this._items.mono, this._items.aroma];
           this._baseHeight = null;
-          this._currentItem = this._items.first;
+          this._currentItem = this._items.mono;
           this._lastOffsetValue = null;
-          this._lastCalculatedOffsetValue = null;
-          window.b = this;
-          this._updateBaseHeightValue();
+          this._updateFull();
           this._bindEvents();
+          setTimeout(function() {
+            this._updateFull();
+          }.bind(this), 300);
         },
         _getItem: function(name) {
           var $elem = this.$elem.find('[data-item=' + name + ']');
           return {
             elem: $elem,
             size: $elem.data('size'),
-            height: $elem.height()
+            height: $elem.height(),
+            aspect: parseFloat($elem.data('aspect'))
           };
         },
         _bindEvents: function() {
           EventDispatcher.on('window-resize', function() {
-            this._updateBaseHeightValue();
-            this._updateCurrentItemOffset();
+            this._updateFull();
           }.bind(this));
         },
         setCurrentItem: function(itemName) {
@@ -274,12 +276,27 @@ var $__catalogue_47_background_46_js__ = (function() {
           value = Math.min(100, Math.max(0, value));
           this._setCurrentItemOffset(value);
         },
+        _updateFull: function() {
+          this._updateOrientation();
+          this._updateBaseHeightValue();
+          this._updateCurrentItemOffset();
+        },
         _setCurrentItemOffset: function(value) {
           this._lastOffsetValue = value;
           var offset = (this._currentItem.height - this._baseHeight) / 100 * value * -1;
           window.requestAnimationFrame(function() {
             this._currentItem.elem.css({'transform': 'translateY(' + offset + 'px)'});
           }.bind(this));
+        },
+        _updateOrientation: function() {
+          var windowAspect = window.innerWidth / window.innerHeight;
+          this._itemsArr.forEach(function(item) {
+            if (item.aspect >= windowAspect) {
+              item.elem.addClass('m-orientation-inverted');
+            } else {
+              item.elem.removeClass('m-orientation-inverted');
+            }
+          });
         },
         _updateBaseHeightValue: function() {
           this._baseHeight = this.$elem.height();
@@ -300,7 +317,7 @@ var $__catalogue_47_init_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/init.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueInit', ['extend', 'baseView', 'Paralax', 'CatalogueBackground', 'CatalogueMenu', 'EventDispatcher'], function(provide, extend, BaseView, Paralax, Background, CatalogueMenu, EventDispatcher) {
+    modules.define('CatalogueInit', ['extend', 'baseView', 'CatalogueBackground', 'CatalogueMenu', 'CatalogueItem', 'EventDispatcher'], function(provide, extend, BaseView, Background, Menu, Item, EventDispatcher) {
       var CatalogueInit = extend(BaseView),
           $class = CatalogueInit,
           $super = $class.superclass,
@@ -315,12 +332,13 @@ var $__catalogue_47_init_46_js__ = (function() {
           this._menuHandler = null;
           this.$elemBackground = this.$elem.find('@bm-catalogue-background');
           this.$elemMenu = this.$elem.find('@bm-catalogue-menu');
+          this.$elemItemsWrapper = this.$elem.find('@bm-catalogue-items-wrapper');
           this._groupes = [this.$elemGroupClassic = this.$elem.find('@bm-catalogue-item-group-classic'), this.$elemGroupAroma = this.$elem.find('@bm-catalogue-item-group-aroma')];
           this._groupesRanges = [];
           this._saveGroupsRanges();
           this._initBackground();
           this._initMenu();
-          this._initParalax();
+          this._initItems();
           this._bindEvents();
         },
         _bindEvents: function() {
@@ -334,11 +352,14 @@ var $__catalogue_47_init_46_js__ = (function() {
             this._backgroundHandler.on('update', function(itemName) {
               this._onBackgroundUpdate(itemName);
             }.bind(this));
+            EventDispatcher.on('window-scroll', function() {
+              this._updateBackground();
+            }.bind(this));
           }
         },
         _initMenu: function() {
           if (BM.tools.isNull(this._menuHandler)) {
-            this._menuHandler = new CatalogueMenu({element: this.$elemMenu});
+            this._menuHandler = new Menu({element: this.$elemMenu});
           }
         },
         _onBackgroundUpdate: function(itemName) {
@@ -346,10 +367,14 @@ var $__catalogue_47_init_46_js__ = (function() {
             this._menuHandler.focusItem(itemName);
           }
         },
-        _initParalax: function() {
-          EventDispatcher.on('window-scroll', function() {
-            this._updateBackground();
-          }.bind(this));
+        _initItems: function() {
+          var lastItem;
+          this.$elemItemsWrapper.each(function() {
+            $(this).find('@bm-catalogue-item').each(function() {
+              lastItem = new Item({element: $(this)});
+            });
+          });
+          lastItem.showPopup();
         },
         _saveGroupsRanges: function() {
           var previousTopRange = 0;
@@ -413,6 +438,47 @@ var $__catalogue_47_init_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__catalogue_47_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "catalogue/item.js";
+  (function(window, modules, $, BM) {
+    modules.define('CatalogueItem', ['extend', 'baseView', 'PopupItem'], function(provide, extend, BaseView, PopupItem) {
+      var CatalogueItem = extend(BaseView),
+          $class = CatalogueItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.$elem) {
+            return ;
+          }
+          this._popupHandler = null;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          this.$elem.on(BM.helper.event.clickName(), function(event) {
+            this._onClick(event);
+          }.bind(this));
+        },
+        _onClick: function(event) {
+          this.showPopup();
+        },
+        _initPopup: function() {
+          if (BM.tools.isNull(this._popupHandler)) {
+            this._popupHandler = new PopupItem();
+          }
+        },
+        showPopup: function() {
+          this._initPopup();
+          this._popupHandler.show();
+        }
+      });
+      provide(CatalogueItem);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__catalogue_47_menu_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/menu.js";
@@ -445,11 +511,8 @@ var $__catalogue_47_menu_46_js__ = (function() {
           }
         },
         focusItem: function(itemName) {
-          console.log(itemName);
           var item = this.$elemsItems.filter('[data-item=' + itemName + ']');
-          console.log(this.$elemsItems);
           if (item.length > 0) {
-            console.log('hh');
             this.$elemsItems.removeClass('m-focused');
             item.addClass('m-focused');
           }
@@ -609,6 +672,230 @@ var $__ui_45_modules_47_cart_47_cart_45_processor_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__ui_45_modules_47_dynamic_45_content_47_dynamic_45_content_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/dynamic-content/dynamic-content.js";
+  (function(window, document, BM, $, modules, radio) {
+    'use strict';
+    var dynamicContentModule = function(provide, extend, PubSub) {
+      var DynamicContent = extend(PubSub),
+          $class = DynamicContent,
+          $super = $class.superclass,
+          DynamicEffect = {
+            FADE: 1,
+            SLIDE: 2
+          };
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.apply(this, arguments);
+          this._element = null;
+          if (!config) {
+            return ;
+          }
+          this.setElement(config.element);
+          this._effect = DynamicEffect.FADE;
+          this._firstStep = this._getStepInitial();
+          this.setConfig(config);
+          this._currentElement = this._firstStep;
+          this._stepsStack = [];
+          this._updateInProgress = false;
+        },
+        setConfig: function(config) {
+          if (!BM.tools.isUndefined(config)) {
+            if (!BM.tools.isUndefined(config.element)) {
+              this.setElement(config.element);
+            }
+            if (!BM.tools.isUndefined(config.effect)) {
+              this.setDynamicEffect(config.effect);
+            }
+            if (!BM.tools.isUndefined(config.firstStep)) {
+              this.setFirstStep(config.firstStep);
+            }
+          }
+        },
+        setElement: function(element) {
+          if (!BM.tools.isUndefined(element)) {
+            this._element = element;
+          }
+        },
+        setDynamicEffect: function(effect) {
+          if (!BM.tools.isUndefined(effect)) {
+            this._effect = effect;
+          }
+        },
+        setFirstStep: function(firstStep) {
+          var step;
+          if (!BM.tools.isUndefined(firstStep)) {
+            step = this._getStep(firstStep);
+            if (step.length > 0) {
+              this._firstStep = step;
+            }
+          }
+        },
+        _updateSize: function(data) {
+          return ;
+          data = data || {};
+          var me = this,
+              oldHeight = data.oldHeight || this._currentElement.height(),
+              newHeight = data.newHeight || height,
+              updateCallback = data.callback || function() {};
+          if (BM.tools.isNull(newHeight)) {
+            newHeight = this._currentElement.height();
+          }
+          this._element.css('height', this._element.height());
+          this._element.get(0).offsetHeight;
+          this._element.css('height', newHeight);
+          setTimeout(function() {
+            me._element.css('height', '');
+            updateCallback();
+          }, 350);
+        },
+        update: function() {},
+        reset: function() {
+          this.setStep(this._getStepFirst().attr('data-step'));
+        },
+        clearHeight: function() {
+          this._element.css('height', '');
+        },
+        clearStepsStack: function() {
+          this._stepsStack.length = 0;
+          this._stepsStack = [];
+        },
+        showStep: function(stepNextName, callback, forceCallback, skipStack) {
+          if (this._isCurrentStep(stepNextName) || !this._isStepExist(stepNextName) || this.isUpdateInProgress()) {
+            if (forceCallback === true && BM.tools.isFunction(callback)) {
+              callback();
+            }
+            return ;
+          }
+          var me = this,
+              stepCurrent = this._currentElement,
+              stepCurrentName = stepCurrent.attr('data-step'),
+              stepNext = this._getStep(stepNextName),
+              heightCurrent = stepCurrent.height(),
+              heightNext;
+          this._updateInProgress = true;
+          if (skipStack !== true) {
+            this._stepsStack.push(stepCurrent.attr('data-step'));
+          }
+          this._notify('fade-out-start', stepCurrentName, stepNextName);
+          this._fadeOut(function() {
+            me._notify('fade-out-end', stepCurrentName, stepNextName);
+            me._setHeightNoTransition(heightCurrent);
+            me.setStep(stepNextName);
+            heightNext = stepNext.height();
+            me._notify('resize-start', stepCurrentName, stepNextName);
+            me._element.css('height', heightNext);
+            setTimeout(function() {
+              me._notify('resize-end', stepCurrentName, stepNextName);
+              me._notify('fade-in-start', stepCurrentName, stepNextName);
+              me._fadeIn(function() {
+                me._notify('fade-in-end', stepCurrentName, stepNextName);
+                me._setHeightNoTransition('');
+                if (BM.tools.isFunction(callback)) {
+                  callback();
+                }
+                me._updateInProgress = false;
+              });
+            }, 350);
+          });
+        },
+        showPreviousStep: function() {
+          var step = this._stepsStack.pop();
+          if (!BM.tools.isUndefined(step)) {
+            this.showStep(step, function() {}, false, true);
+          }
+        },
+        isStepsStackEmpty: function() {
+          return this._stepsStack.length === 0;
+        },
+        setStep: function(n) {
+          var stepToShow = this._getStep(n);
+          if (stepToShow.length > 0) {
+            this._element.find('> [data-step]').removeClass('visible');
+            stepToShow.addClass('visible');
+            this._currentElement = stepToShow;
+          }
+        },
+        _getStep: function(n) {
+          return this._element.find('> [data-step=' + n + ']');
+        },
+        _getStepInitial: function() {
+          var result;
+          result = this._element.find('.visible[data-step]');
+          if (result.length > 0) {
+            result = result.eq(0);
+          } else {
+            result = this._getStepFirst();
+          }
+          return result;
+        },
+        _getStepFirst: function() {
+          return this._element.find('> [data-step]').eq(0);
+        },
+        _isStepExist: function(n) {
+          return this._element.find('> [data-step=' + n + ']').length > 0;
+        },
+        isUpdateInProgress: function() {
+          return this._updateInProgress;
+        },
+        _isCurrentStep: function(n) {
+          return this._currentElement.attr('data-step') === n.toString();
+        },
+        showNext: function() {},
+        showPrev: function() {},
+        _fadeOut: function(callback) {
+          this._unbindTransitionEnd();
+          this._bindTransitionEnd(callback);
+          this._element.attr('visible', 'false');
+        },
+        _fadeOut2: function(callback) {
+          this._unbindTransitionEnd();
+          this._bindTransitionEnd(callback);
+          this._element.attr('visible', 'false');
+        },
+        _fadeIn: function(callback) {
+          this._unbindTransitionEnd();
+          this._bindTransitionEnd(callback);
+          this._element.removeAttr('visible');
+        },
+        _unbindTransitionEnd: function() {
+          this._element.unbindTransitionEnd();
+        },
+        _bindTransitionEnd: function(callback) {
+          callback = callback || function() {};
+          this._element.transitionEnd(function() {
+            this._unbindTransitionEnd();
+            callback();
+            this._notify('fade-in-end');
+          }.bind(this));
+        },
+        collapse: function() {
+          return this._fadeOut(function() {
+            this._updateSize(0);
+          }.bind(this));
+        },
+        getCurrentStepName: function() {
+          return this._currentElement.attr('data-step');
+        },
+        _setHeightNoTransition: function(height) {
+          this._element.attr('data-no-transition', 'true');
+          this._triggerRender();
+          this._element.css('height', height);
+          this._triggerRender();
+          this._element.removeAttr('data-no-transition');
+        },
+        _triggerRender: function() {
+          this._element.get(0).offsetHeight;
+        }
+      });
+      provide(DynamicContent);
+    };
+    modules.define('dynamicContent', ['extend', 'basePubSub'], dynamicContentModule);
+  }(this, this.document, this.BM, this.jQuery, this.modules, this.radio));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/dispatcher/dispatcher.js";
@@ -659,55 +946,74 @@ var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_paralax_47_paralax_46_js__ = (function() {
+var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
   "use strict";
-  var __moduleName = "ui-modules/paralax/paralax.js";
+  var __moduleName = "ui-modules/item/item.js";
   (function(window, modules, $, BM) {
-    modules.define('Paralax', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
-      var Paralax = extend(PubSub),
-          $class = Paralax,
+    modules.define('Item', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var Item = extend(BaseView),
+          $class = Item,
           $super = $class.superclass;
-      var getTemplate = function() {
-        return $($('#bm-paralax-view-template').html());
-      },
-          getTemplateItem = function() {
-            return $($('#bm-paralax-item-template').html());
-          };
       BM.tools.mixin($class.prototype, {
-        initialize: function(config) {
+        initialize: function() {
           $super.initialize.apply(this, arguments);
-          this._speed = 0.5;
-          this._steps = [];
-          this._applyConfig();
-        },
-        _applyConfig: function() {
-          if (BM.tools.isPresent(config)) {
-            if (BM.tools.isPresent(config.speed)) {
-              this._speed = config.speed;
-            }
-            if (BM.tools.isPresent(config.steps)) {
-              this._parseSteps(config.steps);
-            }
+          if (!this.$elem) {
+            return ;
           }
         },
-        _parseSteps: function(steps) {
-          this._steps.length = 0;
-          this._steps = [];
-          steps.forEach(function(step) {
-            this._steps.push(step);
-          }.bind(this));
-          this._steps = this._steps.sort(function(x, y) {
-            if (x.breakpoint > y.breakpoint) {
-              return 1;
-            } else if (x.breakpoint < y.breakpoint) {
-              return -1;
-            } else {
-              return 0;
-            }
-          });
+        _getTemplateName: function() {
+          return 'bm-item-template';
         }
       });
-      provide(Paralax);
+      provide(Item);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/popup/popup-item.js";
+  (function(window, modules, $, BM) {
+    modules.define('PopupItem', ['extend', 'popupBaseClass', 'dynamicContent', 'Item'], function(provide, extend, BasePopup, DynamicContent, Item) {
+      var PopupItem = extend(BasePopup),
+          $class = PopupItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.call(this, {
+            rootClassName: ['m-version-2', 'bm-popup-item'],
+            useTemplate: true
+          });
+          this._dynamicContent = null;
+          this._itemHandler = null;
+          this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
+          this.$elemContent = this.$elem.find('@bm-popup-item-content');
+          this._initDynamicContent();
+          this._initItem();
+        },
+        _initDynamicContent: function() {
+          if (BM.tools.isNull(this._dynamicContent)) {
+            this._dynamicContent = new DynamicContent({element: this.$elemDynamicContent});
+          }
+        },
+        _initItem: function() {
+          if (BM.tools.isNull(this._itemHandler)) {
+            this._itemHandler = new Item();
+            this.$elemContent.append(this._itemHandler.getElement());
+          }
+        },
+        show: function() {
+          $super.show.apply(this, arguments);
+          setTimeout(function() {
+            this._dynamicContent.showStep('content');
+          }.bind(this), 500);
+        },
+        _getTemplateName: function() {
+          return 'bm-popup-item-template';
+        }
+      });
+      provide(PopupItem);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};

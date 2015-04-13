@@ -50,9 +50,9 @@
         }
       },
 
-      focusItem : function(itemName) {console.log(itemName);
-        var item = this.$elemsItems.filter('[data-item=' + itemName + ']');console.log(this.$elemsItems);
-        if (item.length > 0) {console.log('hh');
+      focusItem : function(itemName) {
+        var item = this.$elemsItems.filter('[data-item=' + itemName + ']');
+        if (item.length > 0) {
           this.$elemsItems.removeClass('m-focused');
           item.addClass('m-focused');
         }

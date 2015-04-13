@@ -1,0 +1,71 @@
+.bm-social-share {
+  height: 48px;
+  line-height: 48px;
+  white-space: nowrap;
+  width: 100%;
+}
+.bm-social-share-item {
+  .transition(0.15s);
+  border-radius: 47px;
+  cursor: pointer;
+  display: inline-block;
+  height: 47px;
+  line-height: 47px;
+  overflow: hidden;
+  position: relative;
+  width: 47px;
+
+  &::before {
+    content: ' ';
+    font-family: @font-icons;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+  }
+
+  &:not(:last-of-type) {
+    margin-right: 10px;
+  }
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    .transform(scale(1.09));
+  }
+
+  &.m-facebook {
+    background-color: @color-facebook;
+
+    &::before {
+      color: #ffffff;
+      content: 'F';
+      font-size: 30px;
+      height: 21px;
+      line-height: 25px;
+      margin: -9px 0 0 -10px;
+    }
+  }
+  &.m-twitter {
+    background-color: @color-twitter;
+
+    &::before {
+      color: #ffffff;
+      content: 'T';
+      font-size: 30px;
+      height: 21px;
+      line-height: 25px;
+      margin: -9px 0 0 -11px;
+    }
+  }
+  &.m-vkontakte {
+    background-color: @color-vkontakte;
+
+    &::before {
+      color: #ffffff;
+      content: 'V';
+      font-size: 26px;
+      height: 21px;
+      line-height: 25px;
+      margin: -8px 0 0 -16px;
+    }
+  }
+}

@@ -28,4 +28,28 @@
     //border: 1px solid @color-brown-light;
     color: @color-brown-light;
   }
+
+  &.m-transparent {
+    background-color: transparent;
+    color: @color-brown-light;
+
+    .m-desktop &:hover,
+    .m-touch   &:active {
+      background-color: @color-brown-light;
+      color: #ffffff;
+    }
+
+    &.m-black {
+      background-color: transparent;
+      border-color: #000000;
+      color: #000000;
+
+      .m-desktop &:hover,
+      .m-touch   &:active {
+        background-color: @color-brown-light;
+        border-color: @color-brown-light;
+        color: #ffffff;
+      }
+    }
+  }
 }

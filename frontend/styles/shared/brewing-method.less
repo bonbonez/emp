@@ -1,0 +1,97 @@
+.bm-brewing-method {
+  .vertical-align-middle();
+  text-align: center;
+  width: 95px;
+
+  &[data-size=smaller] {
+    width: 70px;
+  }
+}
+
+.bm-brewing-method-image-wrapper {
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: auto auto;
+  height: 52px;
+  line-height: 52px;
+  margin-bottom: 7px;
+  overflow: hidden;
+  width: 100%;
+
+  .bm-brewing-method[data-name=aeropress] & {
+    background-image: url('/images/icon/brewing/aeropress.png');
+  }
+  .bm-brewing-method[data-name=turk] & {
+    background-image: url('/images/icon/brewing/turk.png');
+    background-position: 32px bottom;
+  }
+  .bm-brewing-method[data-name=v60] & {
+    background-image: url('/images/icon/brewing/v60.png');
+  }
+  .bm-brewing-method[data-name=siphon] & {
+    background-image: url('/images/icon/brewing/siphon.png');
+    background-position: 35px bottom;
+  }
+  .bm-brewing-method[data-name=french] & {
+    background-image: url('/images/icon/brewing/french.png');
+    background-position: 35px bottom;
+  }
+  .bm-brewing-method[data-name=cup] & {
+    background-image: url('/images/icon/brewing/cup.png');
+    background-position: 34px bottom;
+  }
+  .bm-brewing-method[data-name=machine] & {
+    background-image: url('/images/icon/brewing/machine.png');
+    background-size: auto 100%;
+  }
+  .bm-brewing-method[data-name=moka] & {
+    background-image: url('/images/icon/brewing/moka.png');
+    background-position: 33px bottom;
+  }
+
+  .bm-brewing-method[data-name][data-size=smaller] & {
+    background-position: center bottom;
+    background-size: auto 90%;
+    height: 45px;
+  }
+
+  .bm-brewing-method[data-name=turk][data-size=smaller] & {
+    background-position: 16px bottom;
+    background-size: auto 70%;
+  }
+  .bm-brewing-method[data-name=siphon][data-size=smaller] & {
+    //background-position: 35px bottom;
+  }
+  .bm-brewing-method[data-name=french][data-size=smaller] & {
+    background-position: 20px bottom;
+  }
+  .bm-brewing-method[data-name=cup][data-size=smaller] & {
+    background-size: auto 70%;
+    //background-position: 34px bottom;
+  }
+  .bm-brewing-method[data-name=moka][data-size=smaller] & {
+    //background-position: 33px bottom;
+  }
+}
+
+.bm-brewing-method-image {
+  display: inline-block;
+  height: auto;
+  max-height: 100%;
+  max-width: 100%;
+  vertical-align: bottom;
+  width: auto;
+}
+
+.bm-brewing-method-text {
+  color: @color-dark;
+  font-family: @font-ptsans;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+
+  .bm-brewing-method[data-size=smaller] & {
+    font-size: 10px;
+  }
+}

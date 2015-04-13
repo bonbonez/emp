@@ -1,0 +1,40 @@
+ruby:
+  options = [{
+    name: "none",
+    text: "не молоть (зерно)"
+  },{
+    name: "coarse",
+    text: "грубый"
+  },{
+    name: "middle",
+    text: "средний"
+  },{
+    name: "fine",
+    text: "тонкий"
+  },{
+    name: "medium-fine",
+    text: "эспрессо"
+  },{
+    name: "ultra-fine",
+    text: "сверхтонкий"
+  }]
+
+.bm-form-select-grind role="bm-form-select-grind"
+  .bm-form-select-grind-col.m-via-type
+    .bm-form-select-grind-title ="по степени"
+    - options.each_with_index do |option, i|
+      label.bm-form-select-grind-option for="bm-form-select-grind-radio-#{option[:name]}"
+        - if i == 0
+          input.bm-form-select-grind-option-radio type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}" checked="checked"
+        - else
+          input.bm-form-select-grind-option-radio type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}"
+        label.bm-form-select-grind-option-label for="bm-form-select-grind-radio-#{option[:name]}" =option[:text]
+        .bm-form-select-grind-option-fake-radio
+
+  .bm-form-select-grind-col.m-sep
+    .bm-form-select-grind-title ="или"
+
+  .bm-form-select-grind-col.m-via-method
+    .bm-form-select-grind-title.m-centered ="по методу"
+    .bm-form-select-grind-brewing-methods
+      = render partial: 'shared/brewing/all', locals: {size: :smaller}

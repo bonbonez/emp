@@ -1,0 +1,6 @@
+ruby:
+  methods = [:french, :turk, :cup, :machine, :aeropress, :v60, :moka, :siphon]
+  size    ||= :normal
+
+- methods.each do |name|
+  = render partial: "shared/brewing/method", locals: {name: name, size: size}

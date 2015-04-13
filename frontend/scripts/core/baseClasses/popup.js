@@ -3,84 +3,84 @@
 
   modules.define( 'popupBaseClass', ['basePubSub', 'extend', 'tools'], function( provide, PubSub, extend, tools ) {
     var $window = $(window),
-        popupCounter = 0,
-        popups = [],
+      popupCounter = 0,
+      popups = [],
 
-        PopupBaseClass = extend(PubSub),
+      PopupBaseClass = extend(PubSub),
 
-        $class = PopupBaseClass,
-        $super = $class.superclass,
+      $class = PopupBaseClass,
+      $super = $class.superclass,
 
-        template =
-          '<div class="bookmate-popup bm-popup" hidden="hidden" visible="false">' +
-            '<div class="bookmate-popup-overlay bm-popup-overlay"></div>' +
-            '<div class="bookmate-popup-content-wrapper bm-popup-content-wrapper" role="overlay">' +
-              '<div class="bookmate-popup-content bm-popup-content" role="content"></div>' +
-            '</div>' +
+      template =
+        '<div class="bookmate-popup bm-popup" hidden="hidden" visible="false">' +
+          '<div class="bookmate-popup-overlay bm-popup-overlay"></div>' +
+          '<div class="bookmate-popup-content-wrapper bm-popup-content-wrapper" role="overlay">' +
+          '<div class="bookmate-popup-content bm-popup-content" role="content"></div>' +
+          '</div>' +
           '</div>',
 
-        closeButtonTemplate = '<div class="bookmate-popup-button-close bm-popup-button-close"></div>',
+      closeButtonTemplate = '<div class="bookmate-popup-button-close bm-popup-button-close"></div>',
 
-        historyBackTemplate = '<div class="bookmate-popup-button-close bm-popup-button-back"></div>',
+      historyBackTemplate = '<div class="bookmate-popup-button-close bm-popup-button-back"></div>',
 
-        historyControls = false,
+      historyControls = false,
 
-        _popupExist = function( popup ) {
-          var l = popups.length,
-              i;
+      _popupExist = function( popup ) {
+        var l = popups.length,
+          i;
 
-          for ( i = 0; i < l; ++i ) {
-            if ( popups[i] === popup ) {
-              return i;
-            }
+        for ( i = 0; i < l; ++i ) {
+          if ( popups[i] === popup ) {
+            return i;
           }
+        }
 
-          return false;
-        },
+        return false;
+      },
 
-        registerPopup = function( popup ) {
-          if ( _popupExist(popup) === false ) {
-            popups.push(popup);
+      registerPopup = function( popup ) {
+        if ( _popupExist(popup) === false ) {
+          popups.push(popup);
+        }
+      },
+
+      unregisterPopup = function(popup ) {
+        var index;
+
+        if ( (index = _popupExist(popup)) !== false ) {
+          popups.splice(index, 1);
+        }
+      },
+
+      hideAllPopups   = function(exceptPopup, options) {
+        var l = popups.length,
+          i, silent = false;
+
+        if (!BM.tools.isUndefined(options)) {
+          if (BM.tools.isBoolean(options.silent)) {
+            silent = options.silent;
           }
-        },
+        }
 
-        unregisterPopup = function(popup ) {
-          var index;
-
-          if ( (index = _popupExist(popup)) !== false ) {
-            popups.splice(index, 1);
-          }
-        },
-
-        hideAllPopups   = function(exceptPopup, options) {
-          var l = popups.length,
-              i, silent = false;
-
-          if (!BM.tools.isUndefined(options)) {
-            if (BM.tools.isBoolean(options.silent)) {
-              silent = options.silent;
-            }
-          }
-
-          for ( i = 0; i < l; ++i ) {
-            if (popups[i] !== exceptPopup) {
-              if (popups[i] instanceof PopupBaseClass && popups[i].isVisible()) {
-                popups[i].hide(silent);
-              }
-            }
-          }
-        },
-
-        updateVisiblePopups = function() {
-          var l = popups.length,
-              i;
-
-          for ( i = 0; i < l; ++i ) {
+        for ( i = 0; i < l; ++i ) {
+          if (popups[i] !== exceptPopup) {
             if (popups[i] instanceof PopupBaseClass && popups[i].isVisible()) {
-              popups[i].update();
+              popups[i].hide(silent);
             }
           }
-        };
+        }
+      },
+
+      updateVisiblePopups = function() {
+        var l = popups.length,
+          i;
+
+        for ( i = 0; i < l; ++i ) {
+          if (popups[i] instanceof PopupBaseClass && popups[i].isVisible()) {
+            popups[i].update();
+          }
+        }
+      };
 
     $class.dispatcher = new PubSub();
 
@@ -251,7 +251,7 @@
 
       _setupEvents : function() {
         var me = this,
-            clickEvent = BM.tools.client.isTouch() ? 'tap' : 'click';
+          clickEvent = BM.tools.client.isTouch() ? 'tap' : 'click';
 
         this._elementOverlay.on(clickEvent, function(event) {
           me._onOverlayClick(event);
@@ -273,8 +273,8 @@
         });
 
         /*$(window).bind('resize', function() {
-            me._onWindowResize();
-        });*/
+         me._onWindowResize();
+         });*/
       },
 
       _onOverlayClick : function(event) {
@@ -310,8 +310,8 @@
       },
 
       /*_onWindowResize : function() {
-          this._calculateContentPosition();
-      },*/
+       this._calculateContentPosition();
+       },*/
 
       show : function() {
         if (this._isVisible) {
@@ -364,7 +364,7 @@
 
       _hide : function(config) {
         var me = this,
-            animation = config.options && config.options.animation !== undefined ? !!config.options.animation : true;
+          animation = config.options && config.options.animation !== undefined ? !!config.options.animation : true;
 
         this._unblockBodyScrolling();
 
@@ -417,10 +417,10 @@
       },
 
       /*_updateRootClassName : function() {
-        if (this._rootClassName && !this._element.hasClass(this.rootClassName)) {
+       if (this._rootClassName && !this._element.hasClass(this.rootClassName)) {
 
-        }
-      },*/
+       }
+       },*/
 
       _updateContentClassName : function() {
         if (this._contentClassName && !this._elementContent.hasClass(this._contentClassName)) {

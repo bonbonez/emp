@@ -1,0 +1,115 @@
+script type="text/template" id="bm-item-template"
+  .bm-page-item
+    .bm-page-item-header ="Никарагуа Марагоджиб"
+    .bm-page-item-description-short ="Моносорт, 100% арабика"
+
+    .bm-page-item-grid.m-offset-25
+      .bm-page-item-grid-item
+        .bm-page-item-block-header ="Где готовить"
+        .bm-page-item-grid-item-content
+          = render partial: 'shared/brewing/all'
+
+
+      .bm-page-item-grid-item.m-centered
+        .bm-page-item-rating data-value="5"
+          .bm-page-item-rating-value
+        .bm-page-item-image-wrapper
+          img.bm-page-item-image src="/images/coffee-package-sample.png"
+        .bm-page-item-price
+          .bm-page-item-price-value
+            ="-"
+            span ="550"
+            =" руб"
+          .bm-page-item-price-desc
+            ="за 250 грамм"
+
+      .bm-page-item-grid-item
+        .bm-page-item-block-header ="Вкусовые качества"
+        .bm-item-specs.m-offset-30
+          .bm-item-specs-item
+            .bm-item-specs-item-label ="кислинка"
+            .bm-item-specs-item-value
+              - ((0..9).to_a).each do |i|
+                .dot
+          .bm-item-specs-item
+            .bm-item-specs-item-label ="тело"
+            .bm-item-specs-item-value
+              - ((0..9).to_a).each do |i|
+                .dot
+          .bm-item-specs-item
+            .bm-item-specs-item-label ="аромат"
+            .bm-item-specs-item-value
+              - ((0..9).to_a).each do |i|
+                .dot
+          .bm-item-specs-item
+            .bm-item-specs-item-label ="горчинка"
+            .bm-item-specs-item-value
+              - ((0..9).to_a).each do |i|
+                .dot
+          .bm-item-specs-item
+            .bm-item-specs-item-label ="послевкусие"
+            .bm-item-specs-item-value
+              - ((0..9).to_a).each do |i|
+                .dot
+        .bm-button-brown-light.m-transparent.m-black.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
+
+    .bm-page-item-grid
+      .bm-page-item-grid-item
+        .bm-page-item-block-header ="Поделиться"
+        = render partial: 'shared/share'
+
+      .bm-page-item-grid-item
+        .bm-page-item-block-header ="Особености"
+        /.bm-item-features
+          .bm-item-features-item ="Хорошо сбалансирован"
+          .bm-item-features-item ="Яркий вкус"
+          .bm-item-features-item ="Нотки белого шоколада"
+          .bm-item-features-item ="Насыщеный аромат и послевкусие"
+        .bm-item-description
+          | Свежеобжаренные зерна этого сорта дают крепкий хорошо <span class="m-emphasis">сбалансированный</span> напиток, обладают <span class="m-emphasis">ярким вкусом</span>, сладостью <span class="m-emphasis">белого шоколада</span>, насыщенным ароматом и <span class="m-emphasis">долгим послевкусием</span>.
+      .bm-page-item-grid-item
+        .bm-page-item-block-header ="Плантация на карте"
+        .bm-item-plantation
+          img.bm-item-plantation-image src="/images/coffee-plantation.png"
+
+    .bm-page-item-separator
+
+    .bm-page-item-form-order role="bm-form-order"
+      .bm-page-item-form-order-step.m-grind
+        .bm-page-item-form-order-step-header =="1. Выберите помол"
+        .bm-page-item-form-order-step-content
+          = render partial: 'templates/item/form_select_grind'
+
+      .bm-page-item-form-order-step.m-amount
+        .bm-page-item-form-order-step-header =="2. Выберите сколько"
+        .bm-page-item-form-order-step-content
+          .bm-form-order-select-amount
+            .bm-button-number.m-value-present
+              .bm-button-number-control.m-minus
+              .bm-button-number-value ="1"
+              .bm-button-number-text ="250 грамм"
+              .bm-button-number-control.m-plus
+
+            .bm-button-number
+              .bm-button-number-control.m-minus
+              .bm-button-number-text ="500 грамм"
+              .bm-button-number-control.m-plus
+
+            .bm-button-number
+              .bm-button-number-control.m-minus
+              .bm-button-number-text ="1 килограмм"
+              .bm-button-number-control.m-plus
+
+      .bm-page-item-form-order-step.m-order
+        .bm-page-item-form-order-step-header =="3. Оформите заказ"
+        .bm-page-item-form-order-step-content
+          .bm-form-order-purchase
+            .bm-form-order-summary
+              .bm-form-order-summary-item
+                .bm-form-order-summary-item-text ="За этот кофе: "
+                .bm-form-order-summary-item-value ="550 руб."
+              .bm-form-order-summary-item
+                .bm-form-order-summary-item-text ="За весь кофе: "
+                .bm-form-order-summary-item-value ="550 руб."
+            .bm-button-brown-light.bm-form-order-button-purchase ="Оформить заказ"
+            .bm-form-order-link-other-coffee ="Или посмотреть другой кофе"
