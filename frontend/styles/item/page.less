@@ -333,6 +333,7 @@
 }
 
 .bm-form-select-grind-col {
+  .transition(0.15s);
   display: inline-block;
   vertical-align: top;
   white-space: normal;
@@ -356,6 +357,14 @@
 
   &.m-blur {
     opacity: 0.5;
+  }
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    &,
+    &.m-blur {
+      opacity: 1;
+    }
   }
 }
 .bm-form-select-grind-title {

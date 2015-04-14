@@ -211,6 +211,25 @@ var $__cart_47_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__ui_45_modules_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init.js";
+  (function(window, modules, $) {
+    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
+      provide();
+    });
+    modules.define('ui-modules', ['beforeUIModulesInit'], function(provide) {
+      if (BM.tools.client.isTouch()) {
+        $('body').addClass('m-touch');
+      } else {
+        $('body').addClass('m-desktop');
+      }
+      provide();
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
 var $__catalogue_47_background_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/background.js";
@@ -524,25 +543,6 @@ var $__catalogue_47_menu_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init.js";
-  (function(window, modules, $) {
-    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
-      provide();
-    });
-    modules.define('ui-modules', ['beforeUIModulesInit'], function(provide) {
-      if (BM.tools.client.isTouch()) {
-        $('body').addClass('m-touch');
-      } else {
-        $('body').addClass('m-desktop');
-      }
-      provide();
-    });
-  }(this, this.modules, this.jQuery));
-  return {};
-}).call(Reflect.global);
-
 var $__ui_45_modules_47_cart_47_cart_45_header_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/cart/cart-header.js";
@@ -669,6 +669,122 @@ var $__ui_45_modules_47_cart_47_cart_45_processor_46_js__ = (function() {
       provide();
     });
   }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_controls_47_button_45_number_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/controls/button-number.js";
+  (function(window, modules, $, BM) {
+    modules.define('ButtonNumber', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var ControlButtonNumber = extend(BaseView),
+          $class = ControlButtonNumber,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.$elem) {
+            return ;
+          }
+          this._value = 0;
+          this.$elemInputValue = this.$elem.find('@bm-button-number-input-value');
+          this.$elemMinus = this.$elem.find('@bm-button-number-minus');
+          this.$elemPlus = this.$elem.find('@bm-button-number-plus');
+          this.$elemValue = this.$elem.find('@bm-button-number-value');
+          this._bindEvents();
+          this.update();
+        },
+        _bindEvents: function() {
+          this.$elemMinus.on(BM.helper.event.clickName(), function(event) {
+            this._onMinusClick(event);
+          }.bind(this));
+          this.$elemPlus.on(BM.helper.event.clickName(), function(event) {
+            this._onPlusClick(event);
+          }.bind(this));
+        },
+        _onMinusClick: function(event) {
+          this._decValue();
+        },
+        _onPlusClick: function(event) {
+          this._incValue();
+        },
+        _incValue: function() {
+          this.setValue(this._value + 1);
+        },
+        _decValue: function() {
+          this.setValue(Math.max(0, this._value - 1));
+        },
+        setValue: function(value) {
+          if (BM.tools.isNumber(value) && value >= 0) {
+            this._value = value;
+            this.update();
+            this._notify('change', this._value);
+          }
+        },
+        update: function() {
+          if (this._value < 1) {
+            this.$elem.removeClass('m-value-present');
+            this.$elemMinus.addClass('m-disabled');
+          } else {
+            this.$elem.addClass('m-value-present');
+            this.$elemValue.html(this._value);
+            this.$elemMinus.removeClass('m-disabled');
+          }
+        }
+      });
+      provide(ControlButtonNumber);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
+  (function(window, modules, $, BM) {
+    var dispatcherInstance = null;
+    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
+      var EventDispatcher = extend(PubSub),
+          $class = EventDispatcher,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          this._timeoutNotifyResize = null;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          $window.one('resize', function onWindowResize() {
+            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
+              clearTimeout(this._timeoutNotifyResize);
+              this._timeoutNotifyResize = null;
+            }
+            this._timeoutNotifyResize = setTimeout(function() {
+              this._notify('window-resize');
+            }.bind(this), 200);
+            setTimeout(function() {
+              $window.one('resize', onWindowResize.bind(this));
+            }.bind(this), 50);
+          }.bind(this));
+          $window.one('scroll', function onWindowScroll() {
+            this._notify('window-scroll');
+            setTimeout(function() {
+              $window.one('scroll', onWindowScroll.bind(this));
+            }.bind(this), 25);
+          }.bind(this));
+        }
+      });
+      provide(EventDispatcher);
+    });
+    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
+      dispatcherInstance = new Dispatcher();
+      provide();
+    });
+    modules.define('EventDispatcher', [], function(provide) {
+      provide(dispatcherInstance);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
   return {};
 }).call(Reflect.global);
 
@@ -896,51 +1012,65 @@ var $__ui_45_modules_47_dynamic_45_content_47_dynamic_45_content_46_js__ = (func
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+var $__ui_45_modules_47_item_47_form_46_js__ = (function() {
   "use strict";
-  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
+  var __moduleName = "ui-modules/item/form.js";
   (function(window, modules, $, BM) {
-    var dispatcherInstance = null;
-    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
-      var EventDispatcher = extend(PubSub),
-          $class = EventDispatcher,
-          $super = $class.superclass,
-          $window = $(window);
+    modules.define('FormItemOrder', ['extend', 'baseView', 'FormItemSelectGrind', 'ButtonNumber'], function(provide, extend, BaseView, FormItemSelectGrind, ButtonNumber) {
+      var FormItemOrder = extend(BaseView),
+          $class = FormItemOrder,
+          $super = $class.superclass;
       BM.tools.mixin($class.prototype, {
         initialize: function() {
           $super.initialize.apply(this, arguments);
-          this._timeoutNotifyResize = null;
-          this._bindEvents();
+          if (!this.$elem) {
+            return ;
+          }
+          this._formSelectGrind = null;
+          this._buttonNumber250 = null;
+          this._buttonNumber500 = null;
+          this._buttonNumber1kg = null;
+          this.$elemFormSelectGrind = this.$elem.find('@bm-form-select-grind');
+          this.$elemButtonNumber250 = this.$elem.find('@bm-button-number-250');
+          this.$elemButtonNumber500 = this.$elem.find('@bm-button-number-500');
+          this.$elemButtonNumber1kg = this.$elem.find('@bm-button-number-1kg');
+          this._initFormSelectGrind();
+          this._initButtonsNumber();
         },
-        _bindEvents: function() {
-          $window.one('resize', function onWindowResize() {
-            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
-              clearTimeout(this._timeoutNotifyResize);
-              this._timeoutNotifyResize = null;
-            }
-            this._timeoutNotifyResize = setTimeout(function() {
-              this._notify('window-resize');
-            }.bind(this), 200);
-            setTimeout(function() {
-              $window.one('resize', onWindowResize.bind(this));
-            }.bind(this), 50);
-          }.bind(this));
-          $window.one('scroll', function onWindowScroll() {
-            this._notify('window-scroll');
-            setTimeout(function() {
-              $window.one('scroll', onWindowScroll.bind(this));
-            }.bind(this), 25);
-          }.bind(this));
+        _initFormSelectGrind: function() {
+          if (BM.tools.isNull(this._formSelectGrind)) {
+            this._formSelectGrind = new FormItemSelectGrind({element: this.$elemFormSelectGrind});
+            this._formSelectGrind.on('change', function(value) {
+              this._onFormSelectGrindChange(value);
+            }.bind(this));
+          }
+        },
+        _initButtonsNumber: function() {
+          if (BM.tools.isNull(this._buttonNumber250)) {
+            this._buttonNumber250 = new ButtonNumber({element: this.$elemButtonNumber250});
+            this._buttonNumber250.on('change', function(value) {
+              this._onButtonNumberChange('250', value);
+            }.bind(this));
+          }
+          if (BM.tools.isNull(this._buttonNumber500)) {
+            this._buttonNumber500 = new ButtonNumber({element: this.$elemButtonNumber500});
+            this._buttonNumber500.on('change', function(value) {
+              this._onButtonNumberChange('500', value);
+            }.bind(this));
+          }
+          if (BM.tools.isNull(this._buttonNumber1kg)) {
+            this._buttonNumber1kg = new ButtonNumber({element: this.$elemButtonNumber1kg});
+            this._buttonNumber1kg.on('change', function(value) {
+              this._onButtonNumberChange('1kg', value);
+            }.bind(this));
+          }
+        },
+        _onFormSelectGrindChange: function(value) {},
+        _onButtonNumberChange: function(kind, value) {
+          console.log(kind, value);
         }
       });
-      provide(EventDispatcher);
-    });
-    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
-      dispatcherInstance = new Dispatcher();
-      provide();
-    });
-    modules.define('EventDispatcher', [], function(provide) {
-      provide(dispatcherInstance);
+      provide(FormItemOrder);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};
@@ -950,7 +1080,7 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/item.js";
   (function(window, modules, $, BM) {
-    modules.define('Item', ['extend', 'baseView'], function(provide, extend, BaseView) {
+    modules.define('Item', ['extend', 'baseView', 'FormItemOrder'], function(provide, extend, BaseView, FormOrder) {
       var Item = extend(BaseView),
           $class = Item,
           $super = $class.superclass;
@@ -959,6 +1089,14 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
           $super.initialize.apply(this, arguments);
           if (!this.$elem) {
             return ;
+          }
+          this._formOrder = null;
+          this.$elemFormOrder = this.$elem.find('@bm-form-order');
+          this._initFormOrder();
+        },
+        _initFormOrder: function() {
+          if (BM.tools.isNull(this._formOrder)) {
+            this._formOrder = new FormOrder({element: this.$elemFormOrder});
           }
         },
         _getTemplateName: function() {
@@ -989,8 +1127,18 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
           this._itemHandler = null;
           this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
           this.$elemContent = this.$elem.find('@bm-popup-item-content');
+          this.$elemButtonClose = this.$elem.find('@bm-popup-item-button-close');
           this._initDynamicContent();
+          this._bindEvents();
           this._initItem();
+        },
+        _bindEvents: function() {
+          this.$elemButtonClose.on(BM.helper.event.clickName(), function() {
+            this._onButtonCloseClick();
+          }.bind(this));
+        },
+        _onButtonCloseClick: function() {
+          this.hide();
         },
         _initDynamicContent: function() {
           if (BM.tools.isNull(this._dynamicContent)) {
@@ -1014,6 +1162,80 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
         }
       });
       provide(PopupItem);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_item_47_form_47_grind_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/item/form/grind.js";
+  (function(window, modules, $, BM) {
+    modules.define('FormItemSelectGrind', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var FormItemSelectGrind = extend(BaseView),
+          $class = FormItemSelectGrind,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.$elem) {
+            return ;
+          }
+          this.$elemsWithUniqueId = this.$elem.find('@bm-form-unique-element');
+          this.$elemsOptionsViaGrind = this.$elem.find('@bm-form-grind-option-via-grind');
+          this.$elemsBrewingMethods = this.$elem.find('@bm-brewing-method');
+          this.$elemViaTypeWrapper = this.$elem.find('@bm-form-select-grind-via-type-wrapper');
+          this._setUniqueIds();
+          this._bindEvents();
+          window.o = this;
+        },
+        _bindEvents: function() {
+          this.$elemsOptionsViaGrind.on('change', function(event) {
+            this._onOptionViaGrindChange(event);
+          }.bind(this));
+          this.$elemsBrewingMethods.on(BM.helper.event.clickName(), function(event) {
+            this._onBrewingMethodClick(event);
+          }.bind(this));
+        },
+        _onOptionViaGrindChange: function(event) {
+          this._setSelectViaGrindStateBlur(false);
+          this._unselectViaMethodItems();
+          this._notify('change', this.$elemsOptionsViaGrind.filter(':checked').val());
+        },
+        _onBrewingMethodClick: function(event) {
+          var targetElement = $(event.target);
+          if (!targetElement.hasClass('bm-brewing-method')) {
+            targetElement = targetElement.parent();
+          }
+          targetElement.addClass('m-selected');
+          this.$elemsBrewingMethods.not(targetElement).removeClass('m-selected');
+          this._setSelectViaGrindStateBlur(true);
+          this._notify('change', targetElement.data('name'));
+        },
+        _setUniqueIds: function() {
+          var postfix = this.getInstanceId();
+          this.$elemsWithUniqueId.each(function() {
+            var $this = $(this);
+            if ($this.prop('tagName') === 'LABEL') {
+              $this.attr('for', $this.attr('for') + '-' + postfix);
+            } else if ($this.prop('tagName') === 'INPUT') {
+              $this.attr('id', $this.attr('id') + '-' + postfix);
+              $this.attr('name', $this.attr('name') + '-' + postfix);
+            }
+          });
+        },
+        _setSelectViaGrindStateBlur: function(bool) {
+          if (bool) {
+            this.$elemViaTypeWrapper.addClass('m-blur');
+          } else {
+            this.$elemViaTypeWrapper.removeClass('m-blur');
+          }
+        },
+        _unselectViaMethodItems: function() {
+          this.$elemsBrewingMethods.removeClass('m-selected');
+        }
+      });
+      provide(FormItemSelectGrind);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};

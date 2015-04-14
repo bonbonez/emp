@@ -20,15 +20,15 @@ ruby:
   }]
 
 .bm-form-select-grind role="bm-form-select-grind"
-  .bm-form-select-grind-col.m-via-type
+  .bm-form-select-grind-col.m-via-type role="bm-form-select-grind-via-type-wrapper"
     .bm-form-select-grind-title ="по степени"
     - options.each_with_index do |option, i|
-      label.bm-form-select-grind-option for="bm-form-select-grind-radio-#{option[:name]}"
+      label.bm-form-select-grind-option role="bm-form-unique-element" for="bm-form-select-grind-radio-#{option[:name]}"
         - if i == 0
-          input.bm-form-select-grind-option-radio type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}" checked="checked"
+          input.bm-form-select-grind-option-radio role="bm-form-unique-element bm-form-grind-option-via-grind" type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}" value=option[:name] checked="checked"
         - else
-          input.bm-form-select-grind-option-radio type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}"
-        label.bm-form-select-grind-option-label for="bm-form-select-grind-radio-#{option[:name]}" =option[:text]
+          input.bm-form-select-grind-option-radio role="bm-form-unique-element bm-form-grind-option-via-grind" type="radio" name="bm-form-select-grind-radio-group" id="bm-form-select-grind-radio-#{option[:name]}" value=option[:name]
+        label.bm-form-select-grind-option-label role="bm-form-unique-element" for="bm-form-select-grind-radio-#{option[:name]}" =option[:text]
         .bm-form-select-grind-option-fake-radio
 
   .bm-form-select-grind-col.m-sep

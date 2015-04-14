@@ -28,4 +28,21 @@
   &:not(:last-of-type) {
     margin-right: 40px;
   }
+
+  &.m-icon-book {
+    position: relative;
+
+    &::after {
+      background-image: url('/images/icon/book.png');
+      background-size: 100% auto;
+      background-position: center bottom;
+      background-repeat: no-repeat;
+      content: ' ';
+      height: 20px;
+      position: absolute;
+      right: -9px;
+      top: -12px;
+      width: 20px;
+    }
+  }
 }

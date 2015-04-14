@@ -4,12 +4,14 @@
     'Item',
     [
       'extend',
-      'baseView'
+      'baseView',
+      'FormItemOrder'
     ],
     function(
       provide,
       extend,
-      BaseView
+      BaseView,
+      FormOrder
     ) {
 
     var Item = extend(BaseView),
@@ -25,6 +27,20 @@
         if (!this.$elem) {
           return;
         }
+
+        this._formOrder     = null;
+
+        this.$elemFormOrder = this.$elem.find('@bm-form-order');
+
+        this._initFormOrder();
+      },
+
+      _initFormOrder : function() {
+          if (BM.tools.isNull(this._formOrder)) {
+            this._formOrder = new FormOrder({
+              element: this.$elemFormOrder
+            });
+          }
       },
 
       _getTemplateName : function() {

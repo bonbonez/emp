@@ -34,9 +34,21 @@
 
         this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
         this.$elemContent        = this.$elem.find('@bm-popup-item-content');
+        this.$elemButtonClose    = this.$elem.find('@bm-popup-item-button-close');
 
         this._initDynamicContent();
+        this._bindEvents();
         this._initItem();
+      },
+
+      _bindEvents : function() {
+        this.$elemButtonClose.on(BM.helper.event.clickName(), function() {
+          this._onButtonCloseClick();
+        }.bind(this));
+      },
+
+      _onButtonCloseClick : function() {
+          this.hide();
       },
 
       _initDynamicContent : function() {

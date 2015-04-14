@@ -1,52 +1,85 @@
-.b-layout-footer {
-  border-top: 1px solid rgba(122, 90, 39, 0.2);
+.bm-footer {
+  box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.3);
+  background-color: @color-brown-dark;
+  padding: 23px 0 28px 0;
+  width: 100%;
+}
 
-  &-content {
-    .vertical-align-middle();
+.bm-footer-content {
+  .box-sizing(border-box);
+  margin: 0 auto;
+  max-width: 980px;
+  padding: 0 10px;
+  position: relative;
+  width: 100%;
+}
 
-    line-height: normal;
-    width: 100%;
+.bm-footer-menu {
+  text-align: center;
+  width: 100%;
+}
+
+.bm-footer-logo {
+  background-image: url('/images/logo-white@2x.png');
+  display: block;
+  background-size: 100% auto;
+  background-position: 0 0;
+  height: 40px;
+  margin: 0 auto 10px auto;
+  position: relative;
+  width: 138px;
+
+  &::after {
+    .bm-font-pt();
+    color: #ffffff;
+    content: '©';
+    position: absolute;
+    right: -20px;
+    top: 8px;
   }
+}
 
-  &-navigation {
-    margin-bottom: 20px;
-    text-align: center;
-    width: 100%;
+.bm-footer-menu-item {
+  .text {
+    .bm-font-pt();
+    color: #ffffff;
+    text-decoration: none;
 
-    &-item {
-      color: @color-brown-dark;
-      display: inline-block;
-      text-transform: uppercase;
-      .font(15px);
-
-      &:not(:last-of-type) {
-        margin-right: 20px;
-      }
+    .m-desktop &:hover,
+    .m-touch   &:active {
+      text-decoration: underline;
     }
   }
 
-  &-social-block {
-    @item-size: 30px;
-
-    height: @item-size;
-    line-height: @item-size;
-
-    &-item {
-      background-color: @color-brown-dark;
-      border-radius: @item-size;
-      display: inline-block;
-      height: @item-size;
-      width: @item-size;
-
-      &:not(:last-of-type) {
-        margin-right: 10px;
-      }
+  &:not(:last-of-type) {
+    &::after {
+      .bm-font-pt();
+      color: #ffffff;
+      content: ' • ';
+      text-decoration: none;
     }
   }
+}
 
-  &-copyrights {
-    color: @color-brown-dark;
-    text-align: center;
-    .font(15px)
+.bm-footer-contacts {
+  position: absolute;
+  right: 0;
+  text-align: right;
+  top: 0;
+}
+
+.bm-footer-contacts-phone {
+  .bm-font-pt();
+  color: #ffffff;
+}
+
+.bm-footer-contacts-email {
+  .bm-font-pt(15px);
+  color: #ffffff;
+  cursor: pointer;
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    text-decoration: underline;
   }
 }

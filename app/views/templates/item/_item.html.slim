@@ -84,21 +84,24 @@ script type="text/template" id="bm-item-template"
         .bm-page-item-form-order-step-header =="2. Выберите сколько"
         .bm-page-item-form-order-step-content
           .bm-form-order-select-amount
-            .bm-button-number.m-value-present
-              .bm-button-number-control.m-minus
-              .bm-button-number-value ="1"
+            .bm-button-number role="bm-button-number bm-button-number-250"
+              input type="hidden" role="bm-button-number-input-value"
+              .bm-button-number-control.m-minus role="bm-button-number-minus"
+              .bm-button-number-value role="bm-button-number-value"
               .bm-button-number-text ="250 грамм"
-              .bm-button-number-control.m-plus
+              .bm-button-number-control.m-plus role="bm-button-number-plus"
 
-            .bm-button-number
-              .bm-button-number-control.m-minus
+            .bm-button-number role="bm-button-number bm-button-number-500"
+              .bm-button-number-control.m-minus role="bm-button-number-minus"
+              .bm-button-number-value role="bm-button-number-value"
               .bm-button-number-text ="500 грамм"
-              .bm-button-number-control.m-plus
+              .bm-button-number-control.m-plus role="bm-button-number-plus"
 
-            .bm-button-number
-              .bm-button-number-control.m-minus
+            .bm-button-number role="bm-button-number bm-button-number-1kg"
+              .bm-button-number-control.m-minus role="bm-button-number-minus"
+              .bm-button-number-value role="bm-button-number-value"
               .bm-button-number-text ="1 килограмм"
-              .bm-button-number-control.m-plus
+              .bm-button-number-control.m-plus role="bm-button-number-plus"
 
       .bm-page-item-form-order-step.m-order
         .bm-page-item-form-order-step-header =="3. Оформите заказ"

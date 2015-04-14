@@ -4,6 +4,7 @@
   .box-sizing(border-box);
   .transition(0.15s);
   .vertical-align-middle();
+  .user-select(none);
   border: 1px solid #000000;
   background-color: transparent;
   border-radius: 2px;
@@ -18,13 +19,13 @@
 
 .bm-button-number-control {
   .transition(0.15s);
-  cursor: pointer;
   display: inline-block;
   height: @bm-button-number-height - 2;
   line-height: @bm-button-number-height - 2;
   position: absolute;
   top: 0;
   width: @bm-button-number-height - 2;
+  z-index: 1;
 
   &.m-minus {
     border-right: 1px solid #000000;
@@ -48,9 +49,19 @@
     }
   }
 
+  &:not(.m-disabled) {
+    cursor: pointer;
+  }
+
+  &.m-disabled {
+    color: #999999;
+  }
+
   .m-desktop &:hover,
   .m-touch   &:active {
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+    &:not(.m-disabled) {
+      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+    }
   }
 }
 .bm-button-number-value {
