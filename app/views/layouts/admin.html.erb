@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Empressa Admin</title>
+    <link rel="stylesheet" href="/styles/admin.css?<%= frontend_version %>" />
+</head>
+<body>
+    <script type="text/javascript" src="/javascript/core.js?<%= frontend_version %>"></script>
+    <div class="b-admin-layout <%= @css_layout_class if @css_layout_class.present? %>">
+        <div class="b-admin-layout-header"><a href="/">Empressa</a> Admin</div>
+        <%= render partial: 'admin/top_menu' %>
+        <div class="b-admin-layout-content">
+            <% if @link_back %>
+                <div class="b-admin-breadcrumbs-wrapper">
+                    <%= link_to "Назад", @link_back, class: 'b-admin-link m-small' %>
+                </div>
+            <% end %>
+            <% if @header %>
+                <h1 class="b-admin-layout-content-header"><%= @header %></h1>
+            <% end %>
+            <%= yield %>
+        </div>
+    </div>
+</body>
+</html>

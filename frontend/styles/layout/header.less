@@ -34,7 +34,6 @@
 }
 
 .bm-header-logo-text {
-  color: #ffffff;
   font-family: @font-ptsans;
   font-weight: normal;
   font-size: 20px;
@@ -55,17 +54,31 @@
   top: 15px;
 }
 .bm-header-contacts-phone {
-  color: #ffffff;
   font-family: @font-ptsans;
   font-size: 16px;
   font-weight: normal;
+
+  .bm-header.m-white & {
+    color: #ffffff;
+  }
+
+  .bm-header.m-black & {
+    color: #000000;
+  }
 }
 
 .bm-header-contacts-email {
-  color: #ffffff;
   font-family: @font-ptsans;
   font-size: 12px;
   font-weight: normal;
+
+  .bm-header.m-white & {
+    color: #ffffff;
+  }
+
+  .bm-header.m-black & {
+    color: #000000;
+  }
 }
 
 .bm-header-cart {
@@ -75,17 +88,31 @@
   top: 15px;
 }
 .bm-header-cart-text {
-  color: #ffffff;
   font-family: @font-ptsans;
   font-size: 20px;
   font-weight: normal;
+
+  .bm-header.m-white & {
+    color: #ffffff;
+  }
+
+  .bm-header.m-black & {
+    color: #000000;
+  }
 }
 .bm-header-cart-count {
-  color: rgba(255, 255, 255, 0.5);
   font-family: @font-ptsans;
   font-size: 20px;
   font-weight: normal;
   position: absolute;
   top: 1px;
   right: -18px;
+
+  .bm-header.m-white & {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .bm-header.m-black & {
+    color: #e7e7e7;
+  }
 }

@@ -26,31 +26,7 @@ script type="text/template" id="bm-item-template"
       .bm-page-item-grid-item
         .bm-page-item-block-header ="Вкусовые качества"
         .bm-item-specs.m-offset-30
-          .bm-item-specs-item
-            .bm-item-specs-item-label ="кислинка"
-            .bm-item-specs-item-value
-              - ((0..9).to_a).each do |i|
-                .dot
-          .bm-item-specs-item
-            .bm-item-specs-item-label ="тело"
-            .bm-item-specs-item-value
-              - ((0..9).to_a).each do |i|
-                .dot
-          .bm-item-specs-item
-            .bm-item-specs-item-label ="аромат"
-            .bm-item-specs-item-value
-              - ((0..9).to_a).each do |i|
-                .dot
-          .bm-item-specs-item
-            .bm-item-specs-item-label ="горчинка"
-            .bm-item-specs-item-value
-              - ((0..9).to_a).each do |i|
-                .dot
-          .bm-item-specs-item
-            .bm-item-specs-item-label ="послевкусие"
-            .bm-item-specs-item-value
-              - ((0..9).to_a).each do |i|
-                .dot
+          = render partial: 'templates/item/specs/all'
         .bm-button-brown-light.m-transparent.m-black.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
 
     .bm-page-item-grid

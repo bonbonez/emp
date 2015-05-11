@@ -1,0 +1,13 @@
+.b-admin-item-index
+  .m-offset-bottom
+    .b-admin-item-index-controls
+      = link_to '+ Моно', "/admin/items/new?kind=mono", class: 'b-admin-form-item-button'
+      = link_to '+ Эспрессо', "/admin/items/new?kind=espresso", class: 'b-admin-form-item-button'
+      = link_to '+ Арома', "/admin/items/new?kind=aroma", class: 'b-admin-form-item-button'
+      = link_to '+ Экзотик', "/admin/items/new?kind=exotic", class: 'b-admin-form-item-button'
+
+  - if @items.present?
+    .m-offset-bottom
+    - @items.each do |item|
+      div
+        = link_to item.name, edit_admin_item_path(item)

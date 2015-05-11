@@ -1,0 +1,65 @@
+= form_for [:admin, item], html: {class: 'b-admin-form'} do |f|
+  .b-admin-form-item
+    = f.label        "kind"
+    = f.select       "kind", options_for_select({mono: "mono", aroma: "aroma", espresso: "espresso", exotic: "exotic"}, params[:kind])
+
+  .b-admin-form-item
+    = f.label        "name"
+    = f.text_field   "name"
+
+  .b-admin-form-item
+    = f.label        "url"
+    = f.text_field   "url"
+
+  .b-admin-form-item
+    = f.label        "price"
+    = f.text_field   "price"
+
+  .b-admin-form-item
+    = f.label        "rating"
+    = f.select       "rating", options_for_select({"1" => 1.0, "2" => 2.0, "3" => 3.0, "4" => 4.0, "5" => 5.0}, item.rating)
+
+  .b-admin-form-item
+    = f.label        "description"
+    = f.text_area    "description"
+
+  .b-admin-form-item
+    = f.label        "Методы"
+    = f.text_field   "methods", type: :hidden
+    .b-admin-form-item-brewing-methods
+      = render partial: 'shared/brewing/all', locals: {size: :smaller}
+
+  .b-admin-form-item
+    = f.label        "Характеристики"
+    = f.text_field   "specs", type: :hidden
+    .b-admin-form-item-specs
+      = render partial: "templates/item/specs/all"
+
+  .b-admin-form-block-right
+    .b-admin-form-block-right-item
+      .b-admin-form-block-right-item-header ="Картинка"
+      .b-admin-form-block-right-item-content
+        - if item.image.present?
+          img.b-admin-form-block-right-item-image src=item.image.url(:original)
+
+        = f.label "image", 'Выбрать картинку',  class: 'b-admin-form-item-button'
+        = f.file_field "image", hidden: 'hidden'
+
+    .b-admin-form-block-right-item
+      .b-admin-form-block-right-item-header ="Плантация"
+      .b-admin-form-block-right-item-content
+        - if item.image_plantation.present?
+          img.b-admin-form-block-right-item-image src=item.image_plantation.url(:original)
+
+        = f.label "image_plantation", 'Выбрать картинку',  class: 'b-admin-form-item-button'
+        = f.file_field "image_plantation", hidden: 'hidden'
+
+  .b-admin-form-item
+    = f.label        "is_published"
+    = f.check_box    "is_published"
+
+  .b-admin-form-item.m-no-label
+    = f.submit "Сохранить, перейти в список"
+    = f.submit "Сохранить, остаться здесь"
+
+= render partial: 'admin/items/form/helper'

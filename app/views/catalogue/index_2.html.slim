@@ -1,0 +1,9 @@
+= render partial: 'application/header_2'
+
+.bm-page-catalogue role="bm-catalogue-index"
+  .bm-page-catalogue-content
+    .bm-page-catalogue-item-group
+      .bm-header-25.bm-page-catalogue-item-group-header ="Популярный кофе в этом месяце"
+      .bm-page-catalogue-items-wrapper
+        - @items_for_popular.each_with_index do |item, i|
+          = render partial: 'catalogue/item', locals: {item: item, counter: i + 1}

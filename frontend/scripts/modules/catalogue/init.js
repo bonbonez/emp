@@ -101,7 +101,7 @@
             });
           })
         });
-        lastItem.showPopup();
+        //lastItem.showPopup();
       },
 
       _saveGroupsRanges : function() {

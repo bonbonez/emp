@@ -181,6 +181,7 @@ gulp.task('watch-local', ['version'], function() {
   gulp.watch(paths.vendor, ['vendor-local', 'version']);
   gulp.watch(paths.modules, ['modules-local', 'version']);
   gulp.watch(paths.styles, ['styles-local', 'version']);
+  gulp.watch(paths.styles, ['styles-admin', 'version']);
 });
 
 gulp.task('vendor', function() {
@@ -228,7 +229,18 @@ gulp.task('modules-local', function() {
     .pipe(gulp.dest('../public/javascript'));
 });
 
+gulp.task('styles-admin', function() {
+  return gulp.src('styles/admin.less')
+    .pipe(less())
+    .on('error', function(err) {
+      handleError('LESS ADMIN error', err);
+    })
+    .pipe(size())
+    .pipe(sourcemaps.write('./maps'))
+    .pipe(gulp.dest("../public/styles"));
+});
+
 gulp.task('default', ['watch', 'styles', 'vendor', 'modules']);
 gulp.task('build', ['version', 'styles', 'vendor', 'modules']);
 gulp.task('local', ['watch-local']);
-gulp.task('build-local', ['version', 'styles-local', 'vendor-local', 'modules-local']);
+gulp.task('build-local', ['version', 'styles-local', 'vendor-local', 'modules-local', 'styles-admin']);

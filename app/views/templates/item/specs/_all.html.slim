@@ -1,0 +1,30 @@
+ruby:
+  acidity    ||= 0
+  body       ||= 0
+  aroma      ||= 0
+  aftertaste ||= 0
+
+  specs = [{
+    name: "acidity",
+    text: "кислинка",
+    value: acidity
+  },{
+    name: "body",
+    text: "тело",
+    value: body
+  },{
+    name: "aroma",
+    text: "аромат",
+    value: aroma
+  },{
+    name: "aftertaste",
+    text: "послевкусие",
+    value: aftertaste
+  }]
+
+- specs.each do |spec|
+  .bm-item-specs-item role="bm-item-specs-item" data-name=spec[:name]
+    .bm-item-specs-item-label =spec[:text]
+    .bm-item-specs-item-value data-value=spec[:value]
+      - ((0..9).to_a).each do |i|
+        .dot

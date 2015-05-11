@@ -1,12 +1,5 @@
 development:
-  adapter: mysql
-  database: empressa_shop
-  username: root
-  password: root
-  host: localhost
-
-development:
-  adapter: mysql
+  adapter: mysql2
   database: empressa_shop
   username: root
   password: root

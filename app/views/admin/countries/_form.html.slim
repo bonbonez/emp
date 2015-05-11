@@ -1,0 +1,18 @@
+= form_for [:admin, country], html: {class: 'b-admin-form'} do |f|
+  .b-admin-form-item
+    = f.label        "name"
+    = f.text_field   "name"
+
+  .b-admin-form-block-right
+    .b-admin-form-block-right-item
+      .b-admin-form-block-right-item-header ="Flag"
+      .b-admin-form-block-right-item-content
+        - if country.flag.present?
+          img.b-admin-form-block-right-item-image src=country.flag.url(:original)
+
+        = f.label "flag", 'Выбрать картинку',  class: 'b-admin-form-item-button'
+        = f.file_field "flag", hidden: 'hidden'
+
+
+  .b-admin-form-item.m-no-label
+    = f.submit

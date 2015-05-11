@@ -1,0 +1,140 @@
+.b-admin-form {
+  position: relative;
+}
+
+.b-admin-form-block {
+  background-color: #ffffff;
+  left: -20px;
+  margin-bottom: 10px;
+  padding: 20px;
+  position: relative;
+}
+
+.b-admin-form-block-header {
+  .bm-font-pt(24px, 24px, bold);
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.b-admin-form-item {
+  margin-bottom: 10px;
+  padding: 10px 0 10px 200px;
+  position: relative;
+
+  &.m-no-label {
+    padding-left: 0;
+  }
+
+  &.m-align-right {
+    text-align: right;
+  }
+
+  label {
+    color: #000000;
+    font-family: @font-ptsans;
+    font-size: 17px;
+    font-weight: normal;
+    left: 0;
+    position: absolute;
+    top: 10px;
+  }
+
+  textarea {
+    border: 1px solid #ccc;
+    font-family: @font-ptsans;
+    font-size: 17px;
+    font-weight: normal;
+    height: 150px;
+    line-height: 1.2em;
+    padding: 10px;
+    resize: vertical;
+    width: 400px;
+  }
+
+  input[type=text] {
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    font-family: @font-ptsans;
+    font-size: 17px;
+    font-weight: normal;
+    height: 30px;
+    line-height: 30px;
+    padding: 0 10px;
+    width: 400px;
+  }
+}
+
+.b-admin-form-item-button,
+.b-admin-form input[type=submit] {
+  background-color: #ffffff;
+  border: 0;
+  border-radius: 2px;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+  color: #000000;
+  cursor: pointer;
+  display: inline-block;
+  font-family: @font-ptsans;
+  font-size: 17px;
+  font-weight: normal;
+  height: 40px;
+  line-height: 40px;
+  padding: 0 30px;
+  margin-top: 20px;
+  text-decoration: none;
+
+  &:hover {
+    background-color: #fafafa;
+  }
+
+  &.m-offset-right {
+    margin-right: 20px;
+  }
+
+  &:not(:last-of-type) {
+    margin-right: 20px;
+  }
+}
+
+.b-admin-form-button-delete {
+  color: #000000;
+  font-size: 20px;
+  position: absolute;
+  right: 0px;
+  top: -96px;
+  text-decoration: none;
+
+  &::before {
+    content: '✖';
+  }
+}
+
+.b-admin-form-block-right {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.b-admin-form-block-right-item {
+  position: relative;
+
+  &:not(:last-of-type) {
+    margin-bottom: 40px;
+  }
+}
+
+.b-admin-form-block-right-item-header {
+  color: #000000;
+  font-family: @font-ptsans;
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.b-admin-form-block-right-item-image {
+  display: block;
+  max-width: 204px;
+}
+
+.b-admin-form-block-right-item-content {
+
+}

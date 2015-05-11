@@ -1,0 +1,8 @@
+.m-offset-bottom
+  = link_to 'New Country', new_admin_country_path, class: 'b-admin-form-item-button'
+
+- if @countries.present?
+  .m-offset-bottom
+  - @countries.each do |country|
+    div
+      = link_to country.name, edit_admin_country_path(country)

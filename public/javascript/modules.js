@@ -211,25 +211,6 @@ var $__cart_47_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init.js";
-  (function(window, modules, $) {
-    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
-      provide();
-    });
-    modules.define('ui-modules', ['beforeUIModulesInit'], function(provide) {
-      if (BM.tools.client.isTouch()) {
-        $('body').addClass('m-touch');
-      } else {
-        $('body').addClass('m-desktop');
-      }
-      provide();
-    });
-  }(this, this.modules, this.jQuery));
-  return {};
-}).call(Reflect.global);
-
 var $__catalogue_47_background_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/background.js";
@@ -393,7 +374,6 @@ var $__catalogue_47_init_46_js__ = (function() {
               lastItem = new Item({element: $(this)});
             });
           });
-          lastItem.showPopup();
         },
         _saveGroupsRanges: function() {
           var previousTopRange = 0;
@@ -540,6 +520,25 @@ var $__catalogue_47_menu_46_js__ = (function() {
       provide(CatalogueMenu);
     });
   }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init.js";
+  (function(window, modules, $) {
+    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
+      provide();
+    });
+    modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements'], function(provide) {
+      if (BM.tools.client.isTouch()) {
+        $('body').addClass('m-touch');
+      } else {
+        $('body').addClass('m-desktop');
+      }
+      provide();
+    });
+  }(this, this.modules, this.jQuery));
   return {};
 }).call(Reflect.global);
 
@@ -733,56 +732,6 @@ var $__ui_45_modules_47_controls_47_button_45_number_46_js__ = (function() {
         }
       });
       provide(ControlButtonNumber);
-    });
-  }(this, this.modules, this.jQuery, this.BM));
-  return {};
-}).call(Reflect.global);
-
-var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
-  (function(window, modules, $, BM) {
-    var dispatcherInstance = null;
-    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
-      var EventDispatcher = extend(PubSub),
-          $class = EventDispatcher,
-          $super = $class.superclass,
-          $window = $(window);
-      BM.tools.mixin($class.prototype, {
-        initialize: function() {
-          $super.initialize.apply(this, arguments);
-          this._timeoutNotifyResize = null;
-          this._bindEvents();
-        },
-        _bindEvents: function() {
-          $window.one('resize', function onWindowResize() {
-            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
-              clearTimeout(this._timeoutNotifyResize);
-              this._timeoutNotifyResize = null;
-            }
-            this._timeoutNotifyResize = setTimeout(function() {
-              this._notify('window-resize');
-            }.bind(this), 200);
-            setTimeout(function() {
-              $window.one('resize', onWindowResize.bind(this));
-            }.bind(this), 50);
-          }.bind(this));
-          $window.one('scroll', function onWindowScroll() {
-            this._notify('window-scroll');
-            setTimeout(function() {
-              $window.one('scroll', onWindowScroll.bind(this));
-            }.bind(this), 25);
-          }.bind(this));
-        }
-      });
-      provide(EventDispatcher);
-    });
-    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
-      dispatcherInstance = new Dispatcher();
-      provide();
-    });
-    modules.define('EventDispatcher', [], function(provide) {
-      provide(dispatcherInstance);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};
@@ -1012,6 +961,56 @@ var $__ui_45_modules_47_dynamic_45_content_47_dynamic_45_content_46_js__ = (func
   return {};
 }).call(Reflect.global);
 
+var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
+  (function(window, modules, $, BM) {
+    var dispatcherInstance = null;
+    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
+      var EventDispatcher = extend(PubSub),
+          $class = EventDispatcher,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          this._timeoutNotifyResize = null;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          $window.one('resize', function onWindowResize() {
+            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
+              clearTimeout(this._timeoutNotifyResize);
+              this._timeoutNotifyResize = null;
+            }
+            this._timeoutNotifyResize = setTimeout(function() {
+              this._notify('window-resize');
+            }.bind(this), 200);
+            setTimeout(function() {
+              $window.one('resize', onWindowResize.bind(this));
+            }.bind(this), 50);
+          }.bind(this));
+          $window.one('scroll', function onWindowScroll() {
+            this._notify('window-scroll');
+            setTimeout(function() {
+              $window.one('scroll', onWindowScroll.bind(this));
+            }.bind(this), 25);
+          }.bind(this));
+        }
+      });
+      provide(EventDispatcher);
+    });
+    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
+      dispatcherInstance = new Dispatcher();
+      provide();
+    });
+    modules.define('EventDispatcher', [], function(provide) {
+      provide(dispatcherInstance);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_item_47_form_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/form.js";
@@ -1167,6 +1166,45 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__ui_45_modules_47_transform_45_origin_45_dependent_47_transform_45_origin_45_dependent_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/transform-origin-dependent/transform-origin-dependent.js";
+  (function(window, modules, $, BM) {
+    modules.define('initTransformOriginDependentElements', ['extend', 'baseClass'], function(provide, extend, BaseClass) {
+      var Module = function Module() {
+        $traceurRuntime.superConstructor($Module).apply(this, arguments);
+        ;
+      };
+      var $Module = Module;
+      ($traceurRuntime.createClass)(Module, {initialize: function() {
+          $traceurRuntime.superGet(this, $Module.prototype, "initialize").apply(this, arguments);
+          this.$elements = $('.j-transform-origin-dependent');
+          $.each(this.$elements, (function(index, element) {
+            var $e = $(element);
+            var savedOffset = $e.offset();
+            var savedWidth = $e.width();
+            $e.on('mouseover mousemove', (function(e) {
+              var relativeMouseX;
+              var calculatedOrigin;
+              if (e.pageX) {
+                relativeMouseX = e.pageX - savedOffset.left;
+                calculatedOrigin = (relativeMouseX / savedWidth).toFixed(1) * 100;
+                calculatedOrigin = calculatedOrigin < 0 ? 0 : calculatedOrigin;
+                $e.attr('data-transform-origin', calculatedOrigin);
+              }
+            }));
+            $e.on('mouseout', (function(e) {
+              $e.removeAttr('style');
+            }));
+          }));
+        }}, {}, BaseClass);
+      new Module();
+      provide(Module);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_item_47_form_47_grind_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/form/grind.js";
@@ -1260,7 +1298,6 @@ var $__loadScriptsConfig_46_js__ = (function() {
       },
       'catalogue-index': function() {
         modules.require('ui-modules');
-        modules.require('CatalogueInit');
       }
     };
   }(this, this.document, this.modules, this.BM = this.BM || {}));

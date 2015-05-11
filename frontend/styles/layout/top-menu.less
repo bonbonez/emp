@@ -8,9 +8,7 @@
 .bm-top-menu-item {
   .transition(0.15s);
   .vertical-align-middle();
-  background-color: rgba(82, 49, 49, 0.6);
   border-radius: 2px;
-  color: #ffffff;
   cursor: pointer;
   height: 30px;
   line-height: 30px;
@@ -20,9 +18,27 @@
   padding: 0 20px;
   text-decoration: none;
 
-  .m-desktop &:hover,
-  .m-touch   &:active {
-    background-color: rgba(82, 49, 49, 0.8);
+  .bm-top-menu.m-brown & {
+    background-color: rgba(82, 49, 49, 0.6);
+    color: #ffffff;
+
+    .m-desktop &:hover,
+    .m-touch   &:active {
+      background-color: rgba(82, 49, 49, 0.8);
+    }
+  }
+
+  .bm-top-menu.m-transparent-black & {
+    background-color: transparent;
+    border: 1px solid #000000;
+    color: #000000;
+
+    .m-desktop &:hover,
+    .m-touch   &:active {
+      background-color: @color-brown-dark;
+      border-color: @color-brown-dark;
+      color: #ffffff;
+    }
   }
 
   &:not(:last-of-type) {
@@ -32,7 +48,7 @@
   &.m-icon-book {
     position: relative;
 
-    &::after {
+    /*&::after {
       background-image: url('/images/icon/book.png');
       background-size: 100% auto;
       background-position: center bottom;
@@ -43,6 +59,6 @@
       right: -9px;
       top: -12px;
       width: 20px;
-    }
+    }*/
   }
 }

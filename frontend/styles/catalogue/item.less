@@ -1,63 +1,79 @@
 .bm-coffee-item {
   .box-sizing(border-box);
-  background-color: rgba(0, 0, 0, 0.45);
+  //background-color: rgba(0, 0, 0, 0.45);
   background-clip: content-box;
   cursor: pointer;
   display: inline-block;
   position: relative;
   vertical-align: top;
   margin-bottom: 40px;
-  margin-top: 25px;
   width: 225px;
 
   &:not(:nth-child(4n)) {
     margin-right: 20px;
   }
-}
 
-.bm-coffee-item-flag {
-  background-color: #ffffff;
-  border-radius: 30px;
-  left: 50%;
-  height: 50px;
-  margin-left: -25px;
-  position: absolute;
-  top: -25px;
-  width: 50px;
+  &::before {
+    .bm-font-pt(15px, 15px, normal);
+    content: attr(data-counter);
+    color: #999999;
+    position: absolute;
+    top: 15px;
+    left: 0px;
+  }
 }
 
 .bm-coffee-item-content {
   .box-sizing(border-box);
-  padding-top: 32px;
   width: 100%;
 }
 
 .bm-coffee-item-header {
-  display: table;
-  height: 56px;
+  //display: table;
+  height: 106px;
+  line-height: 106px;
   width: 100%;
   margin-bottom: 8px;
 }
+.bm-coffee-item-header-content {
+  display: inline-block;
+  vertical-align: bottom;
+  width: 100%;
+}
+.bm-coffee-item-kind-image {
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  background-position: 50% 50%;
+  height: 31px;
+  margin-bottom: 10px;
+  width: 100%;
+
+  .bm-coffee-item[data-kind="mono"] & {
+    background-image: url('/images/icon/kind/mono.png');
+  }
+  .bm-coffee-item[data-kind="aroma"] & {
+    background-image: url('/images/icon/kind/aroma.png');
+  }
+  .bm-coffee-item[data-kind="exotic"] & {
+    background-image: url('/images/icon/kind/exotic.png');
+  }
+  .bm-coffee-item[data-kind="espresso"] & {
+    background-image: url('/images/icon/kind/espresso.png');
+  }
+
+}
 .bm-coffee-item-header-text {
-  display: table-cell;
-  color: #ffffff;
+  //display: table-cell;
+  color: #000000;
   line-height: 28px;
   vertical-align: middle;
 }
-.bm-coffee-item-sep {
-  background-image: url('/images/misc/coffee-item-sep.png');
-  background-size: auto 100%;
-  background-position: center center;
-  background-repeat: no-repeat;
-  margin: 0 auto;
-  height: 9px;
-  width: 200px;
-}
-
 .bm-coffee-item-image-wrapper {
+  border-radius: 100px;
+  box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.30);
   height: 156px;
   line-height: 156px;
-  margin: 13px auto 42px auto;
+  margin: 13px auto 29px auto;
   position: relative;
   width: 156px;
 }
@@ -72,7 +88,8 @@
 }
 .bm-coffee-item-image-source {
   .vertical-align-middle();
-  height: 80%;
+  height: 110%;
+  margin-top: 15%;
   width: auto;
 }
 .bm-coffee-item-price {
@@ -80,6 +97,7 @@
   background-color: #ffffff;
   border-radius: 50px;
   bottom: -28px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.15);
   height: 56px;
   margin-left: -28px;
   padding-top: 14px;
@@ -103,39 +121,25 @@
   display: block;
   text-align: center;
 }
-.bm-coffee-item-controls {
-  .box-sizing(border-box);
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 20px 10px 0 10px;
-  width: 100%;
-}
-.bm-coffee-item-controls-buy {
-  .bm-button-base();
-  border: 2px solid @color-yellow-light;
-  color: @color-yellow-light;
-  font-size: 18px;
-  font-weight: bold;
-  padding: 0;
+.bm-coffe-item-footer {
   text-align: center;
   width: 100%;
-
-  .m-desktop &:hover,
-  .m-touch   &:active {
-    background-color: @color-yellow-light;
-    color: #000000;
-  }
 }
-.bm-coffee-item-controls-more {
-  color: #ffffff;
-  cursor: pointer;
-  font-family: @font-ptsans;
-  font-size: 18px;
-  font-weight: normal;
-  padding: 14px 0;
+.bm-coffee-item-action-more {
+  .bm-font-pt(15px, 15px, normal);
+  color: #000000;
+  padding: 12px 0;
   text-align: center;
   text-decoration: underline;
 
-  .m-desktop &:hover {
+  .m-desktop &:hover,
+  .m-touch   &:active {
     text-decoration: none;
   }
+}
+
+.bm-coffee-item-reviews {
+  .bm-font-pt(15px, 15px, normal);
+  color: #999999;
+  text-align: center;
 }

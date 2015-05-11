@@ -8,7 +8,7 @@ group :assets do
 end
 
 gem 'jquery-rails'
-gem 'mysql'
+gem 'mysql2'
 gem 'slim'
 gem 'paperclip'
 gem 'aws-sdk'

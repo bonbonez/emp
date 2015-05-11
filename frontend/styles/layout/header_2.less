@@ -1,0 +1,108 @@
+@header-height: 84px;
+
+.bm-header {
+  background-color: #fafafa;
+  height: @header-height;
+  line-height: @header-height;
+  width: 100%;
+}
+.bm-header-content {
+  .box-sizing(border-box);
+  height: @header-height;
+  line-height: @header-height;
+  margin: 0 auto;
+  max-width: @layout-max-width;
+  padding: 0 @layout-padding;
+  position: relative;
+  text-align: center;
+}
+
+.bm-header-logo {
+  display: block;
+  background-image: url('/images/logo-black@2x.png');
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  left: 0px;
+  height: 40px;
+  position: absolute;
+  top: 22px;
+  width: 138px;
+}
+
+.bm-header-navigation {
+  .vertical-align-middle();
+  white-space: nowrap;
+}
+
+.bm-header-navigation-item {
+  .bm-font-pt(18px, 18px, normal);
+  .vertical-align-middle();
+  color: #555555;
+  cursor: pointer;
+  position: relative;
+
+  &:not(:last-of-type) {
+    margin-right: 50px;
+  }
+
+  &::after {
+    .transform(translateX(-50%) scaleX(0));
+    .transition();
+    .transform-origin(inherit);
+    background-color: #0028b9;
+    bottom: -2px;
+    content: ' ';
+    height: 2px;
+    left: 50%;
+    line-height: 1px;
+    opacity: 0.5;
+    position: absolute;
+    width: 100%;
+  }
+
+  &.m-current {
+    &::before {
+      background-color: #555555;
+      bottom: 0;
+      content: ' ';
+      height: 1px;
+      line-height: 1px;
+      position: absolute;
+      width: 100%;
+    }
+  }
+
+  &[data-transform-origin="0"]::after  {.transform-origin(0%  50%)}
+  &[data-transform-origin="10"]::after {.transform-origin(10% 50%)}
+  &[data-transform-origin="20"]::after {.transform-origin(20% 50%)}
+  &[data-transform-origin="30"]::after {.transform-origin(30% 50%)}
+  &[data-transform-origin="40"]::after {.transform-origin(40% 50%)}
+  &[data-transform-origin="50"]::after {.transform-origin(50% 50%)}
+  &[data-transform-origin="60"]::after {.transform-origin(60% 50%)}
+  &[data-transform-origin="70"]::after {.transform-origin(70% 50%)}
+  &[data-transform-origin="80"]::after {.transform-origin(80% 50%)}
+  &[data-transform-origin="90"]::after {.transform-origin(90% 50%)}
+  &[data-transform-origin="100"]::after {.transform-origin(100% 50%)}
+
+  /*.iteration-result(@value) {
+    @selector: ~"&[data-transform-origin=@{value}]";
+    @{selector} {
+      &::after {
+        .transform-origin(@value 50%);
+      }
+    }
+  }
+  .do(@i) when (@i >= 0) {
+    .iteration-result(@i);
+    .do(@i - 1);
+  }
+  .do(100) {}*/
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    &::after {
+      .transform(translateX(-50%) scaleX(1));
+    }
+  }
+}

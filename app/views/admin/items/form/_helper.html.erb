@@ -1,0 +1,133 @@
+<script type="text/javascript">
+
+    (function (window, $) {
+
+        var initMethods = function () {
+            var $input = $('#item_methods'),
+                $methods = $('@bm-brewing-method');
+            currentMethods = [];
+
+            var parseMethods = function () {
+                currentMethods = $input.val().split(' ');
+            };
+
+            var updateMethods = function () {
+                $methods.each(function () {
+                    var $this = $(this);
+                    if (currentMethods.indexOf($this.data('name')) !== -1) {
+                        $this.addClass('m-selected');
+                    } else {
+                        $this.removeClass('m-selected');
+                    }
+                })
+            };
+
+            var saveValue = function () {
+                $input.val(currentMethods.join(' '));
+            };
+
+            var toggleMethod = function (method) {
+                if (currentMethods.indexOf(method) === -1) {
+                    currentMethods.push(method);
+                } else {
+                    currentMethods.splice(currentMethods.indexOf(method), 1);
+                }
+                updateMethods();
+            };
+
+            $methods.on('click', function (event) {
+                var $target = $(event.target);
+
+                if (!$target.hasClass('bm-brewing-method')) {
+                    $target = $target.parent();
+                }
+
+                toggleMethod($target.data('name'));
+                saveValue();
+            });
+
+            parseMethods();
+            updateMethods();
+        };
+
+        var initSpecs = function () {
+            var $input = $('#item_specs'),
+                $specs = $('@bm-item-specs-item'),
+                currentSpecs = {},
+                tempSpecs    = {};
+
+            var appendNumbers = function() {
+              $specs.each(function() {
+                $(this).find('.bm-item-specs-item-value').append(
+                    $('<div>').addClass('bm-item-specs-item-value-number')
+                );
+              })
+            };
+
+            var updateNumbers = function() {
+              $specs.each(function() {
+                var $spec = $(this);
+                $spec.find('.bm-item-specs-item-value-number').html(tempSpecs[$spec.data('name')]);
+              });
+            };
+
+            var hash2json = function(value) {
+                return value.replace(/=>/g, ':;').replace(/:/g, '"').replace(/;/g, ':');
+            };
+            var json2hash = function(value) {
+                return JSON.stringify(value).replace(/:/g, ';').replace(/"/g, ':').replace(/:;/g, '=>');
+            };
+
+            var parseSpecs = function() {
+                currentSpecs = JSON.parse(hash2json($input.val()));
+                tempSpecs    = JSON.parse(hash2json($input.val()));
+            };
+
+            var saveSpecs = function() {
+                currentSpecs['acidity']    = tempSpecs['acidity'];
+                currentSpecs['body']       = tempSpecs['body'];
+                currentSpecs['aroma']      = tempSpecs['aroma'];
+                currentSpecs['aftertaste'] = tempSpecs['aftertaste'];
+
+                $input.val(json2hash(currentSpecs));
+            };
+
+            var updateSpecs = function() {
+                var prop;
+                for (prop in tempSpecs) {
+                    if (tempSpecs.hasOwnProperty(prop)) {
+                        $specs.filter('[data-name=' + prop + ']').find('.bm-item-specs-item-value').attr('data-value', tempSpecs[prop]);
+                    }
+                }
+                updateNumbers();
+            };
+
+            $specs.find('.dot').on('mouseover', function() {
+                var $this = $(this),
+                    name  = $this.parent().parent().data('name');
+
+                tempSpecs[name] = $this.index() + 1;
+                updateSpecs();
+            });
+            $specs.find('.dot').on('mouseout', function() {
+                parseSpecs();
+                updateSpecs();
+            });
+
+            $specs.find('.dot').on('click', function() {
+                saveSpecs();
+                parseSpecs();
+                updateSpecs();
+            });
+
+            parseSpecs();
+            appendNumbers();
+            updateSpecs();
+        };
+
+        initMethods();
+        initSpecs();
+
+    }(this, this.jQuery));
+
+</script>

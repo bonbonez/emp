@@ -1,0 +1,21 @@
+ruby:
+  config ||= {
+    data: {},
+    html: {}
+  }
+
+.bm-coffee-item role="bm-catalogue-item" data-config=config[:data].to_json.to_s data-kind=config[:data].try(:[], :kind) data-counter=config[:html].try(:[], :counter)
+  .bm-coffee-item-content
+    .bm-coffee-item-header
+      .bm-coffee-item-header-content
+        .bm-coffee-item-kind-image
+        .bm-header-25.bm-coffee-item-header-text =config[:data].try(:[], :name)
+    .bm-coffee-item-image-wrapper
+      .bm-coffee-item-image
+        img.bm-coffee-item-image-source src=config[:html].try(:[], :image_url)
+      .bm-coffee-item-price
+        .bm-text-18.m-bold.bm-coffee-item-price-value =config[:data].try(:[], :price)
+        .bm-text-18.m-bold.bm-coffee-item-price-weight ="250г"
+    .bm-coffee-item-footer
+      .bm-coffee-item-action-more ="подробнее"
+      .bm-coffee-item-reviews ="31 отзыв"

@@ -8,7 +8,8 @@
   });
 
   modules.define('ui-modules', [
-    'beforeUIModulesInit'
+    'beforeUIModulesInit',
+    'initTransformOriginDependentElements'
     /*'initFixedHeader'
     'beforeUIModulesInit',
     'initCartHeader',
