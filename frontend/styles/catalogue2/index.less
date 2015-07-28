@@ -6,7 +6,7 @@
 }
 
 .bm-page-catalogue {
-  padding-top: 100px;
+  padding-top: 50px;
   width: 100%;
 }
 
@@ -37,6 +37,119 @@
   text-align: left;
   margin-bottom: 50px;
 }
+.bm-page-catalogue-item-group-header-text {
+  .bm-header-25();
+  .vertical-align-middle();
+  display: inline-block;
+  width: auto;
+}
+.bm-page-catalogue-item-group-header-button {
+  .vertical-align-middle();
+  margin-left: 20px;
+}
+
 .bm-page-catalogue-items-wrapper {
-  
+
+}
+
+.bm-page-catalogue-items-special {
+  display: none;
+
+  .bm-page-catalogue[data-special="featured"] &.m-featured {
+    display: block;
+  }
+
+  .bm-page-catalogue-item-group {
+    &:not(:last-of-type) {
+      margin-bottom: 50px;
+    }
+  }
+  .bm-page-catalogue-item-group-header {
+    border-bottom: 1px solid #f1f1f1;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+}
+
+.bm-page-catalogue-items-grid {
+  .bm-page-catalogue[data-special] & {
+    display: none;
+  }
+
+  &[data-selected-category="mono"] .bm-coffee-item:not([data-kind="mono"]) {
+    display: none;
+  }
+  &[data-selected-category="aroma"] .bm-coffee-item:not([data-kind="aroma"]) {
+    display: none;
+  }
+  &[data-selected-category="exotic"] .bm-coffee-item:not([data-kind="exotic"]) {
+    display: none;
+  }
+  &[data-selected-category="espresso"] .bm-coffee-item:not([data-kind="espresso"]) {
+    display: none;
+  }
+}
+
+.bm-page-catalogue-menu {
+  border-bottom: 1px solid #e7e7e7;
+  margin-bottom: 30px;
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.bm-page-catalogue-menu-item {
+  .transition-prop(background-color, 0.15s);
+  cursor: pointer;
+  display: inline-block;
+  height: 67px;
+  line-height: 67px;
+  padding: 0 12px;
+  text-align: center;
+
+  .m-desktop &:hover {
+    background-color: rgba(231, 231, 231, 0.2);
+  }
+
+  .m-desktop &:active,
+  .m-touch &:active,
+  &.m-selected,
+  &.m-selected:hover {
+    background-color: rgba(231, 231, 231, 0.5);
+  }
+}
+
+.bm-page-catalogue-menu-item-image {
+  background-size: auto auto;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  height: 35px;
+  margin-bottom: 6px;
+
+  .bm-page-catalogue-menu-item[data-name="all"] & {
+    background-image: url('/images/icon/catalogue/menu/all.png');
+  }
+  .bm-page-catalogue-menu-item[data-name="featured"] & {
+    background-image: url('/images/icon/catalogue/menu/featured.png');
+    background-size: auto 70%;
+  }
+  .bm-page-catalogue-menu-item[data-name="mono"] & {
+    background-image: url('/images/icon/catalogue/menu/mono.png');
+  }
+  .bm-page-catalogue-menu-item[data-name="aroma"] & {
+    background-image: url('/images/icon/catalogue/menu/aroma.png');
+  }
+  .bm-page-catalogue-menu-item[data-name="exotic"] & {
+    background-image: url('/images/icon/catalogue/menu/exotic.png');
+  }
+  .bm-page-catalogue-menu-item[data-name="espresso"] & {
+    background-image: url('/images/icon/catalogue/menu/espresso.png');
+  }
+}
+
+.bm-page-catalogue-menu-item-text {
+  .bm-text-15();
+  line-height: 15px;
+  white-space: nowrap;
+  text-transform: lowercase;
 }

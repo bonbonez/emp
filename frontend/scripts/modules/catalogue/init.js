@@ -5,178 +5,110 @@
     [
       'extend',
       'baseView',
-      'CatalogueBackground',
       'CatalogueMenu',
-      'CatalogueItem',
-      'EventDispatcher'
+      'CatalogueItem'
     ],
     function(
       provide,
       extend,
       BaseView,
-      Background,
-      Menu,
-      Item,
-      EventDispatcher
-      ) {
+      CatalogueMenu,
+      CatalogueItem
+    ) {
 
-    var CatalogueInit = extend(BaseView),
+      var CatalogueInit = extend(BaseView),
 
         $class  = CatalogueInit,
         $super  = $class.superclass,
 
         $window = $(window);
 
-    BM.tools.mixin($class.prototype, {
+      BM.tools.mixin($class.prototype, {
 
-      initialize : function() {
-        $super.initialize.apply(this, arguments);
+        initialize : function() {
+          $super.initialize.apply(this, arguments);
 
-        if (!this.$elem) {
-          return;
-        }
-
-        this._backgroundHandler       = null;
-        this._menuHandler             = null;
-
-        this.$elemBackground          = this.$elem.find('@bm-catalogue-background');
-        this.$elemMenu                = this.$elem.find('@bm-catalogue-menu');
-
-        this.$elemItemsWrapper        = this.$elem.find('@bm-catalogue-items-wrapper');
-
-        this._groupes = [
-          this.$elemGroupClassic      = this.$elem.find('@bm-catalogue-item-group-classic'),
-          this.$elemGroupAroma        = this.$elem.find('@bm-catalogue-item-group-aroma')
-        ];
-
-        this._groupesRanges = [];
-
-        this._saveGroupsRanges();
-        this._initBackground();
-        this._initMenu();
-        this._initItems();
-        this._bindEvents();
-      },
-
-      _bindEvents : function() {
-        EventDispatcher.on('window-resize', function() {
-            this._saveGroupsRanges();
-          }.bind(this));
-      },
-
-      _initBackground : function() {
-          if (BM.tools.isNull(this._backgroundHandler)) {
-            this._backgroundHandler = new Background({
-              element: this.$elemBackground
-            });
-            this._backgroundHandler.on('update', function(itemName) {
-              this._onBackgroundUpdate(itemName);
-            }.bind(this));
-            EventDispatcher.on('window-scroll', function() {
-              this._updateBackground();
-            }.bind(this));
+          if (!this.$elem) {
+            return;
           }
-      },
+          
+          this.$menu                = this.$elem.find('@bm-page-catalogue-menu');
+          this.$itemsWrapper        = this.$elem.find('@bm-catalogue-items-wrapper');
+          this.$itemsGridWrapper    = this.$elem.find('@bm-catalogue-items-grid');
+          this.$items               = this.$itemsGridWrapper.find('@bm-catalogue-item');
+          this.$itemsSpecialWrapper = this.$elem.find('@bm-catalogue-items-special');
+          this.$itemsSpecial        = this.$itemsSpecialWrapper.find('@bm-catalogue-item');
 
-      _initMenu : function() {
-          if (BM.tools.isNull(this._menuHandler)) {
-            this._menuHandler = new Menu({
-              element: this.$elemMenu
-            });
-          }
-      },
+          this._menu  = null;
+          this._items = [];
 
-      _onBackgroundUpdate : function(itemName) {
-          if (!BM.tools.isNull(this._menuHandler)) {
-            this._menuHandler.focusItem(itemName);
-          }
-      },
+          this._initMenu();
+          this._initItems();
+          this._updateItems();
+          this._bindEvents();
 
-      _initItems : function() {
-        var lastItem;
-        this.$elemItemsWrapper.each(function() {
-          $(this).find('@bm-catalogue-item').each(function() {
-            lastItem = new Item({
+          //this._items[0]._setMoreInfoVisible(true);
+          //this._items[0]._showPopup();
+        },
+
+        _bindEvents : function() {
+
+        },
+
+        _initItems : function() {
+          var self = this;
+          this.$items.each(function(){
+            var instance = new CatalogueItem({
               element: $(this)
             });
-          })
-        });
-        //lastItem.showPopup();
-      },
-
-      _saveGroupsRanges : function() {
-        var previousTopRange = 0;
-
-        this._groupesRanges.length = 0;
-        this._groupesRanges = [];
-
-        this._groupes.forEach(function($group) {
-          var bottomRange = $group.offset().top + $group.height();
-
-          this._groupesRanges.push({
-            elem:   $group,
-            height: $group.height(),
-            top:    previousTopRange,
-            bottom: bottomRange
+            self._items.push(instance);
           });
-          previousTopRange = bottomRange + 1;
-        }.bind(this));
-      },
+        },
 
-      _updateBackground : function() {
-        var range = this._getCurrentRange();
-
-        if (BM.tools.isNull(range)) {
-          return;
-        }
-        this._updateParallax(range);
-        this._updateImage(range.elem);
-      },
-
-      _updateParallax : function(range) {
-        var scrollTop = $window.scrollTop(),
-          scrollProgress = parseInt(((scrollTop - range.top) / (range.bottom - range.top) * 100).toFixed(0), 10);
-
-        if (!BM.tools.isNull(this._backgroundHandler)) {
-          this._backgroundHandler.setProgress(scrollProgress);
-        }
-      },
-
-      _updateImage : function($group) {
-        if (!BM.tools.isNull(this._backgroundHandler)) {
-          this._backgroundHandler.setCurrentItem($group.data('name'));
-        }
-      },
-
-      _getCurrentGroupByRange : function() {
-        var range = this._getCurrentRange();
-        if (!BM.tools.isNull(range)) {
-          return range.elem;
-        }
-      },
-
-      _getCurrentRange : function() {
-        var barrier = $window.scrollTop() + window.innerHeight / 2,
-          range, i,
-          l = this._groupesRanges.length;
-
-        for (i = 0; i < l; ++i) {
-          range = this._groupesRanges[i];
-          if (barrier >= range.top && barrier <= range.bottom) {
-            return range;
+        _initMenu : function() {
+          if (!BM.tools.isNull(this._menu)) {
+            return;
           }
+
+          this._menu = new CatalogueMenu({
+            element: this.$menu
+          });
+          this._menu.on('category-selected', function(categoryName, special){
+            if (!special) {
+              this.el.removeAttr('data-special');
+              this.$itemsGridWrapper.attr('data-selected-category', categoryName);
+              BM.helper.browser.triggerRerender();
+              this._updateItems();
+            } else {
+              this.el.attr('data-special', special);
+            }
+          }.bind(this));
+        },
+
+        _updateItems : function() {
+          var self = this;
+          this.$items.filter(':visible').each(function(i, el){
+            var handler = self._getItemHandler(this);
+            if (!BM.tools.isNull(handler)) {
+              (i + 1) % 4 === 0 ? handler.dockMoreToRight() : handler.dockMoreToLeft();
+            }
+          });
+        },
+
+        _getItemHandler : function(el) {
+          return this._items.filter(function(item){
+            return item.el.get(0) === el;
+          })[0] || null;
         }
-        return null;
-      }
+
+      });
+
+      new CatalogueInit({
+        element: $(document.body).find('@bm-page-catalogue')
+      });
+
+      provide(CatalogueInit);
 
     });
-
-    new CatalogueInit({
-      element: $(document.body).find('@bm-catalogue-index')
-    });
-
-    provide(CatalogueInit);
-
-  });
 
 }(this, this.modules, this.jQuery, this.BM));

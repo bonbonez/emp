@@ -1,0 +1,19 @@
+ruby:
+  count ||= 4
+  items   = Item.last(count)
+
+  link    ||= nil
+  link_text = link[:text] if link.present?
+  link_url  = link[:url]  if link.present?
+
+.bm-page-catalogue-item-group
+  .bm-page-catalogue-item-group-header
+    .bm-page-catalogue-item-group-header-text
+      | Популярный кофе
+
+    - if link.present?
+      a.bm-button-default.bm-page-catalogue-item-group-header-button href=link_url
+        = link_text
+  .bm-page-catalogue-items-wrapper role="bm-catalogue-items-wrapper"
+    - items.each_with_index do |item, i|
+      = render partial: 'catalogue/item', locals: {item: item, counter: i + 1}

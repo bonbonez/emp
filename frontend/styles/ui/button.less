@@ -53,3 +53,31 @@
     }
   }
 }
+
+.bm-button-default {
+  .bm-button-base();
+  background-color: transparent;
+  border: 1px solid #000000;
+  color: #000000;
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    background-color: @color-blue;
+    border-color: @color-blue;
+    color: #ffffff;
+  }
+}
+
+.bm-button-action {
+  .bm-button-base();
+  background-color: @color-blue;
+  border-color: @color-blue;
+  color: #ffffff;
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    background-color: transparent;
+    border: 1px solid #000000;
+    color: #000000;
+  }
+}

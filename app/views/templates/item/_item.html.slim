@@ -1,33 +1,33 @@
 script type="text/template" id="bm-item-template"
   .bm-page-item
-    .bm-page-item-header ="Никарагуа Марагоджиб"
-    .bm-page-item-description-short ="Моносорт, 100% арабика"
+    .bm-page-item-header role="bm-item-name"
+    .bm-page-item-description-short role="bm-item-description-short"
 
     .bm-page-item-grid.m-offset-25
       .bm-page-item-grid-item
         .bm-page-item-block-header ="Где готовить"
-        .bm-page-item-grid-item-content
-          = render partial: 'shared/brewing/all'
-
+        .bm-page-item-grid-item-content role="bm-item-methods-wrapper"
+          /= render partial: 'shared/brewing/all'
 
       .bm-page-item-grid-item.m-centered
-        .bm-page-item-rating data-value="5"
+        .bm-page-item-rating role="bm-item-rating" data-value="5"
           .bm-page-item-rating-value
-        .bm-page-item-image-wrapper
-          img.bm-page-item-image src="/images/coffee-package-sample.png"
+        .bm-page-item-image-wrapper role="bm-item-image-wrapper"
+          /img.bm-page-item-image src="/images/coffee-package-sample.png"
+          img.bm-page-item-image role="bm-item-image"
         .bm-page-item-price
           .bm-page-item-price-value
             ="-"
-            span ="550"
+            span role="bm-item-price"
             =" руб"
           .bm-page-item-price-desc
             ="за 250 грамм"
 
       .bm-page-item-grid-item
         .bm-page-item-block-header ="Вкусовые качества"
-        .bm-item-specs.m-offset-30
-          = render partial: 'templates/item/specs/all'
-        .bm-button-brown-light.m-transparent.m-black.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
+        .bm-item-specs.m-offset-30 role="bm-item-specs"
+          /= render partial: 'templates/item/specs/all'
+        button.bm-button-default.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
 
     .bm-page-item-grid
       .bm-page-item-grid-item
@@ -41,12 +41,13 @@ script type="text/template" id="bm-item-template"
           .bm-item-features-item ="Яркий вкус"
           .bm-item-features-item ="Нотки белого шоколада"
           .bm-item-features-item ="Насыщеный аромат и послевкусие"
-        .bm-item-description
-          | Свежеобжаренные зерна этого сорта дают крепкий хорошо <span class="m-emphasis">сбалансированный</span> напиток, обладают <span class="m-emphasis">ярким вкусом</span>, сладостью <span class="m-emphasis">белого шоколада</span>, насыщенным ароматом и <span class="m-emphasis">долгим послевкусием</span>.
+        .bm-item-description role="bm-item-description"
+          /| Свежеобжаренные зерна этого сорта дают крепкий хорошо <span class="m-emphasis">сбалансированный</span> напиток, обладают <span class="m-emphasis">ярким вкусом</span>, сладостью <span class="m-emphasis">белого шоколада</span>, насыщенным ароматом и <span class="m-emphasis">долгим послевкусием</span>.
       .bm-page-item-grid-item
-        .bm-page-item-block-header ="Плантация на карте"
+        .bm-page-item-block-header ="На карте"
         .bm-item-plantation
-          img.bm-item-plantation-image src="/images/coffee-plantation.png"
+          /img.bm-item-plantation-image src="/images/coffee-plantation.png"
+          img.bm-item-plantation-image role="bm-item-image-plantation"
 
     .bm-page-item-separator
 
@@ -90,5 +91,5 @@ script type="text/template" id="bm-item-template"
               .bm-form-order-summary-item
                 .bm-form-order-summary-item-text ="За весь кофе: "
                 .bm-form-order-summary-item-value ="550 руб."
-            .bm-button-brown-light.bm-form-order-button-purchase ="Оформить заказ"
+            button.bm-button-action.bm-form-order-button-purchase ="Оформить заказ"
             .bm-form-order-link-other-coffee ="Или посмотреть другой кофе"

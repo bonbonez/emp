@@ -9,7 +9,8 @@
 
   modules.define('ui-modules', [
     'beforeUIModulesInit',
-    'initTransformOriginDependentElements'
+    'initTransformOriginDependentElements',
+    'SideMenuInit'
     /*'initFixedHeader'
     'beforeUIModulesInit',
     'initCartHeader',

@@ -7595,78 +7595,82 @@ var twemoji=function(){"use strict";var twemoji={base:(location.protocol==="http
  * @param       {Object}    document    Ссылка на document
  * @param       {Object}    BM          Ссылка на Bookmate namespace
  */
-(function ( window, document, navigator, BM, undefined ) {
-    var
-        /**
-         * @alias       BM.tools.client
-         */
-        Breakpoint = {
-            MOBILE: 639
-        },
+(function (window, document, navigator, BM, undefined) {
+  var
+    /**
+     * @alias       BM.tools.client
+     */
+    Breakpoint = {
+      MOBILE: 639
+    },
 
-        tools = BM.tools = BM.tools || {},
+    tools = BM.tools = BM.tools || {},
 
-        reload = function() {
-            window.location.reload();
-        },
+    reload = function () {
+      window.location.reload();
+    },
 
-        client = BM.tools.client = BM.tools.client || {},
+    client = BM.tools.client = BM.tools.client || {},
 
-        isWindows = function() {
-            return navigator.appVersion.indexOf("Win") !== -1;
-        },
+    isWindows = function () {
+      return navigator.appVersion.indexOf("Win") !== -1;
+    },
 
-        isMacOS = function() {
-            return navigator.appVersion.indexOf("Mac") !== -1;
-        },
+    isMacOS = function () {
+      return navigator.appVersion.indexOf("Mac") !== -1;
+    },
 
-        isUnix = function() {
-            return navigator.appVersion.indexOf("X11") !== -1;
-        },
+    isUnix = function () {
+      return navigator.appVersion.indexOf("X11") !== -1;
+    },
 
-        isLinux = function() {
-            return navigator.appVersion.indexOf("Linux") !== -1;
-        },
+    isLinux = function () {
+      return navigator.appVersion.indexOf("Linux") !== -1;
+    },
 
-        isTouch = function() {
-            return 'ontouchstart' in window || navigator.msMaxTouchPoints !== undefined;
-        },
+    isTouch = function () {
+      return 'ontouchstart' in window || navigator.msMaxTouchPoints !== undefined;
+    },
 
-        isiOS = function() {
-            return ( /(iPad|iPhone|iPod)/g.test( window.navigator.userAgent ) );
-        },
+    isDesktop = function() {
+      return !isTouch();
+    },
 
-        isAndroid = function() {
-            return ( window.navigator.userAgent.toLowerCase().indexOf('android') !== -1 );
-        },
+    isiOS = function () {
+      return ( /(iPad|iPhone|iPod)/g.test(window.navigator.userAgent) );
+    },
 
-        isWindowsPhone = function() {
-            return ( window.navigator.userAgent.match(/Windows Phone/i) );
-        },
+    isAndroid = function () {
+      return ( window.navigator.userAgent.toLowerCase().indexOf('android') !== -1 );
+    },
 
-        isBreakpointMobile = function() {
-            return $(window).width() <= Breakpoint.MOBILE;
-        };
-    // end of vars
+    isWindowsPhone = function () {
+      return ( window.navigator.userAgent.match(/Windows Phone/i) );
+    },
 
-    tools.reload = reload;
+    isBreakpointMobile = function () {
+      return $(window).width() <= Breakpoint.MOBILE;
+    };
+  // end of vars
 
-    client.isWindows          = isWindows;
-    client.isMacOS            = isMacOS;
-    client.isUnix             = isUnix;
-    client.isLinux            = isLinux;
-    client.isTouch            = isTouch;
-    client.isiOS              = isiOS;
-    client.isAndroid          = isAndroid;
-    client.isWindowsPhone     = isWindowsPhone;
-    client.isBreakpointMobile = isBreakpointMobile;
+  tools.reload = reload;
+
+  client.isWindows = isWindows;
+  client.isMacOS = isMacOS;
+  client.isUnix = isUnix;
+  client.isLinux = isLinux;
+  client.isTouch = isTouch;
+  client.isiOS = isiOS;
+  client.isAndroid = isAndroid;
+  client.isWindowsPhone = isWindowsPhone;
+  client.isBreakpointMobile = isBreakpointMobile;
 
 }(
-        this,
-        this.document,
-        this.navigator,
-        this.BM = this.BM || {}
-    ));
+  this,
+  this.document,
+  this.navigator,
+  this.BM = this.BM || {}
+));
 /**
  * @fileOverview Клонирование объектов
  */
@@ -10102,6 +10106,18 @@ function dataURItoBlob(dataURI) {
                 if (!this.$elem || (config && config.useTemplateForced)) {
                     this._createElementFromTemplate();
                 }
+
+                this._defineFastProps();
+            },
+
+            _defineFastProps : function() {
+              if (!this.el) {
+                  Object.defineProperty(this, 'el', {
+                    get : function() {
+                        return !BM.tools.isNull(this.$elem) && this.$elem.length > 0 ? this.$elem : null;
+                    }
+                  })
+              }
             },
 
             _toJQueryObject : function(element) {
@@ -10191,775 +10207,6 @@ function dataURItoBlob(dataURI) {
     });
 
 }(this, this.modules, this.BM, this.jQuery));
-(function(window) {
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.asset = BM.helper.asset || {};
-
-
-  BM.tools.mixin(BM.helper.asset, {
-
-    path: function (path) {
-      if (path) {
-        /*if (BM.config.isProduction()) {
-         return 'https://bookmate.com' + path;
-         } else {
-         return path;
-         }*/
-        return path;
-      }
-      return '';
-    }
-
-  });
-
-}(this));
-(function(window, BM){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.braintree = BM.helper.braintree || {};
-
-
-    BM.tools.mixin(BM.helper.braintree, {
-
-        merchantId : function() {
-            if (BM.helper.env.isProduction()) {
-                return 'd8h943sx2q7g29mm';
-            } else {
-                return '8tz37b4jh2tfr9vf';
-            }
-        },
-
-        braintreeDataEnvironment : function() {
-            if (!BM.tools.isUndefined(window.BraintreeData)) {
-                if (BM.helper.env.isProduction()) {
-                    return BraintreeData.environments.production;
-                } else {
-                    return BraintreeData.environments.sandbox;
-                }
-            }
-            return null;
-        },
-
-        deviceData : function() {
-            var form, id, deviceData;
-            if (!BM.tools.isUndefined(window.BraintreeData)) {
-                form = document.createElement('form');
-                id = 'braintree-devide-data-form-dummy-' + parseInt(Math.random() * 1000000, 10);
-                form.id = id;
-                document.body.appendChild(form);
-                BraintreeData.setup(BM.helper.braintree.merchantId(), id, BM.helper.braintree.braintreeDataEnvironment());
-                deviceData = form.querySelector('#device_data').getAttribute('value');
-                try {
-                    return JSON.parse(deviceData);
-                } catch (e) {
-                    return deviceData;
-                }
-            }
-            return null;
-        }
-
-    });
-
-
-}(this, this.BM));
-(function(window, BM){
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.browser = BM.helper.browser || {};
-
-
-  BM.tools.mixin(BM.helper.browser, {
-
-    triggerRerender : function() {
-      try {
-        document.body.offsetHeight = document.body.offsetHeight;
-      } catch (e) {}
-    }
-
-  });
-
-}(this, this.BM));
-(function(window, BM){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.country = BM.helper.country || {};
-
-
-    BM.tools.mixin(BM.helper.country, {
-
-        isSingapore : function() {
-            return !BM.tools.isNull(BM.config.mainConfig.country) && BM.config.mainConfig.country === 'sg';
-        },
-
-        isEstonia : function() {
-            return !BM.tools.isNull(BM.config.mainConfig.country) && BM.config.mainConfig.country === 'ee';
-        }
-
-    });
-
-
-}(this, this.BM));
-(function(window, BM){
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.data = BM.helper.data || {};
-
-
-  BM.tools.mixin(BM.helper.data, {
-    isValidUUID : function(uuid) {
-      if (BM.tools.isString(uuid)) {
-        if (uuid.length < 6 || uuid.length > 10) {
-          return false;
-        }
-        if (['recent', 'all', 'finished', 'not_finished', 'uploads', 'quotes'].indexOf(uuid) !== -1) {
-          return false;
-        }
-        return true;
-      }
-      return false;
-    }
-  });
-
-
-}(this, this.BM));
-
-(function(window, BM){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.env = BM.helper.env || {};
-
-
-    BM.tools.mixin(BM.helper.env, {
-
-        isStaging : function() {
-            return BM.config.mainConfig.environment === 'staging';
-        },
-
-        isDevelopment : function() {
-            return BM.config.mainConfig.environment === 'development';
-        },
-
-        isProduction : function() {
-            return BM.config.mainConfig.environment === 'production';
-        },
-
-        getEnvironment : function() {
-            return BM.config.mainConfig.environment;
-        }
-
-    });
-
-
-}(this, this.BM));
-(function(window, $, BM){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.event = BM.helper.event || {};
-
-    var clickEventName = BM.tools.client.isTouch() ? 'tap' : 'click';
-
-    BM.tools.mixin(BM.helper.event, {
-
-        clickName : function() {
-            return clickEventName;
-        },
-
-        isMouseLeftClick : function(event) {
-            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
-                return event.which === 1;
-            }
-        },
-
-        isMouseMiddleClick : function(event) {
-            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
-                return event.which === 2;
-            }
-        },
-
-        isMouseRightClick : function(event) {
-            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
-                return event.which === 3;
-            }
-        },
-
-        isClickWithCtrl : function(event) {
-            if (!BM.tools.isUndefined(event)) {
-                if ( (!BM.tools.isUndefined(event.ctrlKey) && event.ctrlKey === true) || (!BM.tools.isUndefined(event.metaKey) && event.metaKey === true) ) {
-                    return true;
-                }
-            }
-            return false;
-        },
-
-        isSimpleMouseLeftClick : function(event) {
-          return BM.helper.event.isMouseLeftClick(event) && !BM.helper.event.isClickWithCtrl(event);
-        }
-
-    });
-
-}(this, this.jQuery, this.BM));
-(function(window, BM){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.history = BM.helper.history || {};
-
-
-    BM.tools.mixin(BM.helper.history, {
-
-        getPopupQuoteState : function(login, uuid) {
-            return {
-                type  : 'popupQuote',
-                uuid  : uuid,
-                login : login
-            };
-        }
-
-    });
-
-
-}(this, this.BM));
-(function (window, BM) {
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.link = BM.helper.link || {};
-
-
-  BM.tools.mixin(BM.helper.link, {
-
-    book: function (bookUuid) {
-      return '/books/' + bookUuid;
-    },
-
-    quote: function (quoteUuid, userLogin) {
-      if (BM.tools.isUndefined(userLogin)) {
-        userLogin = BM.user.getLogin();
-      }
-      return '/' + userLogin + '/quotes/' + quoteUuid;
-    },
-
-    userQuotes: function (userLogin) {
-      return '/' + userLogin + '/quotes';
-    },
-
-    libraryCard : function(login, uuid) {
-      return '/' + login + '/' + uuid;
-    },
-
-    toAbsolute: function (link) {
-      if (!BM.tools.isString(link)) {
-        return null;
-      }
-      if (link.slice(0, 4) !== 'http') {
-        if (link[0] !== '/' || link[0] !== '\\') {
-          link = '/' + link;
-        }
-        link = window.location.origin + link;
-      }
-      return link;
-    },
-
-    appendParam: function (link, params) {
-      if (!BM.tools.isString(link) && !BM.tools.isPresent(params)) {
-        return link;
-      }
-      if (BM.tools.isString(params)) {
-        if (params[0] === '&' || params[0] === '?') {
-          params = params.slice(1);
-        }
-      }
-
-      if (BM.tools.isObject(params)) {
-        params = window.jQuery.param(params);
-      }
-
-      if (link.indexOf('?') !== -1) {
-        link += '&' + params;
-      } else {
-        link += '?' + params;
-      }
-
-      return link;
-    }
-
-  });
-
-}(this, this.BM));
-(function(window, BM){
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.page = BM.helper.page || {};
-
-
-  BM.tools.mixin(BM.helper.page, {
-
-    isMyRecentPage : function() {
-      return window.location.pathname === '/' + BM.user.getLogin() + '/recent';
-    },
-
-    isOthersRecentPage : function() {
-      return (window.location.pathname === '/' + BM.user.getViewingUserLogin() + '/recent') && BM.user.getLogin() !== BM.user.getViewingUserLogin();
-    }
-
-  });
-
-}(this, this.BM));
-(function(window, BM){
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.pageTitle = BM.helper.pageTitle || {};
-
-  var initialTitle = document.title,
-      titles = [initialTitle],
-      helper = BM.helper.pageTitle;
-
-  var template = null,
-      preloadTemplate = function() {
-        if (BM.tools.isNull(template)) {
-          template = $($('#bm-page-titles-container').html());
-        }
-      };
-
-  BM.tools.mixin(helper, {
-
-    push : function(title) {
-      if (BM.tools.isString(title)) {
-        titles.push(title);
-        document.title = title;
-      }
-    },
-
-    pop : function() {
-      if (titles.length <= 1) {
-        return titles[0];
-      }
-      var title = titles.pop();
-      document.title = titles[titles.length - 1];
-      return title;
-    },
-
-    reset : function() {
-        if (titles.length > 0) {
-          document.title = titles[0];
-          titles.length = 0;
-          titles = [initialTitle];
-        }
-    },
-
-    getQuotePageTitle : function(bookTitle) {
-      preloadTemplate();
-      window.t = template;
-      return template.find('@bm-quote-page-title').data('content').replace('%{quote_source}', BM.helper.text.sliceBookTitle(bookTitle, 150));
-    },
-
-    pushQuotePageTitle : function(bookTitle) {
-        helper.push(helper.getQuotePageTitle(bookTitle));
-    },
-
-    getBookPageTitle : function(bookTitle) {
-      preloadTemplate();
-      return template.find('@bm-book-page-title').data('content').replace('%{book_title}', BM.helper.text.sliceBookTitle(bookTitle, 150));
-    },
-
-    pushBookPageTitle : function(bookTitle) {
-      helper.push(helper.getBookPageTitle(bookTitle));
-    }
-
-  });
-
-}(this, this.BM));
-(function(window, BM, $, radio, modules){
-
-    BM = window.BM || {};
-    BM.helper = BM.helper || {};
-    BM.helper.subscription = {};
-
-    modules.require(['basePubSub', 'extend'], function(PubSub, extend){
-
-        BM.helper.subscription = new PubSub();
-
-        var productLevels = null,
-
-            _getPrice = function(options) {
-                var result = null;
-                productLevels.forEach(function(method) {
-                    method['levels'].forEach(function(level){
-                        level['products'].forEach(function(product){
-                            //if (level === options)
-                            if (method['payment_system'] === options.paymentMethod &&
-                                level['kind'] === options.kind &&
-                                product['duration'] === options.duration) {
-
-                                if (options.withCurrency) {
-                                    result = _formatPriceWithCurrency(product['price']);
-                                } else {
-                                    result = _parsePrice(product['price']);
-                                }
-                            }
-                        });
-                    });
-                });
-                return result;
-            },
-
-            _formatToEUR = function(price) {
-                return '€' + price;
-            },
-
-            _formatToUSD = function(price) {
-                return '$' + price;
-            },
-
-            _formatToRUB = function(price) {
-                if (BM.user.isLocaleRu()) {
-                    return price + ' р.';
-                } else {
-                    return price + ' rub.';
-                }
-            },
-
-            _formatToSGD = function(price) {
-                return price + ' SGD';
-            },
-
-            _formatToGBP = function(price) {
-                return '£' + price;
-            },
-
-            _formatPriceWithCurrency = function(price, discount) {
-                if (BM.tools.isNull(price)) {
-                    return;
-                }
-                if (_isPriceInRub(price)) {
-                    return _formatToRUB(_parsePrice(price, false, discount));
-                }
-                if (_isPriceInUsd(price)) {
-                    return _formatToUSD(_parsePrice(price, true, discount));
-                }
-                if (_isPriceInSgd(price)) {
-                    return  _formatToSGD(_parsePrice(price, true, discount));
-                }
-                if (_isPriceInEur(price)) {
-                    return _formatToEUR(_parsePrice(price, true, discount));
-                }
-                if (_isPriceInGBP(price)) {
-                    return _formatToGBP(_parsePrice(price, true, discount));
-                }
-
-            },
-
-            _getCurrency = function(price) {
-                if (BM.tools.isUndefined(price) || BM.tools.isNull(price)) {
-                    return;
-                }
-                if (_isPriceInRub(price)) {
-                    return 'RUB';
-                }
-                if (_isPriceInUsd(price)) {
-                    return 'USD';
-                }
-                if (_isPriceInSgd(price)) {
-                    return 'SGD';
-                }
-                if (_isPriceInEur(price)) {
-                    return 'EUR';
-                }
-                if (_isPriceInGBP(price)) {
-                    return 'GBP';
-                }
-            },
-
-            _toCurrency = function(price, currency) {
-                if (BM.tools.isNull(price)) {
-                    return;
-                }
-                if (currency === 'RUB') {
-                    return _formatToRUB(price);
-                }
-                if (currency === 'USD') {
-                    return _formatToUSD(price);
-                }
-                if (currency === 'SGD') {
-                    return  _formatToSGD(price);
-                }
-                if (currency === 'EUR') {
-                    return _formatToEUR(price);
-                }
-                if (currency === 'GBP') {
-                    return _formatToGBP(price);
-                }
-            },
-
-            _isPriceInRub = function(price) {
-                if (!BM.tools.isNull(price)) {
-                    return price.indexOf('RUB') !== -1 || price.indexOf('р.') !== -1 || price.indexOf('rub.') !== -1;
-                }
-            },
-
-            _isPriceInUsd = function(price) {
-                if (!BM.tools.isNull(price)) {
-                    return price.indexOf('$') !== -1 || price.indexOf('USD') !== -1;
-                }
-            },
-
-            _isPriceInSgd = function(price) {
-                if (!BM.tools.isNull(price)) {
-                    return price.indexOf('SGD') !== -1;
-                }
-            },
-
-            _parsePrice = function(price, float, discount) {
-                if (!BM.tools.isNull(price)) {
-                    price = parseFloat(price.replace(/[a-z $]/ig, ''));
-
-                    if (discount) {
-                      price = price - price / 100 * discount;
-                    }
-
-                    return float ? Math.ceil(price * 100) / 100 : Math.ceil(price);
-
-                    /*if (float) {
-                        return parseFloat(price.replace(/[a-z $]/ig, ''));
-                    } else {
-                        return parseInt(price.replace(/[a-z $]/ig, ''), 10);
-                    }*/
-                }
-            },
-
-            _isPriceInEur = function(price) {
-                if (!BM.tools.isNull(price)) {
-                    return price.indexOf('€') !== -1 || price.indexOf('EUR') !== -1;
-                }
-            },
-
-            _isPriceInGBP = function(price) {
-                if (!BM.tools.isNull(price)) {
-                    return price.indexOf('£') !== -1 || price.indexOf('GBP') !== -1;
-                }
-            };
-
-
-        BM.tools.mixin(BM.helper.subscription, {
-
-            fetchPrices : function() {
-                var callbackSuccess, callbackError, forced;
-
-                if (!BM.tools.isFunction(arguments[0])) {
-                    return;
-                } else {
-                    callbackSuccess = arguments[0];
-
-                    if (BM.tools.isFunction(arguments[1])) {
-                        callbackError = arguments[1];
-                    } else {
-                        forced = arguments[1];
-                    }
-                }
-
-
-                if (!BM.tools.isNull(productLevels) && forced !== true) {
-                    callbackSuccess(productLevels);
-                    return;
-                }
-
-                var me   = this,
-                    requestUrl = '/a/4/billing/web/product_levels.json';
-
-                if (BM.user.getSubscriptionCoutryCode()) {
-                    requestUrl += '?subscription_country=' + BM.user.getSubscriptionCoutryCode();
-                }
-
-
-                $.ajax({
-                    url: requestUrl,
-                    type: 'get',
-                    dataType: 'json',
-                    success : function(data) {
-                        productLevels = data;
-                        BM.helper.subscription._notify('prices-fetched');
-                        if (BM.tools.isFunction(callbackSuccess)) {
-                            callbackSuccess(data);
-                        }
-                    },
-                    error : function() {
-                        if (callbackError) {
-                            callbackError();
-                        }
-                    }
-                });
-            },
-
-            getPrice : function(kind, duration, options) {
-                var paymentMethod = 'visa',
-                    withCurrency = true,
-                    result = null,
-                    keepFloats = false,
-                    discount = 0;
-
-                if (!kind || !duration) {
-                    return null;
-                }
-
-                if (!BM.tools.isUndefined(options)) {
-                    if (!BM.tools.isUndefined(options.paymentMethod)) {
-                        paymentMethod = options.paymentMethod;
-                    }
-                    if (!BM.tools.isUndefined(options.withCurrency)) {
-                        withCurrency = options.withCurrency;
-                    }
-                    if (!BM.tools.isUndefined(options.keepFloats)) {
-                        keepFloats = options.keepFloats;
-                    }
-                    if (!BM.tools.isUndefined(options.discount) && BM.tools.isNumber(options.discount)) {
-                        discount = options.discount;
-                    }
-                }
-
-                productLevels.forEach(function(method) {
-                    method['levels'].forEach(function(level){
-                        level['products'].forEach(function(product){
-                            //if (level === options)
-                            if (method['payment_system'] === paymentMethod && level['kind'] === kind && product['duration'] === duration) {
-                                if (withCurrency) {
-                                    result = _formatPriceWithCurrency(product['price'], discount);
-                                } else {
-                                    result = _parsePrice(product['price'], keepFloats, discount);
-                                }
-                            }
-                        });
-                    });
-                });
-
-                return result;
-
-            },
-
-            toCurrency : function(price, currency) {
-                return _toCurrency(price, currency);
-            },
-
-            getCurrency : function(price) {
-                return _getCurrency(price);
-            },
-
-            getPriceAsInt : function(kind, duration, options) {
-                options = options || {};
-                options.withCurrency = false;
-                return BM.helper.subscription.getPrice(kind, duration, options);
-            }
-
-        });
-
-
-        radio('bm-product-levels-update').subscribe(function(data){
-            productLevels = data;
-            BM.helper.subscription._notify('prices-fetched');
-        });
-
-    });
-
-
-}(this, this.BM, this.jQuery, this.radio, this.modules));
-
-(function(window, BM){
-
-  BM = window.BM || {};
-  BM.helper = BM.helper || {};
-  BM.helper.text = BM.helper.text || {};
-
-
-  BM.tools.mixin(BM.helper.text, {
-
-    slice : function(text, maxLength, options) {
-      var dots = false,
-          tmp;
-
-      if (!BM.tools.isUndefined(options)) {
-        if (!BM.tools.isUndefined(options.dots)) {
-          dots = options.dots;
-        }
-      }
-
-      if (BM.tools.isString(text) && BM.tools.isNumber(maxLength)) {
-        text = text.trim();
-        if (text.length <= maxLength) {
-          return text;
-        }
-        text = text.slice(0, maxLength);
-        if (text.lastIndexOf(' ') !== -1) {
-          text = text.slice(0, text.lastIndexOf(' '));
-          tmp = text.split(' ');
-          if (tmp[tmp.length - 1].length < 3) {
-            tmp.splice(tmp.length - 1, 1);
-          }
-          tmp[tmp.length - 1] = '...';
-          text = tmp.join(' ');
-        } else {
-          if (dots) {
-            text = text.slice(0, text.length - 3) + '...';
-          }
-        }
-      }
-      return text;
-    },
-
-    sliceBookTitle : function(bookTitle, maxLength) {
-      if (BM.tools.isString(bookTitle) && !BM.tools.isNull(maxLength)) {
-        if (bookTitle.length > maxLength) {
-          if (bookTitle[0] === '(' && bookTitle[bookTitle.length - 1] === ')') {
-            bookTitle = bookTitle.slice(1, bookTitle.length - 1);
-          }
-          bookTitle = bookTitle.replace(/ ?\([^)]+\) ?/ig, ' ');
-
-          if (bookTitle.length <= maxLength) {
-            return bookTitle;
-          }
-
-          bookTitle = bookTitle.trim().slice(0, maxLength);
-
-          if (bookTitle[0] === '(') {
-            bookTitle = bookTitle.slice(1, bookTitle.length);
-          }
-
-          if (bookTitle.indexOf('.') !== -1) {
-            bookTitle.lastIndexOf('.');
-            bookTitle = bookTitle.slice(0, bookTitle.lastIndexOf('.'));
-          } else if (bookTitle.indexOf(':') !== -1) {
-            bookTitle = bookTitle.slice(0, bookTitle.lastIndexOf(':'));
-          } else {
-            bookTitle = bookTitle.split(' ');
-            if (bookTitle[bookTitle.length - 1].length >= 3) {
-              bookTitle[bookTitle.length - 1] = '...';
-            } else {
-              bookTitle.splice(bookTitle.length - 1, 1);
-              bookTitle[bookTitle.length - 1] = '...';
-            }
-            bookTitle = bookTitle.join(' ');
-          }
-          return bookTitle;
-
-        } else {
-          return bookTitle;
-        }
-      }
-      return bookTitle;
-    }
-
-  });
-
-
-}(this, this.BM));
 /*! jQuery Migrate v1.2.1 | (c) 2005, 2013 jQuery Foundation, Inc. and other contributors | jquery.org/license */
 jQuery.migrateMute===void 0&&(jQuery.migrateMute=!0),function(e,t,n){function r(n){var r=t.console;i[n]||(i[n]=!0,e.migrateWarnings.push(n),r&&r.warn&&!e.migrateMute&&(r.warn("JQMIGRATE: "+n),e.migrateTrace&&r.trace&&r.trace()))}function a(t,a,i,o){if(Object.defineProperty)try{return Object.defineProperty(t,a,{configurable:!0,enumerable:!0,get:function(){return r(o),i},set:function(e){r(o),i=e}}),n}catch(s){}e._definePropertyBroken=!0,t[a]=i}var i={};e.migrateWarnings=[],!e.migrateMute&&t.console&&t.console.log&&t.console.log("JQMIGRATE: Logging is active"),e.migrateTrace===n&&(e.migrateTrace=!0),e.migrateReset=function(){i={},e.migrateWarnings.length=0},"BackCompat"===document.compatMode&&r("jQuery is not compatible with Quirks Mode");var o=e("<input/>",{size:1}).attr("size")&&e.attrFn,s=e.attr,u=e.attrHooks.value&&e.attrHooks.value.get||function(){return null},c=e.attrHooks.value&&e.attrHooks.value.set||function(){return n},l=/^(?:input|button)$/i,d=/^[238]$/,p=/^(?:autofocus|autoplay|async|checked|controls|defer|disabled|hidden|loop|multiple|open|readonly|required|scoped|selected)$/i,f=/^(?:checked|selected)$/i;a(e,"attrFn",o||{},"jQuery.attrFn is deprecated"),e.attr=function(t,a,i,u){var c=a.toLowerCase(),g=t&&t.nodeType;return u&&(4>s.length&&r("jQuery.fn.attr( props, pass ) is deprecated"),t&&!d.test(g)&&(o?a in o:e.isFunction(e.fn[a])))?e(t)[a](i):("type"===a&&i!==n&&l.test(t.nodeName)&&t.parentNode&&r("Can't change the 'type' of an input or button in IE 6/7/8"),!e.attrHooks[c]&&p.test(c)&&(e.attrHooks[c]={get:function(t,r){var a,i=e.prop(t,r);return i===!0||"boolean"!=typeof i&&(a=t.getAttributeNode(r))&&a.nodeValue!==!1?r.toLowerCase():n},set:function(t,n,r){var a;return n===!1?e.removeAttr(t,r):(a=e.propFix[r]||r,a in t&&(t[a]=!0),t.setAttribute(r,r.toLowerCase())),r}},f.test(c)&&r("jQuery.fn.attr('"+c+"') may use property instead of attribute")),s.call(e,t,a,i))},e.attrHooks.value={get:function(e,t){var n=(e.nodeName||"").toLowerCase();return"button"===n?u.apply(this,arguments):("input"!==n&&"option"!==n&&r("jQuery.fn.attr('value') no longer gets properties"),t in e?e.value:null)},set:function(e,t){var a=(e.nodeName||"").toLowerCase();return"button"===a?c.apply(this,arguments):("input"!==a&&"option"!==a&&r("jQuery.fn.attr('value', val) no longer sets properties"),e.value=t,n)}};var g,h,v=e.fn.init,m=e.parseJSON,y=/^([^<]*)(<[\w\W]+>)([^>]*)$/;e.fn.init=function(t,n,a){var i;return t&&"string"==typeof t&&!e.isPlainObject(n)&&(i=y.exec(e.trim(t)))&&i[0]&&("<"!==t.charAt(0)&&r("$(html) HTML strings must start with '<' character"),i[3]&&r("$(html) HTML text after last tag is ignored"),"#"===i[0].charAt(0)&&(r("HTML string cannot start with a '#' character"),e.error("JQMIGRATE: Invalid selector string (XSS)")),n&&n.context&&(n=n.context),e.parseHTML)?v.call(this,e.parseHTML(i[2],n,!0),n,a):v.apply(this,arguments)},e.fn.init.prototype=e.fn,e.parseJSON=function(e){return e||null===e?m.apply(this,arguments):(r("jQuery.parseJSON requires a valid JSON string"),null)},e.uaMatch=function(e){e=e.toLowerCase();var t=/(chrome)[ \/]([\w.]+)/.exec(e)||/(webkit)[ \/]([\w.]+)/.exec(e)||/(opera)(?:.*version|)[ \/]([\w.]+)/.exec(e)||/(msie) ([\w.]+)/.exec(e)||0>e.indexOf("compatible")&&/(mozilla)(?:.*? rv:([\w.]+)|)/.exec(e)||[];return{browser:t[1]||"",version:t[2]||"0"}},e.browser||(g=e.uaMatch(navigator.userAgent),h={},g.browser&&(h[g.browser]=!0,h.version=g.version),h.chrome?h.webkit=!0:h.webkit&&(h.safari=!0),e.browser=h),a(e,"browser",e.browser,"jQuery.browser is deprecated"),e.sub=function(){function t(e,n){return new t.fn.init(e,n)}e.extend(!0,t,this),t.superclass=this,t.fn=t.prototype=this(),t.fn.constructor=t,t.sub=this.sub,t.fn.init=function(r,a){return a&&a instanceof e&&!(a instanceof t)&&(a=t(a)),e.fn.init.call(this,r,a,n)},t.fn.init.prototype=t.fn;var n=t(document);return r("jQuery.sub() is deprecated"),t},e.ajaxSetup({converters:{"text json":e.parseJSON}});var b=e.fn.data;e.fn.data=function(t){var a,i,o=this[0];return!o||"events"!==t||1!==arguments.length||(a=e.data(o,t),i=e._data(o,t),a!==n&&a!==i||i===n)?b.apply(this,arguments):(r("Use of jQuery.fn.data('events') is deprecated"),i)};var j=/\/(java|ecma)script/i,w=e.fn.andSelf||e.fn.addBack;e.fn.andSelf=function(){return r("jQuery.fn.andSelf() replaced by jQuery.fn.addBack()"),w.apply(this,arguments)},e.clean||(e.clean=function(t,a,i,o){a=a||document,a=!a.nodeType&&a[0]||a,a=a.ownerDocument||a,r("jQuery.clean() is deprecated");var s,u,c,l,d=[];if(e.merge(d,e.buildFragment(t,a).childNodes),i)for(c=function(e){return!e.type||j.test(e.type)?o?o.push(e.parentNode?e.parentNode.removeChild(e):e):i.appendChild(e):n},s=0;null!=(u=d[s]);s++)e.nodeName(u,"script")&&c(u)||(i.appendChild(u),u.getElementsByTagName!==n&&(l=e.grep(e.merge([],u.getElementsByTagName("script")),c),d.splice.apply(d,[s+1,0].concat(l)),s+=l.length));return d});var Q=e.event.add,x=e.event.remove,k=e.event.trigger,N=e.fn.toggle,T=e.fn.live,M=e.fn.die,S="ajaxStart|ajaxStop|ajaxSend|ajaxComplete|ajaxError|ajaxSuccess",C=RegExp("\\b(?:"+S+")\\b"),H=/(?:^|\s)hover(\.\S+|)\b/,A=function(t){return"string"!=typeof t||e.event.special.hover?t:(H.test(t)&&r("'hover' pseudo-event is deprecated, use 'mouseenter mouseleave'"),t&&t.replace(H,"mouseenter$1 mouseleave$1"))};e.event.props&&"attrChange"!==e.event.props[0]&&e.event.props.unshift("attrChange","attrName","relatedNode","srcElement"),e.event.dispatch&&a(e.event,"handle",e.event.dispatch,"jQuery.event.handle is undocumented and deprecated"),e.event.add=function(e,t,n,a,i){e!==document&&C.test(t)&&r("AJAX events should be attached to document: "+t),Q.call(this,e,A(t||""),n,a,i)},e.event.remove=function(e,t,n,r,a){x.call(this,e,A(t)||"",n,r,a)},e.fn.error=function(){var e=Array.prototype.slice.call(arguments,0);return r("jQuery.fn.error() is deprecated"),e.splice(0,0,"error"),arguments.length?this.bind.apply(this,e):(this.triggerHandler.apply(this,e),this)},e.fn.toggle=function(t,n){if(!e.isFunction(t)||!e.isFunction(n))return N.apply(this,arguments);r("jQuery.fn.toggle(handler, handler...) is deprecated");var a=arguments,i=t.guid||e.guid++,o=0,s=function(n){var r=(e._data(this,"lastToggle"+t.guid)||0)%o;return e._data(this,"lastToggle"+t.guid,r+1),n.preventDefault(),a[r].apply(this,arguments)||!1};for(s.guid=i;a.length>o;)a[o++].guid=i;return this.click(s)},e.fn.live=function(t,n,a){return r("jQuery.fn.live() is deprecated"),T?T.apply(this,arguments):(e(this.context).on(t,this.selector,n,a),this)},e.fn.die=function(t,n){return r("jQuery.fn.die() is deprecated"),M?M.apply(this,arguments):(e(this.context).off(t,this.selector||"**",n),this)},e.event.trigger=function(e,t,n,a){return n||C.test(e)||r("Global events are undocumented and deprecated"),k.call(this,e,t,n||document,a)},e.each(S.split("|"),function(t,n){e.event.special[n]={setup:function(){var t=this;return t!==document&&(e.event.add(document,n+"."+e.guid,function(){e.event.trigger(n,null,t,!0)}),e._data(this,n,e.guid++)),!1},teardown:function(){return this!==document&&e.event.remove(document,n+"."+e._data(this,n)),!1}}})}(jQuery,window);
 /*! jQuery UI - v1.10.4 - 2014-02-18
@@ -14343,6 +13590,775 @@ $.each( { show: "fadeIn", hide: "fadeOut" }, function( method, defaultEffect ) {
         } 
     }); 
 })(jQuery);
+(function(window) {
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.asset = BM.helper.asset || {};
+
+
+  BM.tools.mixin(BM.helper.asset, {
+
+    path: function (path) {
+      if (path) {
+        /*if (BM.config.isProduction()) {
+         return 'https://bookmate.com' + path;
+         } else {
+         return path;
+         }*/
+        return path;
+      }
+      return '';
+    }
+
+  });
+
+}(this));
+(function(window, BM){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.braintree = BM.helper.braintree || {};
+
+
+    BM.tools.mixin(BM.helper.braintree, {
+
+        merchantId : function() {
+            if (BM.helper.env.isProduction()) {
+                return 'd8h943sx2q7g29mm';
+            } else {
+                return '8tz37b4jh2tfr9vf';
+            }
+        },
+
+        braintreeDataEnvironment : function() {
+            if (!BM.tools.isUndefined(window.BraintreeData)) {
+                if (BM.helper.env.isProduction()) {
+                    return BraintreeData.environments.production;
+                } else {
+                    return BraintreeData.environments.sandbox;
+                }
+            }
+            return null;
+        },
+
+        deviceData : function() {
+            var form, id, deviceData;
+            if (!BM.tools.isUndefined(window.BraintreeData)) {
+                form = document.createElement('form');
+                id = 'braintree-devide-data-form-dummy-' + parseInt(Math.random() * 1000000, 10);
+                form.id = id;
+                document.body.appendChild(form);
+                BraintreeData.setup(BM.helper.braintree.merchantId(), id, BM.helper.braintree.braintreeDataEnvironment());
+                deviceData = form.querySelector('#device_data').getAttribute('value');
+                try {
+                    return JSON.parse(deviceData);
+                } catch (e) {
+                    return deviceData;
+                }
+            }
+            return null;
+        }
+
+    });
+
+
+}(this, this.BM));
+(function(window, BM){
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.browser = BM.helper.browser || {};
+
+
+  BM.tools.mixin(BM.helper.browser, {
+
+    triggerRerender : function() {
+      try {
+        document.body.offsetHeight = document.body.offsetHeight;
+      } catch (e) {}
+    }
+
+  });
+
+}(this, this.BM));
+(function(window, BM){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.country = BM.helper.country || {};
+
+
+    BM.tools.mixin(BM.helper.country, {
+
+        isSingapore : function() {
+            return !BM.tools.isNull(BM.config.mainConfig.country) && BM.config.mainConfig.country === 'sg';
+        },
+
+        isEstonia : function() {
+            return !BM.tools.isNull(BM.config.mainConfig.country) && BM.config.mainConfig.country === 'ee';
+        }
+
+    });
+
+
+}(this, this.BM));
+(function(window, BM){
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.data = BM.helper.data || {};
+
+
+  BM.tools.mixin(BM.helper.data, {
+    isValidUUID : function(uuid) {
+      if (BM.tools.isString(uuid)) {
+        if (uuid.length < 6 || uuid.length > 10) {
+          return false;
+        }
+        if (['recent', 'all', 'finished', 'not_finished', 'uploads', 'quotes'].indexOf(uuid) !== -1) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    }
+  });
+
+
+}(this, this.BM));
+
+(function(window, BM){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.env = BM.helper.env || {};
+
+
+    BM.tools.mixin(BM.helper.env, {
+
+        isStaging : function() {
+            return BM.config.mainConfig.environment === 'staging';
+        },
+
+        isDevelopment : function() {
+            return BM.config.mainConfig.environment === 'development';
+        },
+
+        isProduction : function() {
+            return BM.config.mainConfig.environment === 'production';
+        },
+
+        getEnvironment : function() {
+            return BM.config.mainConfig.environment;
+        }
+
+    });
+
+
+}(this, this.BM));
+(function(window, $, BM){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.event = BM.helper.event || {};
+
+    var clickEventName = BM.tools.client.isTouch() ? 'tap' : 'click';
+
+    BM.tools.mixin(BM.helper.event, {
+
+        clickName : function() {
+            return clickEventName;
+        },
+
+        isMouseLeftClick : function(event) {
+            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
+                return event.which === 1;
+            }
+        },
+
+        isMouseMiddleClick : function(event) {
+            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
+                return event.which === 2;
+            }
+        },
+
+        isMouseRightClick : function(event) {
+            if (!BM.tools.isUndefined(event) && BM.tools.isNumber(event.which)) {
+                return event.which === 3;
+            }
+        },
+
+        isClickWithCtrl : function(event) {
+            if (!BM.tools.isUndefined(event)) {
+                if ( (!BM.tools.isUndefined(event.ctrlKey) && event.ctrlKey === true) || (!BM.tools.isUndefined(event.metaKey) && event.metaKey === true) ) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
+        isSimpleMouseLeftClick : function(event) {
+          return BM.helper.event.isMouseLeftClick(event) && !BM.helper.event.isClickWithCtrl(event);
+        }
+
+    });
+
+}(this, this.jQuery, this.BM));
+(function(window, BM){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.history = BM.helper.history || {};
+
+
+    BM.tools.mixin(BM.helper.history, {
+
+        getPopupQuoteState : function(login, uuid) {
+            return {
+                type  : 'popupQuote',
+                uuid  : uuid,
+                login : login
+            };
+        }
+
+    });
+
+
+}(this, this.BM));
+(function (window, BM) {
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.link = BM.helper.link || {};
+
+
+  BM.tools.mixin(BM.helper.link, {
+
+    book: function (bookUuid) {
+      return '/books/' + bookUuid;
+    },
+
+    quote: function (quoteUuid, userLogin) {
+      if (BM.tools.isUndefined(userLogin)) {
+        userLogin = BM.user.getLogin();
+      }
+      return '/' + userLogin + '/quotes/' + quoteUuid;
+    },
+
+    userQuotes: function (userLogin) {
+      return '/' + userLogin + '/quotes';
+    },
+
+    libraryCard : function(login, uuid) {
+      return '/' + login + '/' + uuid;
+    },
+
+    toAbsolute: function (link) {
+      if (!BM.tools.isString(link)) {
+        return null;
+      }
+      if (link.slice(0, 4) !== 'http') {
+        if (link[0] !== '/' || link[0] !== '\\') {
+          link = '/' + link;
+        }
+        link = window.location.origin + link;
+      }
+      return link;
+    },
+
+    appendParam: function (link, params) {
+      if (!BM.tools.isString(link) && !BM.tools.isPresent(params)) {
+        return link;
+      }
+      if (BM.tools.isString(params)) {
+        if (params[0] === '&' || params[0] === '?') {
+          params = params.slice(1);
+        }
+      }
+
+      if (BM.tools.isObject(params)) {
+        params = window.jQuery.param(params);
+      }
+
+      if (link.indexOf('?') !== -1) {
+        link += '&' + params;
+      } else {
+        link += '?' + params;
+      }
+
+      return link;
+    }
+
+  });
+
+}(this, this.BM));
+(function(window, BM){
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.page = BM.helper.page || {};
+
+
+  BM.tools.mixin(BM.helper.page, {
+
+    isMyRecentPage : function() {
+      return window.location.pathname === '/' + BM.user.getLogin() + '/recent';
+    },
+
+    isOthersRecentPage : function() {
+      return (window.location.pathname === '/' + BM.user.getViewingUserLogin() + '/recent') && BM.user.getLogin() !== BM.user.getViewingUserLogin();
+    }
+
+  });
+
+}(this, this.BM));
+(function(window, BM){
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.pageTitle = BM.helper.pageTitle || {};
+
+  var initialTitle = document.title,
+      titles = [initialTitle],
+      helper = BM.helper.pageTitle;
+
+  var template = null,
+      preloadTemplate = function() {
+        if (BM.tools.isNull(template)) {
+          template = $($('#bm-page-titles-container').html());
+        }
+      };
+
+  BM.tools.mixin(helper, {
+
+    push : function(title) {
+      if (BM.tools.isString(title)) {
+        titles.push(title);
+        document.title = title;
+      }
+    },
+
+    pop : function() {
+      if (titles.length <= 1) {
+        return titles[0];
+      }
+      var title = titles.pop();
+      document.title = titles[titles.length - 1];
+      return title;
+    },
+
+    reset : function() {
+        if (titles.length > 0) {
+          document.title = titles[0];
+          titles.length = 0;
+          titles = [initialTitle];
+        }
+    },
+
+    getQuotePageTitle : function(bookTitle) {
+      preloadTemplate();
+      window.t = template;
+      return template.find('@bm-quote-page-title').data('content').replace('%{quote_source}', BM.helper.text.sliceBookTitle(bookTitle, 150));
+    },
+
+    pushQuotePageTitle : function(bookTitle) {
+        helper.push(helper.getQuotePageTitle(bookTitle));
+    },
+
+    getBookPageTitle : function(bookTitle) {
+      preloadTemplate();
+      return template.find('@bm-book-page-title').data('content').replace('%{book_title}', BM.helper.text.sliceBookTitle(bookTitle, 150));
+    },
+
+    pushBookPageTitle : function(bookTitle) {
+      helper.push(helper.getBookPageTitle(bookTitle));
+    }
+
+  });
+
+}(this, this.BM));
+(function(window, BM, $, radio, modules){
+
+    BM = window.BM || {};
+    BM.helper = BM.helper || {};
+    BM.helper.subscription = {};
+
+    modules.require(['basePubSub', 'extend'], function(PubSub, extend){
+
+        BM.helper.subscription = new PubSub();
+
+        var productLevels = null,
+
+            _getPrice = function(options) {
+                var result = null;
+                productLevels.forEach(function(method) {
+                    method['levels'].forEach(function(level){
+                        level['products'].forEach(function(product){
+                            //if (level === options)
+                            if (method['payment_system'] === options.paymentMethod &&
+                                level['kind'] === options.kind &&
+                                product['duration'] === options.duration) {
+
+                                if (options.withCurrency) {
+                                    result = _formatPriceWithCurrency(product['price']);
+                                } else {
+                                    result = _parsePrice(product['price']);
+                                }
+                            }
+                        });
+                    });
+                });
+                return result;
+            },
+
+            _formatToEUR = function(price) {
+                return '€' + price;
+            },
+
+            _formatToUSD = function(price) {
+                return '$' + price;
+            },
+
+            _formatToRUB = function(price) {
+                if (BM.user.isLocaleRu()) {
+                    return price + ' р.';
+                } else {
+                    return price + ' rub.';
+                }
+            },
+
+            _formatToSGD = function(price) {
+                return price + ' SGD';
+            },
+
+            _formatToGBP = function(price) {
+                return '£' + price;
+            },
+
+            _formatPriceWithCurrency = function(price, discount) {
+                if (BM.tools.isNull(price)) {
+                    return;
+                }
+                if (_isPriceInRub(price)) {
+                    return _formatToRUB(_parsePrice(price, false, discount));
+                }
+                if (_isPriceInUsd(price)) {
+                    return _formatToUSD(_parsePrice(price, true, discount));
+                }
+                if (_isPriceInSgd(price)) {
+                    return  _formatToSGD(_parsePrice(price, true, discount));
+                }
+                if (_isPriceInEur(price)) {
+                    return _formatToEUR(_parsePrice(price, true, discount));
+                }
+                if (_isPriceInGBP(price)) {
+                    return _formatToGBP(_parsePrice(price, true, discount));
+                }
+
+            },
+
+            _getCurrency = function(price) {
+                if (BM.tools.isUndefined(price) || BM.tools.isNull(price)) {
+                    return;
+                }
+                if (_isPriceInRub(price)) {
+                    return 'RUB';
+                }
+                if (_isPriceInUsd(price)) {
+                    return 'USD';
+                }
+                if (_isPriceInSgd(price)) {
+                    return 'SGD';
+                }
+                if (_isPriceInEur(price)) {
+                    return 'EUR';
+                }
+                if (_isPriceInGBP(price)) {
+                    return 'GBP';
+                }
+            },
+
+            _toCurrency = function(price, currency) {
+                if (BM.tools.isNull(price)) {
+                    return;
+                }
+                if (currency === 'RUB') {
+                    return _formatToRUB(price);
+                }
+                if (currency === 'USD') {
+                    return _formatToUSD(price);
+                }
+                if (currency === 'SGD') {
+                    return  _formatToSGD(price);
+                }
+                if (currency === 'EUR') {
+                    return _formatToEUR(price);
+                }
+                if (currency === 'GBP') {
+                    return _formatToGBP(price);
+                }
+            },
+
+            _isPriceInRub = function(price) {
+                if (!BM.tools.isNull(price)) {
+                    return price.indexOf('RUB') !== -1 || price.indexOf('р.') !== -1 || price.indexOf('rub.') !== -1;
+                }
+            },
+
+            _isPriceInUsd = function(price) {
+                if (!BM.tools.isNull(price)) {
+                    return price.indexOf('$') !== -1 || price.indexOf('USD') !== -1;
+                }
+            },
+
+            _isPriceInSgd = function(price) {
+                if (!BM.tools.isNull(price)) {
+                    return price.indexOf('SGD') !== -1;
+                }
+            },
+
+            _parsePrice = function(price, float, discount) {
+                if (!BM.tools.isNull(price)) {
+                    price = parseFloat(price.replace(/[a-z $]/ig, ''));
+
+                    if (discount) {
+                      price = price - price / 100 * discount;
+                    }
+
+                    return float ? Math.ceil(price * 100) / 100 : Math.ceil(price);
+
+                    /*if (float) {
+                        return parseFloat(price.replace(/[a-z $]/ig, ''));
+                    } else {
+                        return parseInt(price.replace(/[a-z $]/ig, ''), 10);
+                    }*/
+                }
+            },
+
+            _isPriceInEur = function(price) {
+                if (!BM.tools.isNull(price)) {
+                    return price.indexOf('€') !== -1 || price.indexOf('EUR') !== -1;
+                }
+            },
+
+            _isPriceInGBP = function(price) {
+                if (!BM.tools.isNull(price)) {
+                    return price.indexOf('£') !== -1 || price.indexOf('GBP') !== -1;
+                }
+            };
+
+
+        BM.tools.mixin(BM.helper.subscription, {
+
+            fetchPrices : function() {
+                var callbackSuccess, callbackError, forced;
+
+                if (!BM.tools.isFunction(arguments[0])) {
+                    return;
+                } else {
+                    callbackSuccess = arguments[0];
+
+                    if (BM.tools.isFunction(arguments[1])) {
+                        callbackError = arguments[1];
+                    } else {
+                        forced = arguments[1];
+                    }
+                }
+
+
+                if (!BM.tools.isNull(productLevels) && forced !== true) {
+                    callbackSuccess(productLevels);
+                    return;
+                }
+
+                var me   = this,
+                    requestUrl = '/a/4/billing/web/product_levels.json';
+
+                if (BM.user.getSubscriptionCoutryCode()) {
+                    requestUrl += '?subscription_country=' + BM.user.getSubscriptionCoutryCode();
+                }
+
+
+                $.ajax({
+                    url: requestUrl,
+                    type: 'get',
+                    dataType: 'json',
+                    success : function(data) {
+                        productLevels = data;
+                        BM.helper.subscription._notify('prices-fetched');
+                        if (BM.tools.isFunction(callbackSuccess)) {
+                            callbackSuccess(data);
+                        }
+                    },
+                    error : function() {
+                        if (callbackError) {
+                            callbackError();
+                        }
+                    }
+                });
+            },
+
+            getPrice : function(kind, duration, options) {
+                var paymentMethod = 'visa',
+                    withCurrency = true,
+                    result = null,
+                    keepFloats = false,
+                    discount = 0;
+
+                if (!kind || !duration) {
+                    return null;
+                }
+
+                if (!BM.tools.isUndefined(options)) {
+                    if (!BM.tools.isUndefined(options.paymentMethod)) {
+                        paymentMethod = options.paymentMethod;
+                    }
+                    if (!BM.tools.isUndefined(options.withCurrency)) {
+                        withCurrency = options.withCurrency;
+                    }
+                    if (!BM.tools.isUndefined(options.keepFloats)) {
+                        keepFloats = options.keepFloats;
+                    }
+                    if (!BM.tools.isUndefined(options.discount) && BM.tools.isNumber(options.discount)) {
+                        discount = options.discount;
+                    }
+                }
+
+                productLevels.forEach(function(method) {
+                    method['levels'].forEach(function(level){
+                        level['products'].forEach(function(product){
+                            //if (level === options)
+                            if (method['payment_system'] === paymentMethod && level['kind'] === kind && product['duration'] === duration) {
+                                if (withCurrency) {
+                                    result = _formatPriceWithCurrency(product['price'], discount);
+                                } else {
+                                    result = _parsePrice(product['price'], keepFloats, discount);
+                                }
+                            }
+                        });
+                    });
+                });
+
+                return result;
+
+            },
+
+            toCurrency : function(price, currency) {
+                return _toCurrency(price, currency);
+            },
+
+            getCurrency : function(price) {
+                return _getCurrency(price);
+            },
+
+            getPriceAsInt : function(kind, duration, options) {
+                options = options || {};
+                options.withCurrency = false;
+                return BM.helper.subscription.getPrice(kind, duration, options);
+            }
+
+        });
+
+
+        radio('bm-product-levels-update').subscribe(function(data){
+            productLevels = data;
+            BM.helper.subscription._notify('prices-fetched');
+        });
+
+    });
+
+
+}(this, this.BM, this.jQuery, this.radio, this.modules));
+
+(function(window, BM){
+
+  BM = window.BM || {};
+  BM.helper = BM.helper || {};
+  BM.helper.text = BM.helper.text || {};
+
+
+  BM.tools.mixin(BM.helper.text, {
+
+    slice : function(text, maxLength, options) {
+      var dots = false,
+          tmp;
+
+      if (!BM.tools.isUndefined(options)) {
+        if (!BM.tools.isUndefined(options.dots)) {
+          dots = options.dots;
+        }
+      }
+
+      if (BM.tools.isString(text) && BM.tools.isNumber(maxLength)) {
+        text = text.trim();
+        if (text.length <= maxLength) {
+          return text;
+        }
+        text = text.slice(0, maxLength);
+        if (text.lastIndexOf(' ') !== -1) {
+          text = text.slice(0, text.lastIndexOf(' '));
+          tmp = text.split(' ');
+          if (tmp[tmp.length - 1].length < 3) {
+            tmp.splice(tmp.length - 1, 1);
+          }
+          tmp[tmp.length - 1] = '...';
+          text = tmp.join(' ');
+        } else {
+          if (dots) {
+            text = text.slice(0, text.length - 3) + '...';
+          }
+        }
+      }
+      return text;
+    },
+
+    sliceBookTitle : function(bookTitle, maxLength) {
+      if (BM.tools.isString(bookTitle) && !BM.tools.isNull(maxLength)) {
+        if (bookTitle.length > maxLength) {
+          if (bookTitle[0] === '(' && bookTitle[bookTitle.length - 1] === ')') {
+            bookTitle = bookTitle.slice(1, bookTitle.length - 1);
+          }
+          bookTitle = bookTitle.replace(/ ?\([^)]+\) ?/ig, ' ');
+
+          if (bookTitle.length <= maxLength) {
+            return bookTitle;
+          }
+
+          bookTitle = bookTitle.trim().slice(0, maxLength);
+
+          if (bookTitle[0] === '(') {
+            bookTitle = bookTitle.slice(1, bookTitle.length);
+          }
+
+          if (bookTitle.indexOf('.') !== -1) {
+            bookTitle.lastIndexOf('.');
+            bookTitle = bookTitle.slice(0, bookTitle.lastIndexOf('.'));
+          } else if (bookTitle.indexOf(':') !== -1) {
+            bookTitle = bookTitle.slice(0, bookTitle.lastIndexOf(':'));
+          } else {
+            bookTitle = bookTitle.split(' ');
+            if (bookTitle[bookTitle.length - 1].length >= 3) {
+              bookTitle[bookTitle.length - 1] = '...';
+            } else {
+              bookTitle.splice(bookTitle.length - 1, 1);
+              bookTitle[bookTitle.length - 1] = '...';
+            }
+            bookTitle = bookTitle.join(' ');
+          }
+          return bookTitle;
+
+        } else {
+          return bookTitle;
+        }
+      }
+      return bookTitle;
+    }
+
+  });
+
+
+}(this, this.BM));
 (function(window, BM, twemoji) {
 
   BM = window.BM || {};

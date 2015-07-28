@@ -211,9 +211,279 @@ var $__cart_47_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__catalogue_47_background_46_js__ = (function() {
+var $__catalogue_47_init_46_js__ = (function() {
   "use strict";
-  var __moduleName = "catalogue/background.js";
+  var __moduleName = "catalogue/init.js";
+  (function(window, modules, $, BM) {
+    modules.define('CatalogueInit', ['extend', 'baseView', 'CatalogueMenu', 'CatalogueItem'], function(provide, extend, BaseView, CatalogueMenu, CatalogueItem) {
+      var CatalogueInit = extend(BaseView),
+          $class = CatalogueInit,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.$elem) {
+            return ;
+          }
+          this.$menu = this.$elem.find('@bm-page-catalogue-menu');
+          this.$itemsWrapper = this.$elem.find('@bm-catalogue-items-wrapper');
+          this.$itemsGridWrapper = this.$elem.find('@bm-catalogue-items-grid');
+          this.$items = this.$itemsGridWrapper.find('@bm-catalogue-item');
+          this.$itemsSpecialWrapper = this.$elem.find('@bm-catalogue-items-special');
+          this.$itemsSpecial = this.$itemsSpecialWrapper.find('@bm-catalogue-item');
+          this._menu = null;
+          this._items = [];
+          this._initMenu();
+          this._initItems();
+          this._updateItems();
+          this._bindEvents();
+        },
+        _bindEvents: function() {},
+        _initItems: function() {
+          var self = this;
+          this.$items.each(function() {
+            var instance = new CatalogueItem({element: $(this)});
+            self._items.push(instance);
+          });
+        },
+        _initMenu: function() {
+          if (!BM.tools.isNull(this._menu)) {
+            return ;
+          }
+          this._menu = new CatalogueMenu({element: this.$menu});
+          this._menu.on('category-selected', function(categoryName, special) {
+            if (!special) {
+              this.el.removeAttr('data-special');
+              this.$itemsGridWrapper.attr('data-selected-category', categoryName);
+              BM.helper.browser.triggerRerender();
+              this._updateItems();
+            } else {
+              this.el.attr('data-special', special);
+            }
+          }.bind(this));
+        },
+        _updateItems: function() {
+          var self = this;
+          this.$items.filter(':visible').each(function(i, el) {
+            var handler = self._getItemHandler(this);
+            if (!BM.tools.isNull(handler)) {
+              (i + 1) % 4 === 0 ? handler.dockMoreToRight() : handler.dockMoreToLeft();
+            }
+          });
+        },
+        _getItemHandler: function(el) {
+          return this._items.filter(function(item) {
+            return item.el.get(0) === el;
+          })[0] || null;
+        }
+      });
+      new CatalogueInit({element: $(document.body).find('@bm-page-catalogue')});
+      provide(CatalogueInit);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__catalogue_47_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "catalogue/item.js";
+  (function(window, modules, $, BM) {
+    modules.define('CatalogueItem', ['extend', 'baseView', 'PopupItem'], function(provide, extend, BaseView, PopupItem) {
+      var CatalogueItem = extend(BaseView),
+          $class = CatalogueItem,
+          $super = $class.superclass,
+          $window = $(window);
+      var MORE_INFO_FADE_DISTANCE = 70,
+          MORE_INFO_FADE_BOUNDS = {
+            fr: 1,
+            to: 0.1
+          };
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+          this._config = {};
+          this.$content = this.el.find('@bm-catalogue-item-content');
+          this.$moreInfo = this.el.find('@bm-catalogue-item-more-info');
+          this._offset = null;
+          this._contentWidth = null;
+          this._widthWithMore = null;
+          this._parseConfig();
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          this.el.on(BM.helper.event.clickName(), function(event) {
+            this._onClick();
+          }.bind(this));
+          this.el.on('mouseover', function(event) {
+            this._onMouseOver(event);
+          }.bind(this));
+          this.el.on('mouseout', function(event) {
+            this._onMouseOut(event);
+          }.bind(this));
+          this.el.on('mousemove', function(event) {
+            this._onMouseMove(event);
+          }.bind(this));
+        },
+        _onClick: function(event) {
+          this._showPopup();
+        },
+        _onMouseOver: function(event) {
+          if (this._isMoreVisible()) {
+            return ;
+          }
+          this._setMoreInfoVisible(true);
+          BM.helper.browser.triggerRerender();
+        },
+        _onMouseOut: function(event) {
+          this._setMoreInfoVisible(false);
+        },
+        _onMouseMove: function(event) {
+          this._updateElementOffset();
+          this._updateContentWidth();
+          this._updateWidthWithMore();
+          var posX = event.pageX - this._offset.left,
+              bounds = MORE_INFO_FADE_BOUNDS,
+              boundsDiff = bounds.fr - bounds.to;
+          if (this._isMoreDockedToLeft()) {
+            var fadeStart = this._contentWidth,
+                fadeEnd = this._contentWidth + MORE_INFO_FADE_DISTANCE;
+            if (posX > fadeEnd) {
+              this._setMoreInfoVisible(false);
+            } else if (posX > fadeStart && posX < fadeEnd) {
+              var pos = posX - this._contentWidth,
+                  posRel = pos / MORE_INFO_FADE_DISTANCE,
+                  opacity = bounds.to + (boundsDiff * (1 - posRel));
+              this._setMoreOpacity(opacity);
+            }
+          } else if (this._isMoreDockedToRight() && !BM.tools.isNull(this._widthWithMore) && posX <= 0) {
+            var fadeEnd = MORE_INFO_FADE_DISTANCE,
+                pos = Math.abs(posX);
+            if (pos > fadeEnd) {
+              this._setMoreInfoVisible(false);
+            } else {
+              var posRel = pos / MORE_INFO_FADE_DISTANCE,
+                  opacity = bounds.to + (boundsDiff * (1 - posRel));
+              this._setMoreOpacity(opacity);
+            }
+          }
+        },
+        _showPopup: function() {
+          if (BM.tools.isNull(this._popup)) {
+            this._popup = new PopupItem({data: this._config});
+          }
+          this._popup.show();
+        },
+        _updateElementOffset: function() {
+          if (BM.tools.isNull(this._offset)) {
+            this._offset = this.el.offset();
+          }
+        },
+        _updateContentWidth: function() {
+          if (BM.tools.isNull(this._contentWidth)) {
+            this._contentWidth = this.$content.width();
+          }
+        },
+        _updateWidthWithMore: function() {
+          if (BM.tools.isNull(this._widthWithMore) && this.el.hasClass('m-dock-more-to-right')) {
+            this._widthWithMore = this.el.width();
+          }
+        },
+        _setMoreInfoVisible: function(bool) {
+          bool ? this.el.addClass('m-more-info-visible') && this._setMoreOpacity(1) : this.el.removeClass('m-more-info-visible');
+        },
+        _setMoreOpacity: function(value) {
+          value = Math.min(1, Math.max(0, value));
+          this.$moreInfo.css({'opacity': value});
+        },
+        _isMoreDockedToLeft: function() {
+          return !this.el.hasClass('m-dock-more-to-right');
+        },
+        _isMoreDockedToRight: function() {
+          return this.el.hasClass('m-dock-more-to-right');
+        },
+        _isMoreVisible: function() {
+          return this.el.hasClass('m-more-info-visible');
+        },
+        dockMoreToRight: function() {
+          this.el.addClass('m-dock-more-to-right');
+        },
+        dockMoreToLeft: function() {
+          this.el.removeClass('m-dock-more-to-right');
+        }
+      });
+      provide(CatalogueItem);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__catalogue_47_menu_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "catalogue/menu.js";
+  (function(window, modules, $, BM) {
+    modules.define('CatalogueMenu', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var CatalogueMenu = extend(BaseView),
+          $class = CatalogueMenu,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+          this.$items = this.$elem.find('@bm-page-catalogue-menu-item');
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          this.$items.on(BM.helper.event.clickName(), function(event) {
+            this._onItemClick(event);
+          }.bind(this));
+        },
+        _onItemClick: function(event) {
+          var $item = $(event.target),
+              name = $item.data('name');
+          if (BM.tools.isNull($item.data('name'))) {
+            $item = $item.parent('.bm-page-catalogue-menu-item');
+            name = $item.name;
+          }
+          this.$items.removeClass('m-selected');
+          $item.addClass('m-selected');
+          this._notify('category-selected', $item.data('name'), $item.data('special'));
+        }
+      });
+      provide(CatalogueMenu);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init.js";
+  (function(window, modules, $) {
+    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
+      provide();
+    });
+    modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements', 'SideMenuInit'], function(provide) {
+      if (BM.tools.client.isTouch()) {
+        $('body').addClass('m-touch');
+      } else {
+        $('body').addClass('m-desktop');
+      }
+      provide();
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__catalogue_95_old_47_background_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "catalogue_old/background.js";
   (function(window, modules, $, BM) {
     modules.define('CatalogueBackground', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
       var CatalogueBackground = extend(BaseView),
@@ -313,11 +583,11 @@ var $__catalogue_47_background_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__catalogue_47_init_46_js__ = (function() {
+var $__catalogue_95_old_47_init_46_js__ = (function() {
   "use strict";
-  var __moduleName = "catalogue/init.js";
+  var __moduleName = "catalogue_old/init.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueInit', ['extend', 'baseView', 'CatalogueBackground', 'CatalogueMenu', 'CatalogueItem', 'EventDispatcher'], function(provide, extend, BaseView, Background, Menu, Item, EventDispatcher) {
+    modules.define('CatalogueInitOld', ['extend', 'baseView', 'CatalogueBackground', 'CatalogueMenu', 'CatalogueItem', 'EventDispatcher'], function(provide, extend, BaseView, Background, Menu, Item, EventDispatcher) {
       var CatalogueInit = extend(BaseView),
           $class = CatalogueInit,
           $super = $class.superclass,
@@ -335,11 +605,7 @@ var $__catalogue_47_init_46_js__ = (function() {
           this.$elemItemsWrapper = this.$elem.find('@bm-catalogue-items-wrapper');
           this._groupes = [this.$elemGroupClassic = this.$elem.find('@bm-catalogue-item-group-classic'), this.$elemGroupAroma = this.$elem.find('@bm-catalogue-item-group-aroma')];
           this._groupesRanges = [];
-          this._saveGroupsRanges();
-          this._initBackground();
-          this._initMenu();
           this._initItems();
-          this._bindEvents();
         },
         _bindEvents: function() {
           EventDispatcher.on('window-resize', function() {
@@ -437,11 +703,11 @@ var $__catalogue_47_init_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__catalogue_47_item_46_js__ = (function() {
+var $__catalogue_95_old_47_item_46_js__ = (function() {
   "use strict";
-  var __moduleName = "catalogue/item.js";
+  var __moduleName = "catalogue_old/item.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueItem', ['extend', 'baseView', 'PopupItem'], function(provide, extend, BaseView, PopupItem) {
+    modules.define('CatalogueItemOld', ['extend', 'baseView', 'PopupItem'], function(provide, extend, BaseView, PopupItem) {
       var CatalogueItem = extend(BaseView),
           $class = CatalogueItem,
           $super = $class.superclass;
@@ -478,11 +744,11 @@ var $__catalogue_47_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
-var $__catalogue_47_menu_46_js__ = (function() {
+var $__catalogue_95_old_47_menu_46_js__ = (function() {
   "use strict";
-  var __moduleName = "catalogue/menu.js";
+  var __moduleName = "catalogue_old/menu.js";
   (function(window, modules, $, BM) {
-    modules.define('CatalogueMenu', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
+    modules.define('CatalogueMenuOld', ['extend', 'baseView', 'EventDispatcher'], function(provide, extend, BaseView, EventDispatcher) {
       var CatalogueMenu = extend(BaseView),
           $class = CatalogueMenu,
           $super = $class.superclass,
@@ -520,25 +786,6 @@ var $__catalogue_47_menu_46_js__ = (function() {
       provide(CatalogueMenu);
     });
   }(this, this.modules, this.jQuery, this.BM));
-  return {};
-}).call(Reflect.global);
-
-var $__ui_45_modules_47_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init.js";
-  (function(window, modules, $) {
-    modules.define('beforeUIModulesInit', ['InitEventDispatcher'], function(provide) {
-      provide();
-    });
-    modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements'], function(provide) {
-      if (BM.tools.client.isTouch()) {
-        $('body').addClass('m-touch');
-      } else {
-        $('body').addClass('m-desktop');
-      }
-      provide();
-    });
-  }(this, this.modules, this.jQuery));
   return {};
 }).call(Reflect.global);
 
@@ -732,6 +979,56 @@ var $__ui_45_modules_47_controls_47_button_45_number_46_js__ = (function() {
         }
       });
       provide(ControlButtonNumber);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
+  (function(window, modules, $, BM) {
+    var dispatcherInstance = null;
+    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
+      var EventDispatcher = extend(PubSub),
+          $class = EventDispatcher,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          this._timeoutNotifyResize = null;
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          $window.one('resize', function onWindowResize() {
+            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
+              clearTimeout(this._timeoutNotifyResize);
+              this._timeoutNotifyResize = null;
+            }
+            this._timeoutNotifyResize = setTimeout(function() {
+              this._notify('window-resize');
+            }.bind(this), 200);
+            setTimeout(function() {
+              $window.one('resize', onWindowResize.bind(this));
+            }.bind(this), 50);
+          }.bind(this));
+          $window.one('scroll', function onWindowScroll() {
+            this._notify('window-scroll');
+            setTimeout(function() {
+              $window.one('scroll', onWindowScroll.bind(this));
+            }.bind(this), 25);
+          }.bind(this));
+        }
+      });
+      provide(EventDispatcher);
+    });
+    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
+      dispatcherInstance = new Dispatcher();
+      provide();
+    });
+    modules.define('EventDispatcher', [], function(provide) {
+      provide(dispatcherInstance);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};
@@ -961,51 +1258,56 @@ var $__ui_45_modules_47_dynamic_45_content_47_dynamic_45_content_46_js__ = (func
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_dispatcher_47_dispatcher_46_js__ = (function() {
+var $__ui_45_modules_47_init_47_side_45_menu_45_init_46_js__ = (function() {
   "use strict";
-  var __moduleName = "ui-modules/dispatcher/dispatcher.js";
-  (function(window, modules, $, BM) {
-    var dispatcherInstance = null;
-    modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function(provide, extend, PubSub) {
-      var EventDispatcher = extend(PubSub),
-          $class = EventDispatcher,
-          $super = $class.superclass,
-          $window = $(window);
-      BM.tools.mixin($class.prototype, {
-        initialize: function() {
-          $super.initialize.apply(this, arguments);
-          this._timeoutNotifyResize = null;
-          this._bindEvents();
-        },
-        _bindEvents: function() {
-          $window.one('resize', function onWindowResize() {
-            if (!BM.tools.isNull(this._timeoutNotifyResize)) {
-              clearTimeout(this._timeoutNotifyResize);
-              this._timeoutNotifyResize = null;
-            }
-            this._timeoutNotifyResize = setTimeout(function() {
-              this._notify('window-resize');
-            }.bind(this), 200);
-            setTimeout(function() {
-              $window.one('resize', onWindowResize.bind(this));
-            }.bind(this), 50);
-          }.bind(this));
-          $window.one('scroll', function onWindowScroll() {
-            this._notify('window-scroll');
-            setTimeout(function() {
-              $window.one('scroll', onWindowScroll.bind(this));
-            }.bind(this), 25);
-          }.bind(this));
+  var __moduleName = "ui-modules/init/side-menu-init.js";
+  (function(window, modules, $, radio) {
+    modules.define('SideMenuInit', [], function(provide) {
+      var $body = $(document.body),
+          buttonToggleSideMenu = $('@bm-side-menu-toggle-button');
+      buttonToggleSideMenu.on(BM.helper.event.clickName(), function(event) {
+        if ($body.hasClass('m-side-menu-opened')) {
+          $body.removeClass('m-side-menu-opened');
+        } else {
+          $body.addClass('m-side-menu-opened');
         }
       });
-      provide(EventDispatcher);
     });
-    modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function(provide, Dispatcher) {
-      dispatcherInstance = new Dispatcher();
-      provide();
-    });
-    modules.define('EventDispatcher', [], function(provide) {
-      provide(dispatcherInstance);
+  }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_item_47_brewing_45_method_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/item/brewing-method.js";
+  (function(window, modules, $, BM) {
+    modules.define('ItemBrewingMethodItem', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var ItemBrewingMethodItem = extend(BaseView),
+          $class = ItemBrewingMethodItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+          this.$text = this.el.find('@bm-brewing-method-item-text');
+          this._config = BM.tools.mixin({}, config);
+          this.render();
+        },
+        render: function() {
+          if (!this._config.data) {
+            return ;
+          }
+          this.el.attr('data-name', this._config.data.name);
+          this.el.attr('data-size', this._config.data.size || "normal");
+          this.$text.html(this._config.data.text);
+        },
+        _getTemplateName: function() {
+          return 'bm-brewing-method-item-template';
+        }
+      });
+      provide(ItemBrewingMethodItem);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};
@@ -1079,19 +1381,128 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/item.js";
   (function(window, modules, $, BM) {
-    modules.define('Item', ['extend', 'baseView', 'FormItemOrder'], function(provide, extend, BaseView, FormOrder) {
+    modules.define('Item', ['extend', 'baseView', 'FormItemOrder', 'ItemSpecsItem', 'ItemBrewingMethodItem'], function(provide, extend, BaseView, FormOrder, ItemSpecsItem, ItemBrewingMethodItem) {
       var Item = extend(BaseView),
           $class = Item,
           $super = $class.superclass;
       BM.tools.mixin($class.prototype, {
-        initialize: function() {
+        initialize: function(config) {
           $super.initialize.apply(this, arguments);
           if (!this.$elem) {
             return ;
           }
+          this._config = BM.tools.mixin({}, config);
           this._formOrder = null;
           this.$elemFormOrder = this.$elem.find('@bm-form-order');
+          this.$name = this.el.find('@bm-item-name');
+          this.$descriptionShort = this.el.find('@bm-item-description-short');
+          this.$rating = this.el.find('@bm-item-rating');
+          this.$price = this.el.find('@bm-item-price');
+          this.$specsWrapper = this.el.find('@bm-item-specs');
+          this.$description = this.el.find('@bm-item-description');
+          this.$imageWrapper = this.el.find('@bm-item-image-wrapper');
+          this.$image = this.el.find('@bm-item-image');
+          this.$imagePlantation = this.el.find('@bm-item-image-plantation');
+          this.$methodsWrapper = this.el.find('@bm-item-methods-wrapper');
+          this._timeoutZoom = null;
+          this._specs = [];
+          this._methods = [];
           this._initFormOrder();
+          this._bindEvents();
+          this.render();
+        },
+        _bindEvents: function() {
+          if (BM.tools.client.isTouch()) {
+            this.$imageWrapper.on('tap', function(event) {
+              this._onImageWrapperTap();
+            }.bind(this));
+          } else {
+            this.$imageWrapper.on('mouseover', function(event) {
+              this._onImageWrapperMouseOver();
+            }.bind(this));
+            this.$imageWrapper.on('mouseout', function(event) {
+              this._onImageWrapperMouseOut();
+            }.bind(this));
+          }
+        },
+        _onImageWrapperTap: function() {
+          this._toggleZoom();
+        },
+        _onImageWrapperMouseOver: function() {
+          if (this._isZoomVisible()) {
+            return ;
+          }
+          this._clearTimeoutZoom();
+          this._timeoutZoom = setTimeout(function() {
+            this._showZoom();
+          }.bind(this), 300);
+        },
+        _onImageWrapperMouseOut: function() {
+          this._clearTimeoutZoom();
+          this._hideZoom();
+        },
+        _clearTimeoutZoom: function() {
+          if (!BM.tools.isNull(this._timeoutZoom)) {
+            clearTimeout(this._timeoutZoom);
+            this._timeoutZoom = null;
+          }
+        },
+        _toggleZoom: function() {
+          if (this._isZoomVisible()) {
+            this._hideZoom();
+          } else {
+            this._showZoom();
+          }
+        },
+        _showZoom: function() {
+          this.el.addClass('m-scale-visible');
+        },
+        _hideZoom: function() {
+          this.el.removeClass('m-scale-visible');
+        },
+        _isZoomVisible: function() {
+          return this.el.hasClass('m-scale-visible');
+        },
+        render: function() {
+          if (!this._config.data) {
+            return ;
+          }
+          this.$name.html(this._config.data.name);
+          this.$descriptionShort.html(this._config.data.descriptionShort);
+          this.$rating.attr('data-value', this._config.data.rating);
+          this.$price.html(this._config.data.price);
+          this.$description.html(this._config.data.description);
+          this.$image.attr('src', this._config.data.image.large);
+          this.$imagePlantation.attr('src', this._config.data.imagePlantation.default);
+          this._renderSpecs();
+          this._renderBrewingMethods();
+        },
+        _renderSpecs: function() {
+          this._specs.forEach(function(spec) {
+            spec.destroy();
+          });
+          this._specs.length = 0;
+          this._specs = [];
+          this.$specsWrapper.html('');
+          this._config.data.specsWithLabels.forEach(function(specData) {
+            var spec = new ItemSpecsItem({
+              data: specData,
+              options: {hint: true}
+            });
+            this.$specsWrapper.append(spec.getElement());
+          }.bind(this));
+        },
+        _renderBrewingMethods: function() {
+          this._methods.forEach(function(method) {
+            method.destroy();
+          });
+          this._methods.length = 0;
+          this._methods = [];
+          this.$methodsWrapper.html('');
+          this._config.data.methodsWithLabels.forEach(function(methodData) {
+            var method = new ItemBrewingMethodItem({data: methodData});
+            this.$methodsWrapper.append(method.getElement());
+          }.bind(this));
         },
         _initFormOrder: function() {
           if (BM.tools.isNull(this._formOrder)) {
@@ -1103,6 +1514,104 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
         }
       });
       provide(Item);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_item_47_specs_45_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/item/specs-item.js";
+  (function(window, modules, $, BM) {
+    modules.define('ItemSpecsItem', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var ItemSpecsItem = extend(BaseView),
+          $class = ItemSpecsItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+          this.$label = this.el.find('@bm-item-specs-item-label');
+          this.$value = this.el.find('@bm-item-specs-item-value');
+          this.$hint = this.el.find('@bm-item-specs-item-hint');
+          this._timeoutShowHint = null;
+          this._config = BM.tools.mixin({}, config);
+          this._bindEvents();
+          this.render();
+        },
+        _bindEvents: function() {
+          if (BM.tools.client.isTouch()) {
+            this._onLabelTap();
+          } else {
+            this.$label.on('mouseover', function(event) {
+              this._onLabelMouseOver();
+            }.bind(this));
+            this.$label.on('mouseout', function(event) {
+              this._onLabelMouseOut();
+            }.bind(this));
+          }
+        },
+        _onLabelMouseOver: function() {
+          if (!this._isHintAvailable()) {
+            return ;
+          }
+          this._timeoutShowHint = setTimeout(function() {
+            this._showHint();
+          }.bind(this), 300);
+        },
+        _onLabelMouseOut: function() {
+          if (!BM.tools.isNull(this._timeoutShowHint)) {
+            clearTimeout(this._timeoutShowHint);
+            this._timeoutShowHint = null;
+          }
+          this._hideHint();
+        },
+        _onLabelTap: function() {
+          if (!this._isHintAvailable()) {
+            return ;
+          }
+          this.$label.on('tap', function(event) {
+            this._toggleHint();
+          }.bind(this));
+        },
+        _toggleHint: function() {
+          if (this._isHintVisible()) {
+            this._hideHint();
+          } else {
+            this._showHint();
+          }
+        },
+        _showHint: function() {
+          this.el.addClass('m-hint-visible');
+        },
+        _hideHint: function() {
+          this.el.removeClass('m-hint-visible');
+        },
+        _isHintVisible: function() {
+          return this.el.hasClass('m-hint-visible');
+        },
+        _isHintAvailable: function() {
+          return this._config && this._config.data.description && this._config.options && this._config.options.hint === true;
+        },
+        render: function() {
+          if (!this._config.data) {
+            return ;
+          }
+          this.el.attr('data-name', this._config.data.name);
+          this.$label.html(this._config.data.label);
+          this.$value.attr('data-value', this._config.data.value);
+          this.$hint.html(this._config.data.description);
+          if (this._isHintAvailable()) {
+            this.el.addClass('m-hint-available');
+          }
+        },
+        _getTemplateName: function() {
+          return 'bm-item-specs-all-item-template';
+        }
+      });
+      provide(ItemSpecsItem);
     });
   }(this, this.modules, this.jQuery, this.BM));
   return {};
@@ -1122,6 +1631,7 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
             rootClassName: ['m-version-2', 'bm-popup-item'],
             useTemplate: true
           });
+          this._config = BM.tools.mixin({}, config);
           this._dynamicContent = null;
           this._itemHandler = null;
           this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
@@ -1142,19 +1652,17 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
         _initDynamicContent: function() {
           if (BM.tools.isNull(this._dynamicContent)) {
             this._dynamicContent = new DynamicContent({element: this.$elemDynamicContent});
+            this._dynamicContent.setStep('content');
           }
         },
         _initItem: function() {
           if (BM.tools.isNull(this._itemHandler)) {
-            this._itemHandler = new Item();
+            this._itemHandler = new Item({data: this._config.data});
             this.$elemContent.append(this._itemHandler.getElement());
           }
         },
         show: function() {
           $super.show.apply(this, arguments);
-          setTimeout(function() {
-            this._dynamicContent.showStep('content');
-          }.bind(this), 500);
         },
         _getTemplateName: function() {
           return 'bm-popup-item-template';
@@ -1221,7 +1729,7 @@ var $__ui_45_modules_47_item_47_form_47_grind_46_js__ = (function() {
           }
           this.$elemsWithUniqueId = this.$elem.find('@bm-form-unique-element');
           this.$elemsOptionsViaGrind = this.$elem.find('@bm-form-grind-option-via-grind');
-          this.$elemsBrewingMethods = this.$elem.find('@bm-brewing-method');
+          this.$elemsBrewingMethods = this.$elem.find('@bm-brewing-method-item');
           this.$elemViaTypeWrapper = this.$elem.find('@bm-form-select-grind-via-type-wrapper');
           this._setUniqueIds();
           this._bindEvents();
@@ -1248,6 +1756,7 @@ var $__ui_45_modules_47_item_47_form_47_grind_46_js__ = (function() {
           targetElement.addClass('m-selected');
           this.$elemsBrewingMethods.not(targetElement).removeClass('m-selected');
           this._setSelectViaGrindStateBlur(true);
+          this.$elemsOptionsViaGrind.val([]);
           this._notify('change', targetElement.data('name'));
         },
         _setUniqueIds: function() {
@@ -1298,6 +1807,7 @@ var $__loadScriptsConfig_46_js__ = (function() {
       },
       'catalogue-index': function() {
         modules.require('ui-modules');
+        modules.require('CatalogueInit');
       }
     };
   }(this, this.document, this.modules, this.BM = this.BM || {}));

@@ -89,17 +89,28 @@
 }
 
 .bm-page-item-image-wrapper {
+  .transition(0.25s);
   background-color: #ffffff;
   border-radius: 150px;
   box-shadow: 0px 6px 7px rgba(0, 0, 0, 0.2);
   height: 217px;
   line-height: 217px;
   margin: 0 auto 22px auto;
+  overflow: hidden;
+  position: relative;
   width: 217px;
+  z-index: 4;
+
+  .m-desktop .bm-page-item.m-scale-visible & {
+    .transform(scale(3));
+  }
 }
 .bm-page-item-image {
+  .transition(0.25s);
   .vertical-align-middle();
-  height: 72%;
+  height: 110%;
+  position: relative;
+  top: 30px;
   width: auto;
 }
 
@@ -129,6 +140,20 @@
   color: #555555;
 }
 
+.bm-item-specs-wrapper {
+  &[data-size="small"] {
+    .bm-item-specs-item {
+      padding-left: 92px;
+    }
+    .bm-item-specs-item-value .dot {
+      margin-right: 4px;
+      height: 7px;
+      line-height: 7px;
+      width: 7px;
+    }
+  }
+}
+
 .bm-item-specs-item {
   .box-sizing(border-box);
   height: 10px;
@@ -136,10 +161,59 @@
   padding-left: 146px;
   position: relative;
   width: 100%;
+  z-index: 3;
 
   &:not(:last-of-type) {
     margin-bottom: 18px;
   }
+
+  &.m-hint-available {
+    cursor: help;
+  }
+}
+
+.bm-item-specs-item-hint {
+  .box-sizing(border-box);
+  background-color: rgba(0, 0, 0, 0.87);
+  bottom: 20px;
+  left: 0;
+  opacity: 0;
+  padding: 10px;
+  position: absolute;
+  pointer-events: none;
+  width: 250px;
+  z-index: -1;
+
+  .bm-item-specs-item:not(.m-hint-available) & {
+    display: none;
+  }
+
+  &::before {
+    bottom: -7px;
+    border-bottom: 0;
+    border-top: 7px solid #000000;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    box-sizing: border-box;
+    content: ' ';
+    font-size: 0;
+    line-height: 0;
+    left: 10px;
+    position: absolute;
+    width: 13px;
+  }
+
+  .bm-item-specs-item.m-hint-visible & {
+    //.animated();
+    //.fadeInLeft;
+    .animation(bm-anim-fade-in-top 0.3s ease);
+    opacity: 1;
+    z-index: 2;
+  }
+}
+.bm-item-specs-item-hint-text {
+  .bm-font-pt(15px);
+  color: #ffffff;
 }
 
 .bm-item-specs-item-label {

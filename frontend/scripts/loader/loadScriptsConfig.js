@@ -23,7 +23,7 @@
 
     'catalogue-index' : function() {
         modules.require('ui-modules');
-        //modules.require('CatalogueInit');
+        modules.require('CatalogueInit');
     }
   };
 

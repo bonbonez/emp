@@ -1,5 +1,5 @@
 class Admin::AdminController < ActionController::Base
-  before_filter :check_access, except: [:enable_admin_access, :disable_admin_access]
+  #before_filter :check_access, except: [:enable_admin_access, :disable_admin_access]
 
   layout 'admin'
 

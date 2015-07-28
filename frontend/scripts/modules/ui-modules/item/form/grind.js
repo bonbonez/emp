@@ -28,7 +28,7 @@
 
         this.$elemsWithUniqueId    = this.$elem.find('@bm-form-unique-element');
         this.$elemsOptionsViaGrind = this.$elem.find('@bm-form-grind-option-via-grind');
-        this.$elemsBrewingMethods  = this.$elem.find('@bm-brewing-method');
+        this.$elemsBrewingMethods  = this.$elem.find('@bm-brewing-method-item');
 
         this.$elemViaTypeWrapper   = this.$elem.find('@bm-form-select-grind-via-type-wrapper');
 
@@ -60,6 +60,7 @@
         targetElement.addClass('m-selected');
         this.$elemsBrewingMethods.not(targetElement).removeClass('m-selected');
         this._setSelectViaGrindStateBlur(true);
+        this.$elemsOptionsViaGrind.val([]);
         this._notify('change', targetElement.data('name'));
       },
 

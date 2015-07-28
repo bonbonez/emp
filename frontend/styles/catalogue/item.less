@@ -13,18 +13,86 @@
     margin-right: 20px;
   }
 
-  &::before {
+  /*&::before {
     .bm-font-pt(15px, 15px, normal);
     content: attr(data-counter);
     color: #999999;
     position: absolute;
     top: 15px;
     left: 0px;
+  }*/
+
+  .m-desktop &.m-more-info-visible {
+    .bm-coffee-item-more-info {
+      display: block;
+    }
+
+    .bm-coffee-item-content {
+      z-index: 2;
+    }
+  }
+
+
+}
+
+.bm-coffee-item-more-info {
+  box-shadow: -1px -1px 16px rgba(0, 0, 0, 0.25);
+  background-color: #ffffff;
+  //border-left: 20px solid #ffffff;
+  display: none;
+  padding-left: 225px;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  z-index: 1;
+
+  .bm-coffee-item.m-dock-more-to-right & {
+    left: auto;
+    right: 0;
+    padding-left: 0;
+    padding-right: 225px;
+  }
+}
+
+.bm-coffee-item-more-info-content {
+  .box-sizing(border-box);
+  padding: 20px 20px 20px 0;
+  width: 245px;
+
+  .bm-coffee-item.m-dock-more-to-right & {
+    padding: 20px 0 20px 20px;
+  }
+}
+
+.bm-coffee-item-more-info-specs {
+  .box-sizing(border-box);
+  background-color: rgba(241, 241, 241, 0.5);
+  margin-bottom: 10px;
+  padding: 15px;
+  width: 225px;
+}
+
+.bm-coffee-item-more-info-description {
+  .bm-text-15();
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+
+  &::after {
+    .wt-gradient-bottom-to-top();
+    bottom: 0;
+    content: '';
+    height: 40px;
+    left: 0;
+    position: absolute;
+    width: 100%;
   }
 }
 
 .bm-coffee-item-content {
   .box-sizing(border-box);
+  position: relative;
   width: 100%;
 }
 
@@ -56,6 +124,7 @@
   }
   .bm-coffee-item[data-kind="exotic"] & {
     background-image: url('/images/icon/kind/exotic.png');
+    background-size: auto 70%;
   }
   .bm-coffee-item[data-kind="espresso"] & {
     background-image: url('/images/icon/kind/espresso.png');
@@ -64,8 +133,10 @@
 }
 .bm-coffee-item-header-text {
   //display: table-cell;
+  .box-sizing(border-box);
   color: #000000;
   line-height: 28px;
+  padding: 0 10px;
   vertical-align: middle;
 }
 .bm-coffee-item-image-wrapper {

@@ -1,0 +1,14 @@
+ruby:
+  items  ||= nil
+  header ||= nil
+
+- if items.present? && items.count > 0
+  .bm-page-catalogue-item-group
+    - if header.present?
+      .bm-page-catalogue-item-group-header
+        .bm-page-catalogue-item-group-header-text
+          == header
+
+    .bm-page-catalogue-items-wrapper role="bm-catalogue-items-wrapper"
+      - items.each_with_index do |item, i|
+        = render partial: 'catalogue/item', locals: {item: item, counter: i + 1}

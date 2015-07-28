@@ -1,4 +1,5 @@
 @header-height: 84px;
+@header-height-mobile: 60px;
 
 .bm-header {
   background-color: #fafafa;
@@ -17,13 +18,76 @@
   text-align: center;
 }
 
+.bm-header-side-menu-button {
+  cursor: pointer;
+  display: none;
+  height: @header-height-mobile;
+  line-height: @header-height-mobile;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: @header-height-mobile;
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    background-color: #eeeeee;
+  }
+
+  .m-side-menu-opened & {
+    z-index: 5;
+
+    .m-desktop &:hover,
+    .m-touch   &:active {
+      background-color: transparent;
+    }
+
+    .line {
+      width: 16px;
+      height: 2px;
+
+      &.m-top {
+        .transform(translateY(0px) rotate(45deg));
+      }
+      &.m-middle {
+        opacity: 0;
+      }
+      &.m-bottom {
+        .transform(translateY(0px) rotate(-45deg));
+      }
+    }
+  }
+
+  .line {
+    .transition(0.15s);
+    background-color: #000000;
+    height: 2px;
+    left: 50%;
+    margin: -1px 0 0 -10px;
+    position: absolute;
+    top: 50%;
+    width: 20px;
+
+    &.m-top {
+      .transform(translateY(-5px));
+      .transform-origin(50% 50%);
+    }
+    &.m-middle {
+
+    }
+    &.m-bottom {
+      .transform(translateY(5px));
+      .transform-origin(50% 50%);
+    }
+  }
+}
+
 .bm-header-logo {
   display: block;
   background-image: url('/images/logo-black@2x.png');
   background-position: 0 0;
   background-repeat: no-repeat;
   background-size: 100% auto;
-  left: 0px;
+  left: 10px;
   height: 40px;
   position: absolute;
   top: 22px;
@@ -50,7 +114,7 @@
     .transform(translateX(-50%) scaleX(0));
     .transition();
     .transform-origin(inherit);
-    background-color: #0028b9;
+    background-color: #e5e5e5;
     bottom: -2px;
     content: ' ';
     height: 2px;
@@ -104,5 +168,43 @@
     &::after {
       .transform(translateX(-50%) scaleX(1));
     }
+  }
+}
+
+@media screen and (max-width: @breakpoint-tablet-from) {
+  .bm-header-content {
+    text-align: left;
+  }
+  .bm-header-navigation {
+    padding-left: 157px;
+    text-align: left;
+  }
+  .bm-header-navigation-item {
+    &:not(:last-of-type) {
+      margin-right: 20px;
+    }
+  }
+}
+
+@media screen and (max-width: @breakpoint-mobile) {
+  .bm-header {
+    height: @header-height-mobile;
+    line-height: @header-height-mobile;
+  }
+  .bm-header-logo {
+    left: 50%;
+    margin-left: -69px;
+    top: 10px;
+  }
+  .bm-header-content {
+    height: @header-height-mobile;
+    line-height: @header-height-mobile;
+
+    .bm-header-navigation {
+      display: none;
+    }
+  }
+  .bm-header-side-menu-button {
+    display: block;
   }
 }

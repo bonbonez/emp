@@ -6,16 +6,21 @@
     <%#= javascript_include_tag "application" %>
     <%#= csrf_meta_tags %>
     <link rel="stylesheet" href="/styles/global.css?<%= frontend_version %>" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 
 </head>
 <body class="<%= @css_class_layout if @css_class_layout.present? %>" data-scripts="<%= @scripts_id if @scripts_id.present? %>"
       data-cart-config="<%= @cart_config.to_json.to_s if @cart_config.present? %>">
 <%#= render partial: 'templates/item_popup_preview' %>
 <div class="b-layout">
+    <%= render partial: 'application/side_menu' %>
     <div class="b-layout-page">
-        <%= render partial: 'application/header' %>
+        <div class="b-layout-page-overflow" role="bm-side-menu-toggle-button"></div>
+        <%#= render partial: 'application/header' %>
         <%#= render partial: 'application/top_menu' %>
         <%#= render partial: 'application/top_categories_navigation' %>
+
+        <%= render partial: 'application/header_2' %>
         <div class="b-layout-content">
             <%= yield %>
         </div>

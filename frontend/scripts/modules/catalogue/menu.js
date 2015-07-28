@@ -4,64 +4,59 @@
     'CatalogueMenu',
     [
       'extend',
-      'baseView',
-      'EventDispatcher'
+      'baseView'
     ],
     function(
       provide,
       extend,
-      BaseView,
-      EventDispatcher
-      ) {
+      BaseView
+    ) {
 
-    var CatalogueMenu = extend(BaseView),
+      var CatalogueMenu = extend(BaseView),
 
-        $class        = CatalogueMenu,
-        $super        = $class.superclass,
+        $class  = CatalogueMenu,
+        $super  = $class.superclass,
 
-        $window       = $(window);
+        $window = $(window);
 
-    BM.tools.mixin($class.prototype, {
+      BM.tools.mixin($class.prototype, {
 
-      initialize : function() {
-        $super.initialize.apply(this, arguments);
+        initialize : function() {
+          $super.initialize.apply(this, arguments);
 
-        if (!this.$elem) {
-          return;
+          if (!this.el) {
+            return;
+          }
+
+          this.$items = this.$elem.find('@bm-page-catalogue-menu-item');
+
+          this._bindEvents();
+        },
+
+        _bindEvents : function() {
+          this.$items.on(BM.helper.event.clickName(), function(event){
+            this._onItemClick(event);
+          }.bind(this));
+        },
+
+        _onItemClick : function(event) {
+          var $item = $(event.target),
+              name  = $item.data('name');
+
+          if (BM.tools.isNull($item.data('name'))) {
+            $item = $item.parent('.bm-page-catalogue-menu-item');
+            name  = $item.name;
+          }
+
+          this.$items.removeClass('m-selected');
+          $item.addClass('m-selected');
+          this._notify('category-selected', $item.data('name'), $item.data('special'));
         }
 
-        this.$elemsItems = this.$elem.find('@bm-catalogue-menu-item');
-        this._offsetTop  = this.$elem.offset().top;
+      });
 
-        this._bindEvents();
-      },
-
-      _bindEvents : function() {
-        EventDispatcher.on('window-scroll', function() {
-          this._updatePosition();
-        }.bind(this));
-      },
-
-      _updatePosition : function() {
-        if ($window.scrollTop() >= this._offsetTop) {
-          this.$elem.addClass('m-fixed');
-        } else {
-          this.$elem.removeClass('m-fixed');
-        }
-      },
-
-      focusItem : function(itemName) {
-        var item = this.$elemsItems.filter('[data-item=' + itemName + ']');
-        if (item.length > 0) {
-          this.$elemsItems.removeClass('m-focused');
-          item.addClass('m-focused');
-        }
-      }
+      provide(CatalogueMenu);
 
     });
-
-    provide(CatalogueMenu);
-
-  });
 
 }(this, this.modules, this.jQuery, this.BM));

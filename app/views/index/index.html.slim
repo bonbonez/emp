@@ -1,4 +1,4 @@
-.bm-page-index
+/.bm-page-index
   .bm-page-index-header
     .bm-page-index-content
       = render partial: 'application/header'
@@ -28,3 +28,27 @@
     = render partial: 'shared/feedback_form'
 
   = render partial: 'application/footer'
+
+
+
+= render partial: 'application/header_2'
+
+.bm-page-index
+  .bm-page-index-about
+    .bm-page-index-about-text
+      | Empressa – это магазин свежеобжаренного кофе.<br/>
+        Более 40 видов кофе, включая смеси для кофемашин, ароматизированный кофе<br/>
+        и классическую арабику с 20 плантаций по всему миру
+    a.bm-button-default.bm-page-index-about-button href="/catalogue"
+      | перейти в каталог кофе
+
+  .bm-page-index-content
+    = render partial: "shared/about_fresh_coffee"
+
+  .bm-page-index-content
+    .bm-page-index-popular-wrapper
+      = render partial: "catalogue/popular", locals: {link: {text: "Весь кофе", url: "/catalogue"}, count: 4}
+
+  .bm-page-index-content
+    .bm-page-index-feedback-wrapper
+      = render partial: 'shared/feedback_form'

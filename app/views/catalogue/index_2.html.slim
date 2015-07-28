@@ -1,9 +1,53 @@
-= render partial: 'application/header_2'
+ruby:
+  menu_items = [
+    #{
+    #  name: "featured",
+    #  text: "подборки",
+    #  special: "featured"
+    #},
+    {
+      name: "mono",
+      text: "классический",
+      selected: true
+    },
+    {
+      name: "aroma",
+      text: "ароматизированный"
+    },
+    {
+      name: "exotic",
+      text: "редкий и экзотический"
+    },
+    {
+      name: "espresso",
+      text: "для кофемашин"
+    },
+    {
+      name: "all",
+      text: "весь кофе"
+    }
+  ]
 
-.bm-page-catalogue role="bm-catalogue-index"
+/= render partial: 'application/header_2'
+
+.bm-page-catalogue role="bm-page-catalogue"
   .bm-page-catalogue-content
-    .bm-page-catalogue-item-group
-      .bm-header-25.bm-page-catalogue-item-group-header ="Популярный кофе в этом месяце"
-      .bm-page-catalogue-items-wrapper
-        - @items_for_popular.each_with_index do |item, i|
+    /= render partial: "catalogue/popular"
+
+    .bm-page-catalogue-menu role="bm-page-catalogue-menu"
+      - menu_items.each do |item|
+        .bm-page-catalogue-menu-item role="bm-page-catalogue-menu-item" data-name=item[:name] class="#{'m-selected' if item[:selected].present?}" data-special="#{item[:special] if item[:special].present?}"
+          .bm-page-catalogue-menu-item-image
+          .bm-page-catalogue-menu-item-text
+            = item[:text]
+
+    .bm-page-catalogue-items-wrapper role="bm-catalogue-items-wrapper"
+      /.bm-page-catalogue-items-special.m-featured role="bm-catalogue-items-special"
+        - @items_groups_for_featured.each do |group|
+          = render partial: "catalogue/item_group", locals: {items: group[:items], header: group[:header]}
+      .bm-page-catalogue-items-grid role="bm-catalogue-items-grid" data-selected-category="mono"
+        - @items.each_with_index do |item, i|
           = render partial: 'catalogue/item', locals: {item: item, counter: i + 1}
+
+
+= render partial: 'templates/all'

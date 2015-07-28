@@ -7,7 +7,8 @@ ruby:
       data: item.api_attributes,
       html: {
         image_url: item.image.url(:medium),
-        counter:   counter
+        counter:   counter,
+        specs: (render partial: 'templates/item/specs/all', locals: {size: :small, config: item.specs_as_hash})
       }
     }
   end

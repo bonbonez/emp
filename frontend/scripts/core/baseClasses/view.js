@@ -27,6 +27,18 @@
                 if (!this.$elem || (config && config.useTemplateForced)) {
                     this._createElementFromTemplate();
                 }
+
+                this._defineFastProps();
+            },
+
+            _defineFastProps : function() {
+              if (!this.el) {
+                  Object.defineProperty(this, 'el', {
+                    get : function() {
+                        return !BM.tools.isNull(this.$elem) && this.$elem.length > 0 ? this.$elem : null;
+                    }
+                  })
+              }
             },
 
             _toJQueryObject : function(element) {

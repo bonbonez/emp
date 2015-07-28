@@ -1,8 +1,11 @@
 ruby:
-  config ||= nil
+  config ||= {}
 
-- if config.present?
-  .bm-brewing-method role="bm-brewing-method" data-config=config.to_json data-size=config[:size] data-name=config[:name]
-    .bm-brewing-method-image-wrapper
-       /img.bm-brewing-method-image src=config[:image]
-    .bm-brewing-method-text =config[:text]
+  size = config[:size] || :normal
+  name = config[:name] || ""
+  text = config[:text] || ""
+
+.bm-brewing-method role="bm-brewing-method-item" data-config=config.to_json data-size=size data-name=name
+  .bm-brewing-method-image-wrapper
+     /img.bm-brewing-method-image src=config[:image]
+  .bm-brewing-method-text role="bm-brewing-method-item-text" =text

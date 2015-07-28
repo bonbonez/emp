@@ -29,8 +29,10 @@
           useTemplate: true
         });
 
-        this._dynamicContent = null;
-        this._itemHandler    = null;
+        this._config             = BM.tools.mixin({}, config);
+
+        this._dynamicContent     = null;
+        this._itemHandler        = null;
 
         this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
         this.$elemContent        = this.$elem.find('@bm-popup-item-content');
@@ -56,21 +58,25 @@
             this._dynamicContent = new DynamicContent({
               element: this.$elemDynamicContent
             });
+            this._dynamicContent.setStep('content');
           }
       },
 
       _initItem : function() {
         if (BM.tools.isNull(this._itemHandler)) {
-          this._itemHandler = new Item();
+          this._itemHandler = new Item({
+            data: this._config.data
+          });
           this.$elemContent.append(this._itemHandler.getElement());
         }
       },
 
       show : function() {
         $super.show.apply(this, arguments);
-        setTimeout(function() {
+        /*setTimeout(function() {
           this._dynamicContent.showStep('content');
-        }.bind(this), 500);
+        }.bind(this), 200);*/
+        //this._dynamicContent.showStep('content');
       },
 
       _getTemplateName : function() {

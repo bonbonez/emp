@@ -4,8 +4,9 @@
 
         var initMethods = function () {
             var $input = $('#item_methods'),
-                $methods = $('@bm-brewing-method');
-            currentMethods = [];
+                $methods = $('@bm-brewing-method-item');
+
+            var currentMethods = [];
 
             var parseMethods = function () {
                 currentMethods = $input.val().split(' ');

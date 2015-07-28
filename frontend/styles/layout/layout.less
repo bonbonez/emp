@@ -35,38 +35,17 @@ div, span, p, b, h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
   padding: 0 @layout-padding;
   position: relative;
+  overflow: hidden;
   width: 980px;
 
-  .b-layout-promo-banner + & {
-    padding-top: 136px;
-  }
-
-  &-page {
-    .clearfix();
-    position: relative;
-
-    max-width: @layout-max-width;
-    min-height: 100%;
-    min-height: 100%;
-    margin: 0 auto;
-  }
-
-  &-content {
-    position: relative;
-    //padding-bottom: @layout-footer-height + @layout-footer-padding;
-    padding-bottom: 200px;
-    padding-top: 20px;
-  }
-
-  &-footer {
-    position: relative;
-    //padding-top: @layout-footer-padding;
+  body.m-fullwidth & {
+    padding: 0;
     width: 100%;
-    height: @layout-footer-height;
-    //margin: -(@layout-footer-height + @layout-footer-padding) auto 0;
-    margin: -@layout-footer-height auto 0;
 
-    line-height: @layout-footer-height;
+    .b-layout-page {
+      max-width: none;
+      width: 100%;
+    }
   }
 
   &.m-layout-content-fullwidth {
@@ -90,4 +69,57 @@ div, span, p, b, h1, h2, h3, h4, h5, h6 {
       height: 120px;
     }
   }
+}
+
+.b-layout-page {
+  .box-sizing(border-box);
+  .clearfix();
+  .transition(0.15s);
+  background-color: #ffffff;
+  max-width: @layout-max-width;
+  min-height: 100%;
+  min-height: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+
+  .b-layout-page-overflow {
+    .transition-prop(opacity, 0.15s);
+    background-color: rgba(0, 0, 0, 0.4);
+    height: 0;
+    left: 0;
+    opacity: 0;
+    position: fixed;
+    top: 0;
+    width: 0;
+  }
+
+  .m-side-menu-opened & {
+    .transform(translateX(220px));
+
+    .b-layout-page-overflow {
+      height: 100%;
+      opacity: 1;
+      width: 100%;
+      z-index: 4;
+    }
+  }
+}
+
+.b-layout-content {
+  position: relative;
+  //padding-bottom: @layout-footer-height + @layout-footer-padding;
+  padding-bottom: 200px;
+  padding-top: 20px;
+}
+
+.b-layout-footer {
+  position: relative;
+  //padding-top: @layout-footer-padding;
+  width: 100%;
+  height: @layout-footer-height;
+  //margin: -(@layout-footer-height + @layout-footer-padding) auto 0;
+  margin: -@layout-footer-height auto 0;
+
+  line-height: @layout-footer-height;
 }
