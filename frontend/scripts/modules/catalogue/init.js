@@ -86,6 +86,10 @@
         },
 
         _updateItems : function() {
+          if (BM.tools.client.isTouch()) {
+            return;
+          }
+
           var self = this;
           this.$items.filter(':visible').each(function(i, el){
             var handler = self._getItemHandler(this);

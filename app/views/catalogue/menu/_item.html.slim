@@ -1,0 +1,8 @@
+ruby:
+  item ||= nil
+
+- if item.present?
+  .bm-page-catalogue-menu-item role="bm-page-catalogue-menu-item" data-name=item[:name] class="#{'m-selected' if item[:selected].present?}" data-special="#{item[:special] if item[:special].present?}"
+    .bm-page-catalogue-menu-item-image
+    .bm-page-catalogue-menu-item-text
+      = item[:text]

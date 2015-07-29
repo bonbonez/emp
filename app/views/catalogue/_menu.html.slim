@@ -1,5 +1,47 @@
-.bm-catalogue-menu role="bm-catalogue-menu"
-  .bm-catalogue-menu-item.m-focused role="bm-catalogue-menu-item" data-item="mono" ="моносорта"
-  .bm-catalogue-menu-item role="bm-catalogue-menu-item" data-item="mix" ="смеси"
-  .bm-catalogue-menu-item role="bm-catalogue-menu-item" data-item="aroma" ="ароматизированный"
-  .bm-catalogue-menu-item role="bm-catalogue-menu-item" data-item="exotic" ="экзотика"
+ruby:
+  menu_items = [
+    #{
+    #  name: "featured",
+    #  text: "подборки",
+    #  special: "featured"
+    #},
+    {
+      name: "mono",
+      text: "классический",
+      selected: true
+    },
+    {
+      name: "aroma",
+      text: "ароматизированный"
+    },
+    {
+      name: "exotic",
+      text: "редкий и экзотический"
+    },
+    {
+      name: "espresso",
+      text: "для кофемашин"
+    },
+    {
+      name: "all",
+      text: "весь кофе"
+    }
+  ]
+
+.bm-page-catalogue-menu role="bm-page-catalogue-menu"
+  .bm-page-catalogue-menu-select role="bm-page-catalogue-select"
+    - menu_items.each do |item|
+      .bm-page-catalogue-menu-select-item-wrapper role="bm-page-catalogue-menu-select-item" class="#{'m-selected' if item[:selected] }"
+        .bm-page-catalogue-menu-select-item-wrapper-content
+          .bm-page-catalogue-menu-select-button
+          = render partial: "catalogue/menu/item", locals: {item: item}
+    /.bm-page-catalogue-menu-select-current-item role="bm-page-catalogue-menu-select-dropdown-button"
+      .bm-page-catalogue-menu-select-current-item-wrapper role="bm-page-catalogue-menu-select-current-item-wrapper"
+        .bm-page-catalogue-menu-select-button
+        = render partial: "catalogue/menu/item", locals: {item: menu_items.find{|i|i[:selected].present?}}
+    /.bm-page-catalogue-menu-dropdown
+      - menu_items.each do |item|
+        = render partial: "catalogue/menu/item", locals: {item: item} if item[:selected].nil?
+  .bm-page-catalogue-menu-list role="bm-page-catalogue-list"
+    - menu_items.each do |item|
+      = render partial: "catalogue/menu/item", locals: {item: item}

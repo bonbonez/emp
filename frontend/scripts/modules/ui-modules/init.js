@@ -1,6 +1,7 @@
 (function(window, modules, $){
 
   modules.define('beforeUIModulesInit', [
+    'InitGlobalStylesModifiers',
     'InitEventDispatcher'
   ], function( provide ){
 
