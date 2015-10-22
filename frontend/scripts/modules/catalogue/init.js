@@ -48,7 +48,7 @@
           this._bindEvents();
 
           //this._items[0]._setMoreInfoVisible(true);
-          //this._items[0]._showPopup();
+          this._items[0]._showPopup();
         },
 
         _bindEvents : function() {
@@ -79,6 +79,10 @@
               this.$itemsGridWrapper.attr('data-selected-category', categoryName);
               BM.helper.browser.triggerRerender();
               this._updateItems();
+
+              /*if (BM.tools.client.isTouch()) {
+                $.scrollTo(this._menu.el.offset().top, 400);
+              }*/
             } else {
               this.el.attr('data-special', special);
             }

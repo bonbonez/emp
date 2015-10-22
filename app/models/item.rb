@@ -1,6 +1,7 @@
 #encoding: utf-8
 
 class Item < ActiveRecord::Base
+  include ApplicationHelper
   after_initialize :init
 
   has_attached_file :image, :styles => { :large => "500x700>", :medium => "300x500>" }
@@ -66,34 +67,22 @@ class Item < ActiveRecord::Base
     end
   end
 
+  def get_price_500
+    self.price_500.present? ? self.price_500 : self.price * 2
+  end
+
+  def get_price_1000
+    self.price_1000.present? ? self.price_1000 : self.price * 4
+  end
+
   def methods_with_labels
-    methods = self.methods.split(' ')
     ret = []
+    methods = self.methods.split(' ')
+
     methods.each do |name|
-      text = ""
-      name = name.to_sym
-      if name == :aeropress
-        text  = "Аэропресс"
-      elsif name == :turk
-        text  = "Турка"
-      elsif name == :v60
-        text  = "Пуровер"
-      elsif name == :siphon
-        text  = "Сифон"
-      elsif name == :french
-        text  = "Френч"
-      elsif name == :cup
-        text  = "В чашку"
-      elsif name == :machine
-        text  = "Машина"
-      elsif name == :moka
-        text  = "Мока"
-      end
-      ret.push({
-        name: name,
-        text: text
-      })
+      ret.push brewing_method_meta(name.to_sym)
     end
+
     ret
   end
 
@@ -102,7 +91,18 @@ class Item < ActiveRecord::Base
       name:              self.name,
       methods:           self.methods,
       methodsWithLabels: self.methods_with_labels,
-      price:             self.price,
+      price:             [
+        {
+          amount: 250,
+          value:  self.price
+        }, {
+          amount: 500,
+          value:  get_price_500
+        }, {
+          amount: 1000,
+          value:  get_price_1000
+        }
+      ],
       isPublished:       self.is_published,
       url:               self.url,
       rating:            self.rating,

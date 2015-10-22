@@ -4,7 +4,7 @@
   width: 95px;
 
   &[data-size=smaller] {
-    width: 70px;
+    width: 60px;
   }
 }
 
@@ -18,6 +18,10 @@
   overflow: hidden;
   width: 100%;
 
+  .bm-brewing-method[data-name=beans] & {
+    background-image: url('/images/misc/bean.png');
+    background-size: auto 70%;
+  }
   .bm-brewing-method[data-name=aeropress] & {
     background-image: url('/images/icon/brewing/aeropress.png');
   }
@@ -40,6 +44,11 @@
     background-image: url('/images/icon/brewing/cup.png');
     background-position: 34px bottom;
   }
+  .bm-brewing-method[data-name="manual_espresso"] & {
+    background-image: url('/images/icon/brewing/manual_espresso.png');
+    background-size: auto 90%;
+    background-position: 9px bottom;
+  }
   .bm-brewing-method[data-name=machine] & {
     background-image: url('/images/icon/brewing/machine.png');
     background-size: auto 100%;
@@ -54,16 +63,23 @@
     background-size: auto 90%;
     height: 45px;
   }
-
+  .bm-brewing-method[data-name="beans"][data-size=smaller] & {
+    background-size: auto 70%;
+    //background-position: 4px bottom;
+  }
+  .bm-brewing-method[data-name="manual_espresso"][data-size=smaller] & {
+    background-size: auto 80%;
+    background-position: 4px bottom;
+  }
   .bm-brewing-method[data-name=turk][data-size=smaller] & {
-    background-position: 16px bottom;
+    background-position: 17px bottom;
     background-size: auto 70%;
   }
   .bm-brewing-method[data-name=siphon][data-size=smaller] & {
     //background-position: 35px bottom;
   }
   .bm-brewing-method[data-name=french][data-size=smaller] & {
-    background-position: 20px bottom;
+    background-position: 19px bottom;
   }
   .bm-brewing-method[data-name=cup][data-size=smaller] & {
     background-size: auto 70%;
@@ -71,6 +87,38 @@
   }
   .bm-brewing-method[data-name=moka][data-size=smaller] & {
     //background-position: 33px bottom;
+  }
+
+
+  .m-color-scheme-white .bm-brewing-method[data-name=beans] & {
+    background-image: url('/images/misc/bean-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=aeropress] & {
+    background-image: url('/images/icon/brewing/aeropress-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=turk] & {
+    background-image: url('/images/icon/brewing/turk-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=v60] & {
+    background-image: url('/images/icon/brewing/v60-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=siphon] & {
+    background-image: url('/images/icon/brewing/siphon-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=french] & {
+    background-image: url('/images/icon/brewing/french-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=cup] & {
+    background-image: url('/images/icon/brewing/cup-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name="manual_espresso"] & {
+    background-image: url('/images/icon/brewing/manual_espresso-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=machine] & {
+    background-image: url('/images/icon/brewing/machine-white.png');
+  }
+  .m-color-scheme-white .bm-brewing-method[data-name=moka] & {
+    background-image: url('/images/icon/brewing/moka-white.png');
   }
 }
 
@@ -93,5 +141,54 @@
 
   .bm-brewing-method[data-size=smaller] & {
     font-size: 10px;
+  }
+
+  .m-color-scheme-white &, .bm-brewing-method.m-color-scheme-white & {
+    color: #ffffff;
+  }
+}
+
+.bm-brewing-method-grind {
+  display: none;
+  width: 100%;
+
+  .bm-brewing-method.m-with-grind & {
+    display: block;
+  }
+}
+
+.bm-brewing-method-grind-text {
+  .bm-font-pt(10px, 10px, normal);
+  color: #6b6b6b;
+  margin-bottom: 7px;
+  margin-top: 1px;
+  text-align: center;
+
+  .m-color-scheme-white &, .bm-brewing-method.m-color-scheme-white & {
+    color: #ffffff;
+  }
+}
+
+.bm-brewing-method-grind-image {
+  .box-sizing(border-box);
+  .transition(0.15s);
+  -webkit-border-radius: 40px;
+  -moz-border-radius: 40px;
+  border-radius: 40px;
+  border: 1px solid transparent;
+  height: 45px;
+  overflow: hidden;
+  width: 45px;
+  background-size: 50% 50%;
+  background-repeat: no-repeat;
+
+  .m-desktop &:hover,
+  .m-touch   &:active {
+    border-color: #ffffff;
+    .transform(scale(4));
+  }
+
+  .m-color-scheme-white &, .bm-brewing-method.m-color-scheme-white & {
+    border: 1px solid #ffffff;
   }
 }

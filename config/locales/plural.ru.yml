@@ -1,0 +1,10 @@
+ru:
+  plural:
+    rubles:
+      one: "рубль"
+      few: "рубля"
+      many: "рублей"
+    gramm:
+      one: "грамм"
+      few: "грамма"
+      many: "грамм"

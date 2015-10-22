@@ -24,12 +24,23 @@
   font-weight: normal;
 }
 
-.bm-text-18 {
+.bm-text-base() {
   -webkit-font-smoothing: antialiased;
   color: #000000;
-  font-size: 18px;
   font-family: @font-ptsans;
   font-weight: normal;
+  line-height: 1.4em;
+}
+
+.bm-text-20 {
+  .bm-text-base();
+  font-size: 20px;
+  line-height: 1.4em;
+}
+
+.bm-text-18 {
+  .bm-text-base();
+  font-size: 18px;
   line-height: 28px;
 
   &.m-bold,
@@ -45,8 +56,6 @@
     }
   }
 
-
-
   .link {
     color: #000000;
     font-size: 18px;
@@ -61,10 +70,7 @@
 }
 
 .bm-text-15 {
-  -webkit-font-smoothing: antialiased;
-  color: #000000;
+  .bm-text-base();
   font-size: 15px;
-  font-family: @font-ptsans;
-  font-weight: normal;
   line-height: 22px;
 }

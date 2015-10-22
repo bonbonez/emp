@@ -1,0 +1,41 @@
+ru:
+  grind:
+    extrafine:
+      label: "Ультрапомол"
+      label_short: "Ультра"
+    fine:
+      label: "Тонкий помол"
+      label_short: "Тонкий"
+    medium:
+      label: "Средний помол"
+      label_short: "Средний"
+    coarse:
+      label: "Грубый помол"
+      label_short: "Грубый"
+    beans:
+      label: "В зерне"
+      label_short: "В зерне"
+    no_grind:
+      label: "Не молоть"
+      label_short: "Не молоть"
+
+  brewing_method:
+    french:
+      label: "Френч"
+    turk:
+      label: "Турка"
+    cup:
+      label: "В чашку"
+    manual_espresso:
+      label: "Рожок"
+    machine:
+      label: "Эспрессо"
+    aeropress:
+      label: "Аэропресс"
+    v60:
+      label: "Пуровер"
+    moka:
+      label: "Мока"
+    siphon:
+      label: "Сифон"
+

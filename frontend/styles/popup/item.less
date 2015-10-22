@@ -1,8 +1,8 @@
-.bm-popup.bm-popup-item {
+.bm-popup.m-version-2.bm-popup-item {
   .bm-popup-content {
     .box-sizing(border-box);
     background-clip: content-box;
-    max-width: 980px;
+    max-width: 715px;
     padding: 30px 10px;
     width: 100%;
   }
@@ -13,27 +13,30 @@
 
 .bm-popup-item-content {
   .box-sizing(border-box);
-  padding: 35px 40px 50px 40px;
+  //padding: 35px 40px 50px 40px;
+  padding: 0;
   position: relative;
   width: 100%;
 }
 
 .bm-popup-item-button-close-wrapper {
-  position: relative;
   font-size: 0;
   line-height: 0;
   height: 0;
-  margin: 0 auto;
-  //max-width: 660px;
-  width: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0;
 }
 
 .bm-popup-item-button-close {
   cursor: pointer;
   font-size: 0;
   position: absolute;
-  top: -25px;
-  right: -27px;
+  top: 15px;
+  right: 15px;
+  //top: -15px;
+  //right: -17px;
 
   &::before {
     .vertical-align-middle();
@@ -93,4 +96,12 @@
 .bm-popup-item-loading {
   padding-bottom: 50%;
   width: 100%;
+}
+
+@media screen and (max-width: @breakpoint-mobile) {
+  .bm-popup.bm-popup-item.m-version-2 {
+    .bm-popup-content {
+      padding: 0;
+    }
+  }
 }

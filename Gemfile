@@ -12,8 +12,8 @@ gem 'mysql2'
 gem 'slim'
 gem 'paperclip'
 gem 'aws-sdk'
-
 gem 'rack-rewrite'
+gem 'rails-i18n'
 
 group :development do
   gem 'terminal-notifier'

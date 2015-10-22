@@ -1,7 +1,7 @@
 (function(window, modules, $, BM){
 
   modules.define(
-    'FormItemSelectGrind',
+    'FormItemSelectGrindOld',
     [
       'extend',
       'baseView'

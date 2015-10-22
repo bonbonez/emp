@@ -11,7 +11,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150509002054) do
+ActiveRecord::Schema.define(version: 20150804211305) do
+
+  create_table "carts", force: :cascade do |t|
+    t.string   "cookie_id",  limit: 255
+    t.string   "data",       limit: 255
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
+  end
 
   create_table "countries", force: :cascade do |t|
     t.string   "name",              limit: 255
@@ -43,6 +50,8 @@ ActiveRecord::Schema.define(version: 20150509002054) do
     t.string   "image_plantation_content_type", limit: 255
     t.integer  "image_plantation_file_size",    limit: 4
     t.datetime "image_plantation_updated_at"
+    t.integer  "price_500",                     limit: 4
+    t.integer  "price_1000",                    limit: 4
   end
 
 end

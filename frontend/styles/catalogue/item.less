@@ -210,3 +210,44 @@
   color: #999999;
   text-align: center;
 }
+
+@media screen and (max-width: @breakpoint-mobile) {
+  .bm-coffee-item {
+    width: 100%;
+  }
+
+  .bm-coffee-item-content {
+    margin-bottom: 10px;
+    //z-index: 2;
+  }
+
+  .bm-coffee-item-more-info {
+    display: block;
+    box-shadow: none;
+    position: static;
+    padding-left: 0;
+  }
+
+  .bm-coffee-item-more-info-content {
+    padding: 0;
+  }
+  .bm-coffee-item-more-info-specs {
+    margin: 0 auto 15px auto;
+  }
+
+  .bm-coffee-item-more-info-description {
+    height: auto;
+    text-align: left;
+    max-width: 100%;
+    margin: 0 auto;
+    width: 320px;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  .bm-coffee-item-more-info-content {
+    width: 100%;
+  }
+}

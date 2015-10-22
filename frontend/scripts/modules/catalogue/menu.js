@@ -121,10 +121,10 @@
             this.$selectItems.removeClass('m-selected');
             $item.addClass('m-selected');
             this._toggleMenu();
-          }
 
-          var $menuItem = $item.find('@bm-page-catalogue-menu-item');
-          this._notify('category-selected', $menuItem.data('name'), $menuItem.data('special'));
+            var $menuItem = $item.find('@bm-page-catalogue-menu-item');
+            this._notify('category-selected', $menuItem.data('name'), $menuItem.data('special'));
+          }
         },
 
         _toggleMenu : function() {

@@ -40,7 +40,7 @@
 
           this.el.attr('data-name', this._config.data.name);
           this.el.attr('data-size', this._config.data.size || "normal");
-          this.$text.html(this._config.data.text);
+          this.$text.html(this._config.data.label);
         },
 
         _getTemplateName : function() {

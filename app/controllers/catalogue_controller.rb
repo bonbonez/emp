@@ -10,19 +10,19 @@ class CatalogueController < ApplicationController
     @items = Item.all
     @items_groups_for_featured = [
       {
-        header: "Популярное",
+        header: t('catalogue.group.popular.header'),
         items: Item.last(4)
       },
       {
-        header: "Любителям экспериментов",
+        header: t('catalogue.group.experiments.header'),
         items: Item.last(3)
       },
       {
-        header: "Лучшее из арома",
+        header: t('catalogue.group.best_of_aroma.header'),
         items: Item.last(3)
       },
       {
-        header: "Декаф (кофе без кофеина)",
+        header: t('catalogue.group.decaf.header'),
         items: Item.last(2)
       }
     ]

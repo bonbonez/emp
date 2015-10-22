@@ -5,14 +5,16 @@
     [
       'extend',
       'baseView',
-      'FormItemOrder',
+      'ItemModel',
+      'ItemFormOrder',
       'ItemSpecsItem',
-      'ItemBrewingMethodItem'
+      'ItemBrewingMethodItem',
     ],
     function(
       provide,
       extend,
       BaseView,
+      ItemModel,
       FormOrder,
       ItemSpecsItem,
       ItemBrewingMethodItem
@@ -33,9 +35,10 @@
         }
 
         this._config           = BM.tools.mixin({}, config);
+        this._item             = new ItemModel({ data: this._config.data });
 
         this._formOrder        = null;
-        this.$elemFormOrder    = this.$elem.find('@bm-form-order');
+        this.$elemFormOrder    = this.$elem.find('@bm-item-form-order');
 
         this.$name             = this.el.find('@bm-item-name');
         this.$descriptionShort = this.el.find('@bm-item-description-short');
@@ -54,6 +57,7 @@
         this._methods          = [];
 
         this._initFormOrder();
+        this._updateFormOrder();
         this._bindEvents();
         this.render();
       },
@@ -128,7 +132,7 @@
         this.$name.html(this._config.data.name);
         this.$descriptionShort.html(this._config.data.descriptionShort);
         this.$rating.attr('data-value', this._config.data.rating);
-        this.$price.html(this._config.data.price);
+        this.$price.html(this._item.getPrice250());
         this.$description.html(this._config.data.description);
         this.$image.attr('src', this._config.data.image.large);
         this.$imagePlantation.attr('src', this._config.data.imagePlantation.default);
@@ -178,6 +182,12 @@
               element: this.$elemFormOrder
             });
           }
+      },
+
+      _updateFormOrder : function() {
+        this._formOrder.setPrices(
+          this._item.getData().price
+        );
       },
 
       _getTemplateName : function() {

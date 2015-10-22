@@ -42,7 +42,7 @@ class Admin::ItemsController < Admin::AdminController
   private
 
   def item_params
-    params.require(:item).permit(:kind, :name, :url, :description, :price, :rating, :methods, :specs, :image, :image_plantation, :is_published)
+    params.require(:item).permit(:kind, :name, :url, :description, :price, :price_500, :price_1000, :rating, :methods, :specs, :image, :image_plantation, :is_published)
   end
 
 end

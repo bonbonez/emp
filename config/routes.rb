@@ -9,6 +9,10 @@ Empressa::Application.routes.draw do
     resources :items
   end
 
+  namespace :api, path: 'api' do
+    get 'translations/get', to: 'translations#get'
+  end
+
   get "/" => "index#index"
   get "/catalogue" => "catalogue#index"
 end

@@ -1,0 +1,43 @@
+ruby:
+  amounts = [
+    {
+      amount: 250,
+      beans: 1
+    }, {
+      amount: 500,
+      beans: 2
+    }, {
+      amount: 1000,
+      beans: 3
+    }
+  ]
+
+.bm-item-form-order role="bm-item-form-order"
+  .bm-item-form-order-header
+    | Заказать кофе
+  .bm-item-form-order-step-header
+    | 1. Выберите сколько
+  .bm-item-form-order-amount
+    - amounts.each_with_index do |amount, i|
+      .bm-item-form-order-amount-item role="bm-item-form-order-amount-item" data-amount=amount[:amount] class="#{'m-selected' if i == 0}"
+        .bm-item-form-order-amount-item-icon
+          - (1..amount[:beans]).each do |i|
+            .bean
+        .bm-item-form-order-amount-item-amount role="bm-item-form-order-amount-item-amount"
+          | #{amount[:amount]} грамм
+        .bm-item-form-order-amount-item-price role="bm-item-form-order-amount-item-price" data-text=" рублей"
+          | 500 рублей
+
+  .bm-item-form-order-step-header
+    | 2. Выберите помол
+
+  .bm-item-form-order-select-grind
+    .bm-hor-slider
+      .bm-hor-slider-content
+        - brewing_methods(with_beans: true, sort_by: :grind_index_desc).each_with_index do |method, i|
+          .bm-hor-slider-item.bm-item-form-order-select-grind-item role="bm-item-form-order-grind-item" class="#{'m-selected m-color-scheme-white' if i == 0}" data-grind=method[:grind][:kind]
+            = render partial: "shared/brewing/method", locals: {name: method[:name], size: :smaller, grind: true}
+
+  .bm-item-form-order-button-add-wrapper
+    .bm-item-form-order-button-add role="bm-item-form-order-button-add"
+      | добавить 250 грамм в зерне

@@ -1,213 +1,41 @@
-var $__cart_47_init_46_js__ = (function() {
+var $__mvc_47_item_46_js__ = (function() {
   "use strict";
-  var __moduleName = "cart/init.js";
-  (function(window, modules, $, radio) {
-    modules.define('pageCartInit', ['pageCartItem', 'CartProcessor'], function(provide, CartItem, cart) {
-      var $elemPageCart = $('@b-page-cart');
-      $('@b-cart-item').each(function() {
-        var $this = $(this);
-        new CartItem({element: $this});
-      });
-      cart.on('update', function() {
-        if (cart.getTotalItems() < 1) {
-          $elemPageCart.attr('data-cart-empty', 'true');
-        }
-      });
-      provide();
-    });
-  }(this, this.modules, this.jQuery, this.radio));
-  return {};
-}).call(Reflect.global);
-
-var $__cart_47_item_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "cart/item.js";
-  (function(window, modules, $) {
-    modules.define('pageCartItem', ['basePubSub', 'extend'], function(provide, PubSub, extend) {
-      var CartItem = extend(PubSub),
-          $class = CartItem,
+  var __moduleName = "mvc/item.js";
+  (function(window, modules, $, BM) {
+    modules.define('ItemModel', ['extend', 'Model'], function(provide, extend, Model) {
+      var ItemModel = extend(Model),
+          $class = ItemModel,
           $super = $class.superclass;
       BM.tools.mixin($class.prototype, {
-        initialize: function(config) {
+        initialize: function() {
           $super.initialize.apply(this, arguments);
-          this.$elem = config.element;
-          this.$elemButtonRemove = this.$elem.find('@b-cart-item-button-remove');
-          this.$elemButtonMinus = this.$elem.find('@b-cart-item-button-minus');
-          this.$elemButtonPlus = this.$elem.find('@b-cart-item-button-plus');
-          this.$elemAmount = this.$elem.find('@b-cart-item-amount');
-          this.$elemPrice = this.$elem.find('@b-cart-item-price');
-          this.$elemPriceTotal = this.$elem.find('@b-cart-item-price-total');
-          this._config = {item: {id: null}};
-          this._parseConfig();
-          this._updateLayout();
-          this._setupEvents();
         },
-        _parseConfig: function() {
-          try {
-            this._config = JSON.parse(this.$elem.attr('data-config'));
-          } catch (e) {}
+        getPrice: function() {
+          return this._getPrice(250);
         },
-        _setupEvents: function() {
-          var me = this;
-          this.$elemButtonRemove.on('click', function() {
-            me._onButtonCloseClick();
-          });
-          this.$elemButtonMinus.on('click', function() {
-            me._onButtonMinusClick();
-          });
-          this.$elemButtonPlus.on('click', function() {
-            me._onButtonPlusClick();
-          });
+        getPrice250: function() {
+          return this.getPrice();
         },
-        _onButtonCloseClick: function() {
-          var me = this;
-          this._setStateWait(true);
-          $.ajax({
-            url: '/api/cart/item/remove',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestItemRemoveSuccess(data);
-              }, 300);
-            },
-            error: function() {
-              setTimeout(function() {
-                me._onRequestAddToCartError();
-              }, 300);
+        getPrice500: function() {
+          return this._getPrice(500);
+        },
+        getPrice1000: function() {
+          return this._getPrice(1000);
+        },
+        _getPrice: function(amount) {
+          var result = null;
+          this._data.price.forEach(function(item) {
+            if (item.amount === amount) {
+              result = item;
             }
           });
-        },
-        _onButtonMinusClick: function() {
-          if (this._getCurrentAmount() > 1) {
-            this._sendRequestDecItem();
-          }
-        },
-        _sendRequestDecItem: function() {
-          var me = this;
-          $.ajax({
-            url: '/api/cart/item/dec',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestDecItemSuccess();
-                radio('b-cart-update').broadcast(data);
-              }, 300);
-            },
-            error: function() {
-              me._onRequestDecItemError();
-            }
-          });
-        },
-        _onRequestDecItemSuccess: function() {
-          this._setStateWait(false);
-          this._decItemAmount();
-          this._updatePrice();
-        },
-        _onRequestDecItemError: function() {
-          this._setStateWait(false);
-        },
-        _onButtonPlusClick: function() {
-          this._sendRequestIncItem();
-        },
-        _sendRequestIncItem: function() {
-          var me = this;
-          $.ajax({
-            url: '/api/cart/item/inc',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestIncItemSuccess(data);
-              }, 300);
-            },
-            error: function() {
-              me._onRequestIncItemError();
-            }
-          });
-        },
-        _onRequestIncItemSuccess: function(data) {
-          this._setStateWait(false);
-          this._incItemAmount();
-          this._updatePrice();
-          radio('b-cart-update').broadcast(data);
-        },
-        _onRequestIncItemError: function() {
-          this._setStateWait(false);
-        },
-        _onRequestItemRemoveSuccess: function(data) {
-          var me = this;
-          setTimeout(function() {
-            me.hide();
-            radio('b-cart-update').broadcast(data);
-          }.bind(this), 300);
-        },
-        _onRequestItemRemoveError: function() {
-          setTimeout(function() {
-            this._setStateWait(false);
-          }.bind(this), 300);
-        },
-        _slideOut: function(callback) {},
-        hide: function() {
-          this.$elem.attr('data-visible', 'false');
-        },
-        _updateLayout: function() {},
-        _setStateWait: function(bool) {
-          if (bool) {
-            this.$elem.attr('data-wait', 'true');
-          } else {
-            this.$elem.attr('data-wait', 'fasle');
-          }
-        },
-        _getCurrentAmount: function() {
-          var amount = this.$elemAmount.html();
-          amount = parseInt(amount, 10);
-          return amount;
-        },
-        _incItemAmount: function() {
-          var amount = this._getCurrentAmount();
-          this._showButtonMinus();
-          return this.$elemAmount.html(amount + 1);
-        },
-        _decItemAmount: function() {
-          var amount = this._getCurrentAmount();
-          if (amount <= 2) {
-            this._hideButtonMinus();
-          }
-          return this.$elemAmount.html(amount - 1);
-        },
-        _showButtonMinus: function() {
-          this.$elemButtonMinus.attr('data-visible', 'true');
-        },
-        _hideButtonMinus: function() {
-          this.$elemButtonMinus.attr('data-visible', 'false');
-        },
-        _updatePrice: function() {
-          var amount = this._getCurrentAmount();
-          if (amount > 1) {
-            this._showPriceTotal();
-          } else {
-            this._hidePriceTotal();
-          }
-        },
-        _showPriceTotal: function() {
-          this.$elemPriceTotal.html(this._getCurrentAmount() * this._config.item.price);
-          this.$elemPrice.attr('data-total-visible', 'true');
-        },
-        _hidePriceTotal: function() {
-          this.$elemPrice.attr('data-total-visible', 'false');
-        },
-        destroy: function() {
-          $super.destroy.apply(this, arguments);
+          return result.value;
         }
       });
-      provide(CartItem);
+      BM.tools.mixin($class.prototype, {});
+      provide(ItemModel);
     });
-  }(this, this.modules, this.jQuery));
+  }(this, this.modules, this.jQuery, this.BM));
   return {};
 }).call(Reflect.global);
 
@@ -238,6 +66,7 @@ var $__catalogue_47_init_46_js__ = (function() {
           this._initItems();
           this._updateItems();
           this._bindEvents();
+          this._items[0]._showPopup();
         },
         _bindEvents: function() {},
         _initItems: function() {
@@ -514,9 +343,9 @@ var $__catalogue_47_menu_46_js__ = (function() {
             this.$selectItems.removeClass('m-selected');
             $item.addClass('m-selected');
             this._toggleMenu();
+            var $menuItem = $item.find('@bm-page-catalogue-menu-item');
+            this._notify('category-selected', $menuItem.data('name'), $menuItem.data('special'));
           }
-          var $menuItem = $item.find('@bm-page-catalogue-menu-item');
-          this._notify('category-selected', $menuItem.data('name'), $menuItem.data('special'));
         },
         _toggleMenu: function() {
           if (this._isSelectExpanded()) {
@@ -549,6 +378,238 @@ var $__catalogue_47_menu_46_js__ = (function() {
       provide(CatalogueMenu);
     });
   }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__cart_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "cart/init.js";
+  (function(window, modules, $, radio) {
+    modules.define('pageCartInit', ['pageCartItem', 'CartProcessor'], function(provide, CartItem, cart) {
+      var $elemPageCart = $('@b-page-cart');
+      $('@b-cart-item').each(function() {
+        var $this = $(this);
+        new CartItem({element: $this});
+      });
+      cart.on('update', function() {
+        if (cart.getTotalItems() < 1) {
+          $elemPageCart.attr('data-cart-empty', 'true');
+        }
+      });
+      provide();
+    });
+  }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__cart_47_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "cart/item.js";
+  (function(window, modules, $) {
+    modules.define('pageCartItem', ['basePubSub', 'extend'], function(provide, PubSub, extend) {
+      var CartItem = extend(PubSub),
+          $class = CartItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.apply(this, arguments);
+          this.$elem = config.element;
+          this.$elemButtonRemove = this.$elem.find('@b-cart-item-button-remove');
+          this.$elemButtonMinus = this.$elem.find('@b-cart-item-button-minus');
+          this.$elemButtonPlus = this.$elem.find('@b-cart-item-button-plus');
+          this.$elemAmount = this.$elem.find('@b-cart-item-amount');
+          this.$elemPrice = this.$elem.find('@b-cart-item-price');
+          this.$elemPriceTotal = this.$elem.find('@b-cart-item-price-total');
+          this._config = {item: {id: null}};
+          this._parseConfig();
+          this._updateLayout();
+          this._setupEvents();
+        },
+        _parseConfig: function() {
+          try {
+            this._config = JSON.parse(this.$elem.attr('data-config'));
+          } catch (e) {}
+        },
+        _setupEvents: function() {
+          var me = this;
+          this.$elemButtonRemove.on('click', function() {
+            me._onButtonCloseClick();
+          });
+          this.$elemButtonMinus.on('click', function() {
+            me._onButtonMinusClick();
+          });
+          this.$elemButtonPlus.on('click', function() {
+            me._onButtonPlusClick();
+          });
+        },
+        _onButtonCloseClick: function() {
+          var me = this;
+          this._setStateWait(true);
+          $.ajax({
+            url: '/api/cart/item/remove',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestItemRemoveSuccess(data);
+              }, 300);
+            },
+            error: function() {
+              setTimeout(function() {
+                me._onRequestAddToCartError();
+              }, 300);
+            }
+          });
+        },
+        _onButtonMinusClick: function() {
+          if (this._getCurrentAmount() > 1) {
+            this._sendRequestDecItem();
+          }
+        },
+        _sendRequestDecItem: function() {
+          var me = this;
+          $.ajax({
+            url: '/api/cart/item/dec',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestDecItemSuccess();
+                radio('b-cart-update').broadcast(data);
+              }, 300);
+            },
+            error: function() {
+              me._onRequestDecItemError();
+            }
+          });
+        },
+        _onRequestDecItemSuccess: function() {
+          this._setStateWait(false);
+          this._decItemAmount();
+          this._updatePrice();
+        },
+        _onRequestDecItemError: function() {
+          this._setStateWait(false);
+        },
+        _onButtonPlusClick: function() {
+          this._sendRequestIncItem();
+        },
+        _sendRequestIncItem: function() {
+          var me = this;
+          $.ajax({
+            url: '/api/cart/item/inc',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestIncItemSuccess(data);
+              }, 300);
+            },
+            error: function() {
+              me._onRequestIncItemError();
+            }
+          });
+        },
+        _onRequestIncItemSuccess: function(data) {
+          this._setStateWait(false);
+          this._incItemAmount();
+          this._updatePrice();
+          radio('b-cart-update').broadcast(data);
+        },
+        _onRequestIncItemError: function() {
+          this._setStateWait(false);
+        },
+        _onRequestItemRemoveSuccess: function(data) {
+          var me = this;
+          setTimeout(function() {
+            me.hide();
+            radio('b-cart-update').broadcast(data);
+          }.bind(this), 300);
+        },
+        _onRequestItemRemoveError: function() {
+          setTimeout(function() {
+            this._setStateWait(false);
+          }.bind(this), 300);
+        },
+        _slideOut: function(callback) {},
+        hide: function() {
+          this.$elem.attr('data-visible', 'false');
+        },
+        _updateLayout: function() {},
+        _setStateWait: function(bool) {
+          if (bool) {
+            this.$elem.attr('data-wait', 'true');
+          } else {
+            this.$elem.attr('data-wait', 'fasle');
+          }
+        },
+        _getCurrentAmount: function() {
+          var amount = this.$elemAmount.html();
+          amount = parseInt(amount, 10);
+          return amount;
+        },
+        _incItemAmount: function() {
+          var amount = this._getCurrentAmount();
+          this._showButtonMinus();
+          return this.$elemAmount.html(amount + 1);
+        },
+        _decItemAmount: function() {
+          var amount = this._getCurrentAmount();
+          if (amount <= 2) {
+            this._hideButtonMinus();
+          }
+          return this.$elemAmount.html(amount - 1);
+        },
+        _showButtonMinus: function() {
+          this.$elemButtonMinus.attr('data-visible', 'true');
+        },
+        _hideButtonMinus: function() {
+          this.$elemButtonMinus.attr('data-visible', 'false');
+        },
+        _updatePrice: function() {
+          var amount = this._getCurrentAmount();
+          if (amount > 1) {
+            this._showPriceTotal();
+          } else {
+            this._hidePriceTotal();
+          }
+        },
+        _showPriceTotal: function() {
+          this.$elemPriceTotal.html(this._getCurrentAmount() * this._config.item.price);
+          this.$elemPrice.attr('data-total-visible', 'true');
+        },
+        _hidePriceTotal: function() {
+          this.$elemPrice.attr('data-total-visible', 'false');
+        },
+        destroy: function() {
+          $super.destroy.apply(this, arguments);
+        }
+      });
+      provide(CartItem);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init.js";
+  (function(window, modules, $) {
+    modules.define('beforeUIModulesInit', ['InitGlobalStylesModifiers', 'InitEventDispatcher'], function(provide) {
+      provide();
+    });
+    modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements', 'SideMenuInit'], function(provide) {
+      if (BM.tools.client.isTouch()) {
+        $('body').addClass('m-touch');
+      } else {
+        $('body').addClass('m-desktop');
+      }
+      provide();
+    });
+  }(this, this.modules, this.jQuery));
   return {};
 }).call(Reflect.global);
 
@@ -857,25 +918,6 @@ var $__catalogue_95_old_47_menu_46_js__ = (function() {
       provide(CatalogueMenu);
     });
   }(this, this.modules, this.jQuery, this.BM));
-  return {};
-}).call(Reflect.global);
-
-var $__ui_45_modules_47_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init.js";
-  (function(window, modules, $) {
-    modules.define('beforeUIModulesInit', ['InitGlobalStylesModifiers', 'InitEventDispatcher'], function(provide) {
-      provide();
-    });
-    modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements', 'SideMenuInit'], function(provide) {
-      if (BM.tools.client.isTouch()) {
-        $('body').addClass('m-touch');
-      } else {
-        $('body').addClass('m-desktop');
-      }
-      provide();
-    });
-  }(this, this.modules, this.jQuery));
   return {};
 }).call(Reflect.global);
 
@@ -1348,42 +1390,6 @@ var $__ui_45_modules_47_dynamic_45_content_47_dynamic_45_content_46_js__ = (func
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_init_47_global_45_styles_45_modifiers_45_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init/global-styles-modifiers-init.js";
-  (function(window, modules, $, radio) {
-    modules.define('InitGlobalStylesModifiers', [], function(provide) {
-      var $body = $(document.body);
-      if (BM.tools.client.isTouch()) {
-        $body.addClass('m-touch');
-      } else {
-        $body.addClass('m-desktop');
-      }
-      provide();
-    });
-  }(this, this.modules, this.jQuery, this.radio));
-  return {};
-}).call(Reflect.global);
-
-var $__ui_45_modules_47_init_47_side_45_menu_45_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "ui-modules/init/side-menu-init.js";
-  (function(window, modules, $, radio) {
-    modules.define('SideMenuInit', [], function(provide) {
-      var $body = $(document.body),
-          buttonToggleSideMenu = $('@bm-side-menu-toggle-button');
-      buttonToggleSideMenu.on(BM.helper.event.clickName(), function(event) {
-        if ($body.hasClass('m-side-menu-opened')) {
-          $body.removeClass('m-side-menu-opened');
-        } else {
-          $body.addClass('m-side-menu-opened');
-        }
-      });
-    });
-  }(this, this.modules, this.jQuery, this.radio));
-  return {};
-}).call(Reflect.global);
-
 var $__ui_45_modules_47_item_47_brewing_45_method_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/brewing-method.js";
@@ -1408,7 +1414,7 @@ var $__ui_45_modules_47_item_47_brewing_45_method_46_js__ = (function() {
           }
           this.el.attr('data-name', this._config.data.name);
           this.el.attr('data-size', this._config.data.size || "normal");
-          this.$text.html(this._config.data.text);
+          this.$text.html(this._config.data.label);
         },
         _getTemplateName: function() {
           return 'bm-brewing-method-item-template';
@@ -1424,7 +1430,101 @@ var $__ui_45_modules_47_item_47_form_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/form.js";
   (function(window, modules, $, BM) {
-    modules.define('FormItemOrder', ['extend', 'baseView', 'FormItemSelectGrind', 'ButtonNumber'], function(provide, extend, BaseView, FormItemSelectGrind, ButtonNumber) {
+    modules.define('ItemFormOrder', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var ItemFormOrder = extend(BaseView),
+          $class = ItemFormOrder,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+          this._amount = null;
+          this._grind = null;
+          this.$amountItems = this.el.find('@bm-item-form-order-amount-item');
+          this.$grindItems = this.el.find('@bm-item-form-order-grind-item');
+          this.$buttonAdd = this.el.find('@bm-item-form-order-button-add');
+          this._updateAmount();
+          this._updateGrind();
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          var self = this,
+              clickName = BM.helper.event.clickName();
+          this.$buttonAdd.on(clickName, function(event) {
+            this._onButtonAddClick(event);
+          }.bind(this));
+          this.$amountItems.on(clickName, function(event) {
+            this._onAmountItemClick(event);
+          }.bind(this));
+          this.$grindItems.on(clickName, function(event) {
+            this._onGrindItemClick(event);
+          }.bind(this));
+        },
+        _onButtonAddClick: function() {
+          this._notifyAdd();
+        },
+        _onAmountItemClick: function(event) {
+          var $this = $(event.target);
+          while ($this.filter('[role=bm-item-form-order-amount-item]').length < 1) {
+            $this = $this.parent();
+          }
+          this.$amountItems.removeClass('m-selected');
+          $this.addClass('m-selected');
+          this._updateButton();
+          this._updateAmount();
+        },
+        _onGrindItemClick: function(event) {
+          var $this = $(event.target);
+          while ($this.filter('[role=bm-item-form-order-grind-item]').length < 1) {
+            $this = $this.parent();
+          }
+          this.$grindItems.removeClass('m-selected');
+          this.$grindItems.removeClass('m-color-scheme-white');
+          $this.addClass('m-selected');
+          $this.addClass('m-color-scheme-white');
+          this._updateButton();
+          this._updateGrind();
+        },
+        setPrices: function(pricesArr) {
+          pricesArr.forEach(function(price) {
+            var $amountItem = this.$amountItems.filter(function() {
+              return $(this).data('amount') == price.amount;
+            }),
+                $itemPrice = $amountItem.find('@bm-item-form-order-amount-item-price');
+            $itemPrice.html(price.value + $itemPrice.data('text'));
+          }.bind(this));
+        },
+        _updateAmount: function() {
+          this._amount = this._getSelectedItemAmount().data('amount');
+        },
+        _updateGrind: function() {
+          this._grind = this.$grindItems.filter('.m-selected').last().data('grind');
+        },
+        _getSelectedItemAmount: function() {
+          return this.$amountItems.filter('.m-selected').last();
+        },
+        _updateButton: function() {},
+        _notifyAdd: function() {
+          var obj = {
+            amount: this._amount,
+            grind: this._grind
+          };
+          this._notify('add', obj);
+        }
+      });
+      provide(ItemFormOrder);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_item_47_form_95_old_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/item/form_old.js";
+  (function(window, modules, $, BM) {
+    modules.define('FormItemOrderOld', ['extend', 'baseView', 'FormItemSelectGrind', 'ButtonNumber'], function(provide, extend, BaseView, FormItemSelectGrind, ButtonNumber) {
       var FormItemOrder = extend(BaseView),
           $class = FormItemOrder,
           $super = $class.superclass;
@@ -1488,7 +1588,7 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/item.js";
   (function(window, modules, $, BM) {
-    modules.define('Item', ['extend', 'baseView', 'FormItemOrder', 'ItemSpecsItem', 'ItemBrewingMethodItem'], function(provide, extend, BaseView, FormOrder, ItemSpecsItem, ItemBrewingMethodItem) {
+    modules.define('Item', ['extend', 'baseView', 'ItemModel', 'ItemFormOrder', 'ItemSpecsItem', 'ItemBrewingMethodItem'], function(provide, extend, BaseView, ItemModel, FormOrder, ItemSpecsItem, ItemBrewingMethodItem) {
       var Item = extend(BaseView),
           $class = Item,
           $super = $class.superclass;
@@ -1499,8 +1599,9 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
             return ;
           }
           this._config = BM.tools.mixin({}, config);
+          this._item = new ItemModel({data: this._config.data});
           this._formOrder = null;
-          this.$elemFormOrder = this.$elem.find('@bm-form-order');
+          this.$elemFormOrder = this.$elem.find('@bm-item-form-order');
           this.$name = this.el.find('@bm-item-name');
           this.$descriptionShort = this.el.find('@bm-item-description-short');
           this.$rating = this.el.find('@bm-item-rating');
@@ -1515,6 +1616,7 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
           this._specs = [];
           this._methods = [];
           this._initFormOrder();
+          this._updateFormOrder();
           this._bindEvents();
           this.render();
         },
@@ -1577,7 +1679,7 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
           this.$name.html(this._config.data.name);
           this.$descriptionShort.html(this._config.data.descriptionShort);
           this.$rating.attr('data-value', this._config.data.rating);
-          this.$price.html(this._config.data.price);
+          this.$price.html(this._item.getPrice250());
           this.$description.html(this._config.data.description);
           this.$image.attr('src', this._config.data.image.large);
           this.$imagePlantation.attr('src', this._config.data.imagePlantation.default);
@@ -1615,6 +1717,9 @@ var $__ui_45_modules_47_item_47_item_46_js__ = (function() {
           if (BM.tools.isNull(this._formOrder)) {
             this._formOrder = new FormOrder({element: this.$elemFormOrder});
           }
+        },
+        _updateFormOrder: function() {
+          this._formOrder.setPrices(this._item.getData().price);
         },
         _getTemplateName: function() {
           return 'bm-item-template';
@@ -1781,6 +1886,67 @@ var $__ui_45_modules_47_popup_47_popup_45_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__ui_45_modules_47_init_47_global_45_styles_45_modifiers_45_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init/global-styles-modifiers-init.js";
+  (function(window, modules, $, radio) {
+    modules.define('InitGlobalStylesModifiers', [], function(provide) {
+      var $body = $(document.body);
+      if (BM.tools.client.isTouch()) {
+        $body.addClass('m-touch');
+      } else {
+        $body.addClass('m-desktop');
+      }
+      provide();
+    });
+  }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_init_47_side_45_menu_45_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/init/side-menu-init.js";
+  (function(window, modules, $, radio) {
+    modules.define('SideMenuInit', [], function(provide) {
+      var $body = $(document.body),
+          buttonToggleSideMenu = $('@bm-side-menu-toggle-button');
+      buttonToggleSideMenu.on(BM.helper.event.clickName(), function(event) {
+        if ($body.hasClass('m-side-menu-opened')) {
+          $body.removeClass('m-side-menu-opened');
+        } else {
+          $body.addClass('m-side-menu-opened');
+        }
+      });
+    });
+  }(this, this.modules, this.jQuery, this.radio));
+  return {};
+}).call(Reflect.global);
+
+var $__ui_45_modules_47_order_47_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "ui-modules/order/item.js";
+  (function(window, modules, $, BM) {
+    modules.define('OrderItem', ['extend', 'baseView'], function(provide, extend, BaseView) {
+      var OrderItem = extend(BaseView),
+          $class = OrderItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return ;
+          }
+        },
+        _getTemplateName: function() {
+          return 'bm-order-item-template';
+        }
+      });
+      provide(OrderItem);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_transform_45_origin_45_dependent_47_transform_45_origin_45_dependent_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/transform-origin-dependent/transform-origin-dependent.js";
@@ -1820,11 +1986,11 @@ var $__ui_45_modules_47_transform_45_origin_45_dependent_47_transform_45_origin_
   return {};
 }).call(Reflect.global);
 
-var $__ui_45_modules_47_item_47_form_47_grind_46_js__ = (function() {
+var $__ui_45_modules_47_item_47_form_47_grind_95_old_46_js__ = (function() {
   "use strict";
-  var __moduleName = "ui-modules/item/form/grind.js";
+  var __moduleName = "ui-modules/item/form/grind_old.js";
   (function(window, modules, $, BM) {
-    modules.define('FormItemSelectGrind', ['extend', 'baseView'], function(provide, extend, BaseView) {
+    modules.define('FormItemSelectGrindOld', ['extend', 'baseView'], function(provide, extend, BaseView) {
       var FormItemSelectGrind = extend(BaseView),
           $class = FormItemSelectGrind,
           $super = $class.superclass;

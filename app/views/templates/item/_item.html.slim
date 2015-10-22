@@ -1,35 +1,54 @@
 script type="text/template" id="bm-item-template"
   .bm-page-item
-    .bm-page-item-header role="bm-item-name"
-    .bm-page-item-description-short role="bm-item-description-short"
+    .bm-page-item-header
+      .bm-page-item-header-text role="bm-item-name"
+      .bm-page-item-description-short role="bm-item-description-short"
 
-    .bm-page-item-grid.m-offset-25
-      .bm-page-item-grid-item
+    .bm-page-item-grid.m-double
+      /.bm-page-item-grid-item
         .bm-page-item-block-header ="Где готовить"
         .bm-page-item-grid-item-content role="bm-item-methods-wrapper"
           /= render partial: 'shared/brewing/all'
 
-      .bm-page-item-grid-item.m-centered
-        .bm-page-item-rating role="bm-item-rating" data-value="5"
+      .bm-page-item-grid-item.m-right
+        /.bm-page-item-rating role="bm-item-rating" data-value="5"
           .bm-page-item-rating-value
-        .bm-page-item-image-wrapper role="bm-item-image-wrapper"
-          /img.bm-page-item-image src="/images/coffee-package-sample.png"
-          img.bm-page-item-image role="bm-item-image"
-        .bm-page-item-price
-          .bm-page-item-price-value
-            ="-"
-            span role="bm-item-price"
-            =" руб"
-          .bm-page-item-price-desc
-            ="за 250 грамм"
+        .bm-page-item-image-column
+          .bm-page-item-image-wrapper role="bm-item-image-wrapper"
+            /img.bm-page-item-image src="/images/coffee-package-sample.png"
+            img.bm-page-item-image role="bm-item-image"
+          .bm-page-item-price
+            .bm-page-item-price-text-wrapper
+              .bm-page-item-price-value
+                span role="bm-item-price"
+                =" руб."
+              .bm-page-item-price-desc
+                ="за 250 грамм"
+            .bm-page-item-price-button-wrapper
+              button.bm-button-default ="Купить"
 
+      .bm-page-item-grid-item.m-left
+        .bm-item-specs-wrapper.bm-page-item-specs-wrapper
+          .bm-item-specs role="bm-item-specs"
+        .bm-item-description role="bm-item-description"
+
+      .bm-page-item-grid
+        .bm-page-item-brewing-methods
+          .bm-page-item-brewing-methods-header
+            | Где готовить
+          .bm-hor-slider.bm-page-item-brewing-methods-slider
+            .bm-hor-slider-content role="bm-item-methods-wrapper"
+            /- brewing_methods.each do |method|
+
+    .bm-page-item-grid.m-single
       .bm-page-item-grid-item
-        .bm-page-item-block-header ="Вкусовые качества"
-        .bm-item-specs.m-offset-30 role="bm-item-specs"
-          /= render partial: 'templates/item/specs/all'
-        button.bm-button-default.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
+        = render partial: "templates/item/form"
 
-    .bm-page-item-grid
+
+          /= render partial: 'templates/item/specs/all'
+        /button.bm-button-default.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"
+
+    /.bm-page-item-grid
       .bm-page-item-grid-item
         .bm-page-item-block-header ="Поделиться"
         = render partial: 'shared/share'
@@ -42,16 +61,16 @@ script type="text/template" id="bm-item-template"
           .bm-item-features-item ="Нотки белого шоколада"
           .bm-item-features-item ="Насыщеный аромат и послевкусие"
         .bm-item-description role="bm-item-description"
-          /| Свежеобжаренные зерна этого сорта дают крепкий хорошо <span class="m-emphasis">сбалансированный</span> напиток, обладают <span class="m-emphasis">ярким вкусом</span>, сладостью <span class="m-emphasis">белого шоколада</span>, насыщенным ароматом и <span class="m-emphasis">долгим послевкусием</span>.
+
       .bm-page-item-grid-item
         .bm-page-item-block-header ="На карте"
         .bm-item-plantation
           /img.bm-item-plantation-image src="/images/coffee-plantation.png"
           img.bm-item-plantation-image role="bm-item-image-plantation"
 
-    .bm-page-item-separator
+    /.bm-page-item-separator
 
-    .bm-page-item-form-order role="bm-form-order"
+    /.bm-page-item-form-order role="bm-form-order"
       .bm-page-item-form-order-step.m-grind
         .bm-page-item-form-order-step-header =="1. Выберите помол"
         .bm-page-item-form-order-step-content

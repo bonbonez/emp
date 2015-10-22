@@ -2,11 +2,17 @@
 
 }
 .bm-page-item-header {
+  border-bottom: 1px solid #f1f1f1;
+  margin-bottom: 12px;
+  padding: 20px 0 14px 0;
+  text-align: center;
+  width: 100%;
+}
+
+.bm-page-item-header-text {
   .bm-font-pt(35px, 35px, bold);
   color: #000000;
   margin-bottom: 7px;
-  text-align: center;
-  width: 100%;
 }
 
 .bm-page-item-description-short {
@@ -24,18 +30,37 @@
   }
 }
 .bm-page-item-grid-item {
+  .box-sizing(border-box);
   display: inline-block;
   vertical-align: top;
   text-align: left;
   white-space: normal;
-  width: 33%;
+  width: 100%;
 
-  &:not(:last-of-type) {
-    margin-right: 1%;
+  &.m-right {
+    padding-left: 20px;
+    text-align: right;
+  }
+
+  &.m-left {
+    text-align: left;
+    padding-right: 20px;
   }
 
   &.m-centered {
     text-align: center;
+  }
+
+  .bm-page-item-grid.m-single & {
+    width: 100%;
+  }
+
+  .bm-page-item-grid.m-double & {
+    width: 48%;
+
+    &:not(:last-of-type) {
+      margin-right: 4%;
+    }
   }
 }
 .bm-page-item-grid-item-content {
@@ -44,6 +69,12 @@
   .bm-brewing-method {
     margin-bottom: 23px;
   }
+}
+
+.bm-page-item-image-column {
+  display: inline-block;
+  max-width: 100%;
+  width: 220px;
 }
 
 .bm-page-item-block-header {
@@ -93,11 +124,13 @@
   background-color: #ffffff;
   border-radius: 150px;
   box-shadow: 0px 6px 7px rgba(0, 0, 0, 0.2);
+  display: inline-block;
   height: 217px;
   line-height: 217px;
   margin: 0 auto 22px auto;
   overflow: hidden;
   position: relative;
+  text-align: center;
   width: 217px;
   z-index: 4;
 
@@ -115,8 +148,11 @@
 }
 
 .bm-item-specs {
+  .box-sizing(border-box);
+  background-color: #f1f1f1;
+  display: inline-block;
+  padding: 12px;
   font-size: 0;
-  width: 100%;
 
   &.m-offset-30 {
     margin-bottom: 30px;
@@ -124,20 +160,41 @@
 }
 
 .bm-page-item-price {
-  background-color: @color-yellow-light;
-  padding: 10px 0 5px 0;
+  //background-color: @color-yellow-light;
+  //padding: 10px 0 5px 0;
   text-align: center;
+  white-space: nowrap;
   width: 100%;
 }
 
+.bm-page-item-price-text-wrapper {
+  display: inline-block;
+  margin-right: 10px;
+  text-align: center;
+  vertical-align: top;
+  white-space: normal;
+}
+
 .bm-page-item-price-value {
-  .bm-font-pt(25px, 25px, bold);
+  //.bm-font-pt(25px, 25px, bold);
+  .bm-font-pt(20px, 20px, normal);
   color: #000000;
   bottom: 5px;
 }
 .bm-page-item-price-desc {
-  .bm-font-pt();
+  .bm-font-pt(15px, 15px, normal);
   color: #555555;
+}
+
+.bm-page-item-price-button-wrapper {
+  display: inline-block;
+  vertical-align: top;
+  white-space: normal;
+}
+
+.bm-page-item-specs-wrapper {
+  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .bm-item-specs-wrapper {
@@ -154,11 +211,38 @@
   }
 }
 
+.bm-page-item-brewing-methods {
+  border-top: 1px solid #f1f1f1;
+  margin-top: 30px;
+  position: relative;
+}
+.bm-page-item-brewing-methods-header {
+  .box-sizing(border-box);
+  .bm-font-pt(18px, 18px, normal);
+  .transform(translateX(-50%));
+  background-color: #ffffff;
+  border: 1px solid #f1f1f1;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  color: #000000;
+  left: 50%;
+  padding: 2px 14px;
+  top: -12px;
+  text-align: center;
+  position: absolute;
+}
+
+.bm-page-item-brewing-methods-slider {
+  padding-top: 36px;
+  height: 140px;
+}
+
 .bm-item-specs-item {
   .box-sizing(border-box);
   height: 10px;
   line-height: 10px;
-  padding-left: 146px;
+  padding-left: 100px;
   position: relative;
   width: 100%;
   z-index: 3;
@@ -358,7 +442,9 @@
   width: 100%;
 }
 
-.bm-page-item-form-order {
+
+
+/*.bm-page-item-form-order {
   white-space: nowrap;
   text-align: left;
   width: 100%;
@@ -601,5 +687,37 @@
   .m-desktop &:hover,
   .m-touch   &:active {
     text-decoration: none;
+  }
+}*/
+
+@media screen and (max-width: @breakpoint-mobile){
+  .bm-page-item-grid {
+    white-space: normal;
+  }
+
+  .bm-page-item-grid-item {
+    .bm-page-item-grid.m-double & {
+      width: 100%;
+
+      &:not(:last-of-type) {
+        margin-right: 0;
+      }
+    }
+
+    &.m-left,
+    &.m-right {
+      margin-right: 0;
+      margin-left: 0;
+      padding-right: 20px;
+      padding-left: 20px;
+      text-align: center;
+    }
+  }
+
+  .bm-item-description {
+    margin: 0 auto;
+    max-width: 400px;
+    text-align: left;
+    width: 100%;
   }
 }

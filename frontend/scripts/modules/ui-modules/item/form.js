@@ -1,24 +1,20 @@
 (function(window, modules, $, BM){
 
   modules.define(
-    'FormItemOrder',
+    'ItemFormOrder',
     [
       'extend',
-      'baseView',
-      'FormItemSelectGrind',
-      'ButtonNumber'
+      'baseView'
     ],
     function(
       provide,
       extend,
-      BaseView,
-      FormItemSelectGrind,
-      ButtonNumber
+      BaseView
     ) {
 
-    var FormItemOrder = extend(BaseView),
+    var ItemFormOrder = extend(BaseView),
 
-        $class = FormItemOrder,
+        $class = ItemFormOrder,
         $super = $class.superclass;
 
     BM.tools.mixin($class.prototype, {
@@ -26,73 +22,110 @@
       initialize : function() {
         $super.initialize.apply(this, arguments);
 
-        if (!this.$elem) {
+        if (!this.el) {
           return;
         }
 
-        this._formSelectGrind     = null;
-        this._buttonNumber250     = null;
-        this._buttonNumber500     = null;
-        this._buttonNumber1kg     = null;
+        this._amount = null;
+        this._grind  = null;
 
-        this.$elemFormSelectGrind = this.$elem.find('@bm-form-select-grind');
-        this.$elemButtonNumber250 = this.$elem.find('@bm-button-number-250');
-        this.$elemButtonNumber500 = this.$elem.find('@bm-button-number-500');
-        this.$elemButtonNumber1kg = this.$elem.find('@bm-button-number-1kg');
+        this.$amountItems = this.el.find('@bm-item-form-order-amount-item');
+        this.$grindItems  = this.el.find('@bm-item-form-order-grind-item');
+        this.$buttonAdd   = this.el.find('@bm-item-form-order-button-add');
 
-        this._initFormSelectGrind();
-        this._initButtonsNumber();
+        this._updateAmount();
+        this._updateGrind();
+
+        this._bindEvents();
       },
 
-      _initFormSelectGrind : function() {
-        if (BM.tools.isNull(this._formSelectGrind)) {
-          this._formSelectGrind = new FormItemSelectGrind({
-            element: this.$elemFormSelectGrind
-          });
-          this._formSelectGrind.on('change', function(value) {
-            this._onFormSelectGrindChange(value);
-          }.bind(this));
-        }
+      _bindEvents : function() {
+        var self      = this,
+            clickName = BM.helper.event.clickName();
+
+        this.$buttonAdd.on(clickName, function(event) {
+          this._onButtonAddClick(event);
+        }.bind(this));
+        this.$amountItems.on(clickName, function(event) {
+          this._onAmountItemClick(event);
+        }.bind(this));
+        this.$grindItems.on(clickName, function(event) {
+          this._onGrindItemClick(event);
+        }.bind(this))
       },
 
-      _initButtonsNumber : function() {
-        if (BM.tools.isNull(this._buttonNumber250)) {
-          this._buttonNumber250 = new ButtonNumber({
-            element: this.$elemButtonNumber250
-          });
-          this._buttonNumber250.on('change', function(value) {
-            this._onButtonNumberChange('250', value);
-          }.bind(this));
-        }
-        if (BM.tools.isNull(this._buttonNumber500)) {
-          this._buttonNumber500 = new ButtonNumber({
-            element: this.$elemButtonNumber500
-          });
-          this._buttonNumber500.on('change', function(value) {
-            this._onButtonNumberChange('500', value);
-          }.bind(this));
-        }
-        if (BM.tools.isNull(this._buttonNumber1kg)) {
-          this._buttonNumber1kg = new ButtonNumber({
-            element: this.$elemButtonNumber1kg
-          });
-          this._buttonNumber1kg.on('change', function(value) {
-            this._onButtonNumberChange('1kg', value);
-          }.bind(this));
-        }
+      _onButtonAddClick : function() {
+        this._notifyAdd();
       },
 
-      _onFormSelectGrindChange : function(value) {
+      _onAmountItemClick : function(event) {
+        var $this = $(event.target);
+        while ($this.filter('[role=bm-item-form-order-amount-item]').length < 1) {
+          $this = $this.parent();
+        }
+
+        this.$amountItems.removeClass('m-selected');
+        $this.addClass('m-selected');
+
+        this._updateButton();
+        this._updateAmount();
+      },
+
+      _onGrindItemClick : function(event) {
+        var $this = $(event.target);
+        while ($this.filter('[role=bm-item-form-order-grind-item]').length < 1) {
+          $this = $this.parent();
+        }
+
+        this.$grindItems.removeClass('m-selected');
+        this.$grindItems.removeClass('m-color-scheme-white');
+        $this.addClass('m-selected');
+        $this.addClass('m-color-scheme-white');
+
+        this._updateButton();
+        this._updateGrind();
+      },
+
+      setPrices : function(pricesArr) {
+        pricesArr.forEach(function(price){
+          var $amountItem = this.$amountItems.filter(function(){return $(this).data('amount') == price.amount}),
+              $itemPrice  = $amountItem.find('@bm-item-form-order-amount-item-price');
+
+          $itemPrice.html(
+            price.value + $itemPrice.data('text')
+          );
+        }.bind(this))
+      },
+
+      _updateAmount : function() {
+        this._amount = this._getSelectedItemAmount().data('amount');
+      },
+
+      _updateGrind : function() {
+        this._grind = this.$grindItems.filter('.m-selected').last().data('grind');
+      },
+
+      _getSelectedItemAmount : function() {
+        return this.$amountItems.filter('.m-selected').last();
+      },
+
+      _updateButton : function() {
+
 
       },
 
-      _onButtonNumberChange : function(kind, value) {
-        console.log(kind, value);
+      _notifyAdd : function() {
+        var obj = {
+          amount : this._amount,
+          grind : this._grind
+        };
+
+        this._notify('add', obj);
       }
 
     });
 
-    provide(FormItemOrder);
+    provide(ItemFormOrder);
 
   });
 

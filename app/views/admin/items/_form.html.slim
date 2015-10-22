@@ -16,6 +16,14 @@
     = f.text_field   "price"
 
   .b-admin-form-item
+    = f.label        "price 500"
+    = f.text_field   "price_500"
+
+  .b-admin-form-item
+    = f.label        "price 1000"
+    = f.text_field   "price_1000"
+
+  .b-admin-form-item
     = f.label        "rating"
     = f.select       "rating", options_for_select({"1" => 1.0, "2" => 2.0, "3" => 3.0, "4" => 4.0, "5" => 5.0}, item.rating)
 

@@ -1,11 +1,18 @@
 ruby:
   config ||= {}
+  size   ||= :normal
+  grind  ||= false
 
-  size = config[:size] || :normal
-  name = config[:name] || ""
-  text = config[:text] || ""
+  name        = config[:name]  || ""
+  label       = config[:label] || ""
+  grind_kind  = config[:grind] && config[:grind][:kind]       || ""
+  grind_label = config[:grind] && config[:grind][:label]       || ""
+  grind_image = config[:grind] && config[:grind][:image][:url] || ""
 
-.bm-brewing-method role="bm-brewing-method-item" data-config=config.to_json data-size=size data-name=name
+.bm-brewing-method role="bm-brewing-method-item" class="#{'m-with-grind' if grind == true}" data-config=config.to_json data-size=size data-name=name
   .bm-brewing-method-image-wrapper
      /img.bm-brewing-method-image src=config[:image]
-  .bm-brewing-method-text role="bm-brewing-method-item-text" =text
+  .bm-brewing-method-text role="bm-brewing-method-item-text" =label
+  .bm-brewing-method-grind data-kind=grind_kind
+    .bm-brewing-method-grind-text =grind_label
+    img.bm-brewing-method-grind-image src=grind_image

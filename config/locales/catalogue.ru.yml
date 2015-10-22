@@ -1,0 +1,11 @@
+ru:
+  catalogue:
+    group:
+      popular:
+        header: "Популярное"
+      experiments:
+        header: "Любителям экспериментов"
+      best_of_aroma:
+        header: "Лучшее из арома"
+      decaf:
+        header: "Декаф (кофе без кофеина)"
