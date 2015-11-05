@@ -11,7 +11,7 @@ var size         = require('gulp-size');
 var cache        = require('gulp-cached');
 var csswring     = require('csswring');
 var replace      = require('gulp-replace');
-// var babel        = require('gulp-babel');
+var babel        = require('gulp-babel');
 // Should be run with following options:
 // .pipe(babel({ blacklist: ["strict"] }))
 //
@@ -20,7 +20,7 @@ var replace      = require('gulp-replace');
 // I do like the code it produces, though. And the fact that there is no need
 // to load additional runtime file for eveything to work. But for interactive
 // development, traceur offers speed, wich is a must.
-var traceur      = require('gulp-traceur');
+//var traceur      = require('gulp-traceur');
 var os           = require('os');
 var fs           = require('fs');
 var path         = require("path");
@@ -64,7 +64,7 @@ var paths = {
   // Order is important!
   vendor: [
     // this is a file form traceur.RUNTIME_PATH
-    'node_modules/gulp-traceur/node_modules/traceur/bin/traceur-runtime.js',
+    //'node_modules/gulp-traceur/node_modules/traceur/bin/traceur-runtime.js',
     'scripts/core/vendor/braintree.js',
     'scripts/core/vendor/braintree-data.js',
     'scripts/core/vendor/console.js',
@@ -204,7 +204,10 @@ gulp.task('vendor-local', function() {
 gulp.task('modules', function() {
   return gulp.src(paths.modules)
     .pipe(sourcemaps.init())
-    .pipe(traceur({modules:'inline'}))
+    //.pipe(traceur({modules:'inline'}))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
     .pipe(concat('modules.js'))
     .pipe(uglify({
       compress: {
@@ -221,7 +224,10 @@ gulp.task('modules', function() {
 
 gulp.task('modules-local', function() {
   return gulp.src(paths.modules)
-    .pipe(traceur({modules:'inline'}))
+    //.pipe(traceur({modules:'inline'}))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
     .on('error', function(err) {
       handleError('JS error', err);
     })

@@ -91,6 +91,7 @@ module ApplicationHelper
         kind: kind,
         label: "Ульра",
         label_full: "Ультрапомол",
+        label_full_form1: "Ультрапомол",
         image: {
           url: "/images/grinds/extrafine.png"
         },
@@ -101,6 +102,7 @@ module ApplicationHelper
         kind: kind,
         label: "Тонкий",
         label_full: "Тонкий помол",
+        label_full_form1: "Тонкого помола",
         image: {
           url: "/images/grinds/fine.png"
         },
@@ -111,6 +113,7 @@ module ApplicationHelper
         kind: kind,
         label: "Средний",
         label_full: "Средний помол",
+        label_full_form1: "Среднего помола",
         image: {
           url: "/images/grinds/medium.png"
         },
@@ -121,6 +124,7 @@ module ApplicationHelper
         kind: kind,
         label: "Грубый",
         label_full: "Грубый помол",
+        label_full_form1: "Грубого помола",
         image: {
           url: "/images/grinds/coarse.png"
         },
@@ -131,6 +135,7 @@ module ApplicationHelper
         kind: kind,
         label: "В зерне",
         label_full: "В зерне",
+        label_full_form1: "В Зерне",
         image: {
           url: "/images/grinds/beans.png"
         },

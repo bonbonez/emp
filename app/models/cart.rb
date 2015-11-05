@@ -1,71 +1,71 @@
 class Cart < ActiveRecord::Base
-  before_save :generate_unique_cookie_id, :ensure_data_not_empty
+  before_save :generate_unique_cookie_id, :ensure_data_not_empty, :update_props
 
-  def get_data
-    d = self.data
-    return data_dummy if d.nil?
+  has_and_belongs_to_many :order_items
 
-    begin
-      result = ActiveSupport::JSON.decode(d)
-    rescue
-      result = data_dummy
+  def add_item(item_id, weight, grind)
+      items = order_items
+      item = get_item(item_id, weight, grind)
+
+      if item.present?
+        item.quantity += 1
+        item.save
+        save
+      else
+        item = OrderItem.new(weight: weight, grind: grind)
+        item.item = Item.find(item_id)
+        item.save
+        order_items.push(item)
+        save
+      end
+
+      #update_props
+  end
+
+  def remove_item(item_id, weight, grind)
+    item = get_item(item_id, weight, grind)
+    if item
+      if item.quantity > 1
+        item.quantity -= 1
+        item.save
+      else
+        delete_item(item_id, weight, grind)
+      end
     end
-    result
+
+    #self.update_props
   end
 
-  def set_data(obj)
-    d = obj.to_json.to_s
-    #d = ActiveSupport::Base64.encode64(d)
-    self.data = d
-    self.save
+  def delete_item(item_id, weight, grind)
+    item = get_item(item_id, weight, grind)
+    if item
+      item.destroy
+      save
+    end
+
+    #update_props
   end
 
-  def add_item(item_data)
-    return inc_item(item_data) if item_exists?(item_data)
-    d = get_data
-    d["items"].push({
-      item_id: item_data["item_id"],
-      amount: item_data["amount"],
-      grind: item_data["grind"],
-      count: 1
-    })
-    set_data(d)
+  def get_item(item_id, weight, grind)
+    items = order_items
+    item = items.where(item_id: item_id, weight: weight, grind: grind).last if items
+    item
   end
 
-  def remove_item(item_data)
-    return nil if !item_exists?(item_data)
-    data = get_data
-    data["items"].delete_at(get_item_index(item_data))
-    set_data(data)
-  end
-
-  def inc_item(item_data)
-    return if !item_exists?(item_data)
-    data = get_data
-    data["items"][get_item_index(item_data)]["count"] += 1
-    set_data(data)
-  end
-
-  def dec_item(item_data)
-    data = get_data
-    count = (data["items"][get_item_index(item_data)]["count"] -= 1)
-    return remove_item(item_data) if count < 1
-    set_data(data)
-  end
-
-  def item_exists?(item_data)
-    d = get_data
-    return get_item(item_data).present?
-  end
-
-  def get_item(item_data)
-    d = get_data
-    d["items"].find{|item| item["item_id"] == item_data["item_id"] && item["amount"] == item_data["amount"] && item["grind"].to_sym == item_data["grind"].to_sym }
-  end
-
-  def get_item_index(item_data)
-    d = get_data
-    d["items"].index{|item| item["item_id"] == item_data["item_id"] && item["amount"] == item_data["amount"] && item["grind"].to_sym == item_data["grind"].to_sym }
+  def update_props
+    if self.order_items.count == 0
+      self.amount = 0
+      self.total_amount = 0
+    else
+      tmp = 0
+      order_items.each do |i|
+        item = i.item
+        tmp += item.send("get_price_#{i.weight}") * i.quantity
+      end
+      self.amount = tmp
+      self.total_amount = self.amount - (self.amount * self.discount / 100)
+    end
+    #save
   end
 
   def generate_unique_cookie_id
@@ -78,8 +78,16 @@ class Cart < ActiveRecord::Base
   end
 
   def ensure_data_not_empty
-    if self.data.nil?
-      self.data = data_dummy.to_json
+    if !self.amount.is_a?(Integer)
+      self.amount = 0
+    end
+
+    if !self.discount.is_a?(Integer)
+      self.discount = 0
+    end
+
+    if !self.total_amount.is_a?(Integer)
+      self.total_amount = 0
     end
   end
 

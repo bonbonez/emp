@@ -9,6 +9,8 @@ class Item < ActiveRecord::Base
   validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
   validates_attachment_content_type :image_plantation, :content_type => /\Aimage\/.*\Z/
 
+  has_many :order_items
+
   def init
     self.rating       ||= 5.0
     self.methods      ||= [:french, :turk, :cup, :machine, :aeropress, :v60, :moka, :siphon]
@@ -65,6 +67,10 @@ class Item < ActiveRecord::Base
     elsif self.kind == "espresso"
       "Смесь для кофемашин"
     end
+  end
+
+  def get_price_250
+    self.price
   end
 
   def get_price_500

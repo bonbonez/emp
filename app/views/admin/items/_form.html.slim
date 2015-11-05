@@ -41,7 +41,7 @@
     = f.label        "Характеристики"
     = f.text_field   "specs", type: :hidden
     .b-admin-form-item-specs
-      = render partial: "templates/item/specs/all"
+      = render partial: "templates/item/specs/all", locals: {config: {acidity: 0, body: 0, aroma: 0, aftertaste: 0}}
 
   .b-admin-form-block-right
     .b-admin-form-block-right-item

@@ -35,6 +35,7 @@
 
         this._updateAmount();
         this._updateGrind();
+        this._updateButton();
 
         this._bindEvents();
       },
@@ -109,9 +110,26 @@
         return this.$amountItems.filter('.m-selected').last();
       },
 
+      _getSelectedItemGrind : function() {
+        return this.$grindItems.filter('.m-selected').last();
+      },
+
       _updateButton : function() {
+        var amount = this._getSelectedItemAmount().data('amount');
+        var grind = this._getSelectedItemGrind().find('.bm-brewing-method').data('config').grind;
+        var textTemplate;
 
+        /*if (grind.kind === "extrafine") {
+          textTemplate = this.$buttonAdd.data('text-template-with-comma');
+        } else {
+          textTemplate = this.$buttonAdd.data('text-template-default');
+        }*/
 
+        textTemplate = this.$buttonAdd.data('text-template');
+        textTemplate = textTemplate.replace('${amount}', amount);
+        textTemplate = textTemplate.replace('${grind}', grind.label_full.toLowerCase());
+
+        this.$buttonAdd.html(textTemplate);
       },
 
       _notifyAdd : function() {

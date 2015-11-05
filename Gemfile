@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+ruby '2.1.5'
+
 gem 'rails', '4.2.0'
 
 group :assets do
@@ -8,7 +10,6 @@ group :assets do
 end
 
 gem 'jquery-rails'
-gem 'mysql2'
 gem 'slim'
 gem 'paperclip'
 gem 'aws-sdk'

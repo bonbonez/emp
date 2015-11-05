@@ -991,15 +991,11 @@ body,
   width: 45px;
   background-size: 50% 50%;
   background-repeat: no-repeat;
-}
-.m-desktop .bm-brewing-method-grind-image:hover,
-.m-touch .bm-brewing-method-grind-image:active {
-  border-color: #ffffff;
-  -webkit-transform: scale(4);
-  -moz-transform: scale(4);
-  -ms-transform: scale(4);
-  -o-transform: scale(4);
-  transform: scale(4);
+  /*.m-desktop &:hover,
+  .m-touch   &:active {
+    border-color: #ffffff;
+    .transform(scale(4));
+  }*/
 }
 .m-color-scheme-white .bm-brewing-method-grind-image,
 .bm-brewing-method.m-color-scheme-white .bm-brewing-method-grind-image {

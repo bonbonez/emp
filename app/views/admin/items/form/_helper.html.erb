@@ -80,8 +80,14 @@
             };
 
             var parseSpecs = function() {
-                currentSpecs = JSON.parse(hash2json($input.val()));
-                tempSpecs    = JSON.parse(hash2json($input.val()));
+                try {
+                    currentSpecs = JSON.parse($input.val());
+                    tempSpecs    = JSON.parse($input.val());
+                } catch (e) {
+                    currentSpecs = JSON.parse(hash2json($input.val()));
+                    tempSpecs    = JSON.parse(hash2json($input.val()));
+                }
+
             };
 
             var saveSpecs = function() {

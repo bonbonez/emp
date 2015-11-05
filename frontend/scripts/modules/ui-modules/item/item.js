@@ -181,6 +181,9 @@
             this._formOrder = new FormOrder({
               element: this.$elemFormOrder
             });
+            this._formOrder.on('add', function(obj) {
+              console.log(obj);
+            });
           }
       },
 
