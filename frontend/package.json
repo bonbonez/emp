@@ -49,6 +49,8 @@
     "react-router": "^1.0.0-rc3",
     "react-tween-state": "0.0.5",
     "sass-loader": "2.0.1",
+    "less-loader": "2.2.1",
+    "imports-loader": "0.6.5",
     "shelljs": "^0.5.3",
     "sort-by": "^1.1.0",
     "style-loader": "^0.12.3",

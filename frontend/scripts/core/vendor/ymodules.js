@@ -394,11 +394,6 @@ var undef,
         };
     })();
 
-if(typeof exports === 'object') {
-    module.exports = create();
-}
-else {
-    global.modules = create();
-}
+    window.modules = create();
 
 })(this);

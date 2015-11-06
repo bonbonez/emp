@@ -1,2761 +1,5540 @@
-'use strict';
-
-(function (window, modules, $, radio) {
-
-    modules.define('pageCartInit', ['pageCartItem', 'CartProcessor'], function (provide, CartItem, cart) {
-
-        var $elemPageCart = $('@b-page-cart');
-
-        $('@b-cart-item').each(function () {
-            var $this = $(this);
-            new CartItem({ element: $this });
-        });
-
-        cart.on('update', function () {
-            if (cart.getTotalItems() < 1) {
-                $elemPageCart.attr('data-cart-empty', 'true');
-            }
-        });
-
-        provide();
-    });
-})(undefined, undefined.modules, undefined.jQuery, undefined.radio);
-'use strict';
-
-(function (window, modules, $) {
-
-    modules.define('pageCartItem', ['basePubSub', 'extend'], function (provide, PubSub, extend) {
-
-        var CartItem = extend(PubSub),
-            $class = CartItem,
-            $super = $class.superclass;
-
-        BM.tools.mixin($class.prototype, {
-
-            initialize: function initialize(config) {
-                $super.initialize.apply(this, arguments);
-
-                this.$elem = config.element;
-                this.$elemButtonRemove = this.$elem.find('@b-cart-item-button-remove');
-                this.$elemButtonMinus = this.$elem.find('@b-cart-item-button-minus');
-                this.$elemButtonPlus = this.$elem.find('@b-cart-item-button-plus');
-                this.$elemAmount = this.$elem.find('@b-cart-item-amount');
-                this.$elemPrice = this.$elem.find('@b-cart-item-price');
-                this.$elemPriceTotal = this.$elem.find('@b-cart-item-price-total');
-
-                this._config = {
-                    item: {
-                        id: null
-                    }
-                };
-
-                this._parseConfig();
-                this._updateLayout();
-                this._setupEvents();
-            },
-
-            _parseConfig: function _parseConfig() {
-                try {
-                    this._config = JSON.parse(this.$elem.attr('data-config'));
-                } catch (e) {}
-            },
-
-            _setupEvents: function _setupEvents() {
-                var me = this;
-                this.$elemButtonRemove.on('click', function () {
-                    me._onButtonCloseClick();
-                });
-                this.$elemButtonMinus.on('click', function () {
-                    me._onButtonMinusClick();
-                });
-                this.$elemButtonPlus.on('click', function () {
-                    me._onButtonPlusClick();
-                });
-            },
-
-            _onButtonCloseClick: function _onButtonCloseClick() {
-                //this.hide();
-                //this._setStateWait(true);
-                var me = this;
-                this._setStateWait(true);
-                $.ajax({
-                    url: '/api/cart/item/remove',
-                    type: 'post',
-                    dataType: 'json',
-                    data: {
-                        item: {
-                            id: this._config.item.id
-                        }
-                    },
-                    success: function success(data) {
-                        setTimeout(function () {
-                            me._onRequestItemRemoveSuccess(data);
-                        }, 300);
-                    },
-                    error: function error() {
-                        setTimeout(function () {
-                            me._onRequestAddToCartError();
-                        }, 300);
-                    }
-                });
-            },
-
-            _onButtonMinusClick: function _onButtonMinusClick() {
-                if (this._getCurrentAmount() > 1) {
-                    this._sendRequestDecItem();
-                }
-            },
-
-            _sendRequestDecItem: function _sendRequestDecItem() {
-                var me = this;
-                //this._setStateWait(true);
-                $.ajax({
-                    url: '/api/cart/item/dec',
-                    type: 'post',
-                    dataType: 'json',
-                    data: {
-                        item: {
-                            id: this._config.item.id
-                        }
-                    },
-                    success: function success(data) {
-                        setTimeout(function () {
-                            me._onRequestDecItemSuccess();
-                            radio('b-cart-update').broadcast(data);
-                        }, 300);
-                    },
-                    error: function error() {
-                        me._onRequestDecItemError();
-                    }
-                });
-            },
-
-            _onRequestDecItemSuccess: function _onRequestDecItemSuccess() {
-                this._setStateWait(false);
-                this._decItemAmount();
-                this._updatePrice();
-            },
-
-            _onRequestDecItemError: function _onRequestDecItemError() {
-                this._setStateWait(false);
-            },
-
-            _onButtonPlusClick: function _onButtonPlusClick() {
-                this._sendRequestIncItem();
-            },
-
-            _sendRequestIncItem: function _sendRequestIncItem() {
-                var me = this;
-                //this._setStateWait(true);
-                $.ajax({
-                    url: '/api/cart/item/inc',
-                    type: 'post',
-                    dataType: 'json',
-                    data: {
-                        item: {
-                            id: this._config.item.id
-                        }
-                    },
-                    success: function success(data) {
-                        setTimeout(function () {
-                            me._onRequestIncItemSuccess(data);
-                        }, 300);
-                    },
-                    error: function error() {
-                        me._onRequestIncItemError();
-                    }
-                });
-            },
-
-            _onRequestIncItemSuccess: function _onRequestIncItemSuccess(data) {
-                this._setStateWait(false);
-                this._incItemAmount();
-                this._updatePrice();
-                radio('b-cart-update').broadcast(data);
-            },
-
-            _onRequestIncItemError: function _onRequestIncItemError() {
-                this._setStateWait(false);
-            },
-
-            _onRequestItemRemoveSuccess: function _onRequestItemRemoveSuccess(data) {
-                var me = this;
-                setTimeout((function () {
-                    me.hide();
-                    radio('b-cart-update').broadcast(data);
-                }).bind(this), 300);
-            },
-
-            _onRequestItemRemoveError: function _onRequestItemRemoveError() {
-                setTimeout((function () {
-                    this._setStateWait(false);
-                }).bind(this), 300);
-            },
-
-            _slideOut: function _slideOut(callback) {},
-
-            hide: function hide() {
-                this.$elem.attr('data-visible', 'false');
-            },
-
-            _updateLayout: function _updateLayout() {},
-
-            _setStateWait: function _setStateWait(bool) {
-                if (bool) {
-                    this.$elem.attr('data-wait', 'true');
-                } else {
-                    this.$elem.attr('data-wait', 'fasle');
-                }
-            },
-
-            _getCurrentAmount: function _getCurrentAmount() {
-                var amount = this.$elemAmount.html();
-                amount = parseInt(amount, 10);
-                return amount;
-            },
-
-            _incItemAmount: function _incItemAmount() {
-                var amount = this._getCurrentAmount();
-                this._showButtonMinus();
-                return this.$elemAmount.html(amount + 1);
-            },
-
-            _decItemAmount: function _decItemAmount() {
-                var amount = this._getCurrentAmount();
-                if (amount <= 2) {
-                    this._hideButtonMinus();
-                }
-                return this.$elemAmount.html(amount - 1);
-            },
-
-            _showButtonMinus: function _showButtonMinus() {
-                this.$elemButtonMinus.attr('data-visible', 'true');
-            },
-
-            _hideButtonMinus: function _hideButtonMinus() {
-                this.$elemButtonMinus.attr('data-visible', 'false');
-            },
-
-            _updatePrice: function _updatePrice() {
-                var amount = this._getCurrentAmount();
-                if (amount > 1) {
-                    this._showPriceTotal();
-                } else {
-                    this._hidePriceTotal();
-                }
-            },
-
-            _showPriceTotal: function _showPriceTotal() {
-                this.$elemPriceTotal.html(this._getCurrentAmount() * this._config.item.price);
-                this.$elemPrice.attr('data-total-visible', 'true');
-            },
-
-            _hidePriceTotal: function _hidePriceTotal() {
-                this.$elemPrice.attr('data-total-visible', 'false');
-            },
-
-            destroy: function destroy() {
-                $super.destroy.apply(this, arguments);
-            }
-
-        });
-
-        provide(CartItem);
-    });
-})(undefined, undefined.modules, undefined.jQuery);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueInit', ['extend', 'baseView', 'CatalogueMenu', 'CatalogueItem'], function (provide, extend, BaseView, CatalogueMenu, CatalogueItem) {
-
-    var CatalogueInit = extend(BaseView),
-        $class = CatalogueInit,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this.$menu = this.$elem.find('@bm-page-catalogue-menu');
-        this.$itemsWrapper = this.$elem.find('@bm-catalogue-items-wrapper');
-        this.$itemsGridWrapper = this.$elem.find('@bm-catalogue-items-grid');
-        this.$items = this.$itemsGridWrapper.find('@bm-catalogue-item');
-        this.$itemsSpecialWrapper = this.$elem.find('@bm-catalogue-items-special');
-        this.$itemsSpecial = this.$itemsSpecialWrapper.find('@bm-catalogue-item');
-
-        this._menu = null;
-        this._items = [];
-
-        this._initMenu();
-        this._initItems();
-        this._updateItems();
-        this._bindEvents();
-
-        //this._items[0]._setMoreInfoVisible(true);
-        this._items[0]._showPopup();
-      },
-
-      _bindEvents: function _bindEvents() {},
-
-      _initItems: function _initItems() {
-        var self = this;
-        this.$items.each(function () {
-          var instance = new CatalogueItem({
-            element: $(this)
-          });
-          self._items.push(instance);
-        });
-      },
-
-      _initMenu: function _initMenu() {
-        if (!BM.tools.isNull(this._menu)) {
-          return;
-        }
-
-        this._menu = new CatalogueMenu({
-          element: this.$menu
-        });
-        this._menu.on('category-selected', (function (categoryName, special) {
-          if (!special) {
-            this.el.removeAttr('data-special');
-            this.$itemsGridWrapper.attr('data-selected-category', categoryName);
-            BM.helper.browser.triggerRerender();
-            this._updateItems();
-
-            /*if (BM.tools.client.isTouch()) {
-              $.scrollTo(this._menu.el.offset().top, 400);
-            }*/
-          } else {
-              this.el.attr('data-special', special);
-            }
-        }).bind(this));
-      },
-
-      _updateItems: function _updateItems() {
-        if (BM.tools.client.isTouch()) {
-          return;
-        }
-
-        var self = this;
-        this.$items.filter(':visible').each(function (i, el) {
-          var handler = self._getItemHandler(this);
-          if (!BM.tools.isNull(handler)) {
-            (i + 1) % 4 === 0 ? handler.dockMoreToRight() : handler.dockMoreToLeft();
-          }
-        });
-      },
-
-      _getItemHandler: function _getItemHandler(el) {
-        return this._items.filter(function (item) {
-          return item.el.get(0) === el;
-        })[0] || null;
-      }
-
-    });
-
-    new CatalogueInit({
-      element: $(document.body).find('@bm-page-catalogue')
-    });
-
-    provide(CatalogueInit);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueItem', ['extend', 'baseView', 'PopupItem'], function (provide, extend, BaseView, PopupItem) {
-
-    var CatalogueItem = extend(BaseView),
-        $class = CatalogueItem,
-        $super = $class.superclass,
-        $window = $(window);
-
-    var MORE_INFO_FADE_DISTANCE = 70,
-        MORE_INFO_FADE_BOUNDS = { fr: 1, to: 0.1 };
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-
-        this._config = {};
-
-        this.$content = this.el.find('@bm-catalogue-item-content');
-        this.$moreInfo = this.el.find('@bm-catalogue-item-more-info');
-
-        this._offset = null;
-        this._contentWidth = null;
-        this._widthWithMore = null;
-
-        this._parseConfig();
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        this.el.on(BM.helper.event.clickName(), (function (event) {
-          this._onClick();
-        }).bind(this));
-        this.el.on('mouseover', (function (event) {
-          this._onMouseOver(event);
-        }).bind(this));
-        this.el.on('mouseout', (function (event) {
-          this._onMouseOut(event);
-        }).bind(this));
-        this.el.on('mousemove', (function (event) {
-          this._onMouseMove(event);
-        }).bind(this));
-      },
-
-      _onClick: function _onClick(event) {
-        this._showPopup();
-      },
-
-      _onMouseOver: function _onMouseOver(event) {
-        if (this._isMoreVisible()) {
-          return;
-        }
-        this._setMoreInfoVisible(true);
-        BM.helper.browser.triggerRerender();
-      },
-
-      _onMouseOut: function _onMouseOut(event) {
-        this._setMoreInfoVisible(false);
-      },
-
-      _onMouseMove: function _onMouseMove(event) {
-        this._updateElementOffset();
-        this._updateContentWidth();
-        this._updateWidthWithMore();
-
-        var posX = event.pageX - this._offset.left,
-            bounds = MORE_INFO_FADE_BOUNDS,
-            boundsDiff = bounds.fr - bounds.to;
-
-        if (this._isMoreDockedToLeft()) {
-          var fadeStart = this._contentWidth,
-              fadeEnd = this._contentWidth + MORE_INFO_FADE_DISTANCE;
-
-          if (posX > fadeEnd) {
-            this._setMoreInfoVisible(false);
-          } else if (posX > fadeStart && posX < fadeEnd) {
-            var pos = posX - this._contentWidth,
-                posRel = pos / MORE_INFO_FADE_DISTANCE,
-                opacity = bounds.to + boundsDiff * (1 - posRel);
-
-            this._setMoreOpacity(opacity);
-          }
-        } else if (this._isMoreDockedToRight() && !BM.tools.isNull(this._widthWithMore) && posX <= 0) {
-
-          var fadeEnd = MORE_INFO_FADE_DISTANCE,
-              pos = Math.abs(posX);
-
-          if (pos > fadeEnd) {
-            this._setMoreInfoVisible(false);
-          } else {
-            var posRel = pos / MORE_INFO_FADE_DISTANCE,
-                opacity = bounds.to + boundsDiff * (1 - posRel);
-
-            this._setMoreOpacity(opacity);
-          }
-        }
-      },
-
-      _showPopup: function _showPopup() {
-        if (BM.tools.isNull(this._popup)) {
-          this._popup = new PopupItem({
-            data: this._config
-          });
-        }
-        this._popup.show();
-      },
-
-      _updateElementOffset: function _updateElementOffset() {
-        if (BM.tools.isNull(this._offset)) {
-          this._offset = this.el.offset();
-        }
-      },
-
-      _updateContentWidth: function _updateContentWidth() {
-        if (BM.tools.isNull(this._contentWidth)) {
-          this._contentWidth = this.$content.width();
-        }
-      },
-
-      _updateWidthWithMore: function _updateWidthWithMore() {
-        if (BM.tools.isNull(this._widthWithMore) && this.el.hasClass('m-dock-more-to-right')) {
-          this._widthWithMore = this.el.width();
-        }
-      },
-
-      _setMoreInfoVisible: function _setMoreInfoVisible(bool) {
-        bool ? this.el.addClass('m-more-info-visible') && this._setMoreOpacity(1) : this.el.removeClass('m-more-info-visible');
-      },
-
-      _setMoreOpacity: function _setMoreOpacity(value) {
-        value = Math.min(1, Math.max(0, value));
-        this.$moreInfo.css({
-          'opacity': value
-        });
-      },
-
-      _isMoreDockedToLeft: function _isMoreDockedToLeft() {
-        return !this.el.hasClass('m-dock-more-to-right');
-      },
-
-      _isMoreDockedToRight: function _isMoreDockedToRight() {
-        return this.el.hasClass('m-dock-more-to-right');
-      },
-
-      _isMoreVisible: function _isMoreVisible() {
-        return this.el.hasClass('m-more-info-visible');
-      },
-
-      dockMoreToRight: function dockMoreToRight() {
-        this.el.addClass('m-dock-more-to-right');
-      },
-
-      dockMoreToLeft: function dockMoreToLeft() {
-        this.el.removeClass('m-dock-more-to-right');
-      }
-
-    });
-
-    provide(CatalogueItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueMenu', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var CatalogueMenu = extend(BaseView),
-        $class = CatalogueMenu,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-
-        this.$list = this.$elem.find('@bm-page-catalogue-list');
-        this.$select = this.$elem.find('@bm-page-catalogue-select');
-        this.$listItems = this.$list.find('@bm-page-catalogue-menu-item');
-        this.$selectItems = this.$select.find('@bm-page-catalogue-menu-select-item');
-        //this.$selectItems = this.$select.find('@bm-page-catalogue-menu-item');
-
-        this.$selectDropdownButton = this.el.find('@bm-page-catalogue-menu-select-dropdown-button');
-        this.$selectCurrentItemWrapper = this.el.find('@bm-page-catalogue-menu-select-current-item-wrapper');
-
-        this._offset = null;
-        this._selectItemHeight = null;
-
-        this._updateSelect();
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        var self = this,
-            clickName = BM.helper.event.clickName();
-
-        this.$selectItems.on(clickName, function (event) {
-          self._onSelectItemClick(event, this);
-        });
-        this.$listItems.on(clickName, (function (event) {
-          this._onListItemClick(event);
-        }).bind(this));
-      },
-
-      _updateSelect: function _updateSelect() {
-        this._updateMenuOffset();
-        this._updateSelectItemHeight();
-        //this._updateSelectItemWrapper();
-
-        this._updateItemsPosition();
-      },
-
-      _updateItemsPosition: function _updateItemsPosition() {
-        var self = this;
-        this.$selectItems.each(function (i, el) {
-          if (i < 1) {
-            return;
-          }
-
-          var $item = $(this);console.log();
-          $item.css({
-            'transform': 'translateY(' + self._selectItemHeight * i + 'px)'
-          });
-        });
-      },
-
-      _updateMenuOffset: function _updateMenuOffset() {
-        if (!BM.tools.isNull(this._offset)) {
-          this._updateMenuOffset = function () {};
-          return;
-        }
-        this._offset = this.el.offset();
-      },
-
-      _updateSelectItemHeight: function _updateSelectItemHeight() {
-        if (!BM.tools.isNull(this._selectItemHeight)) {
-          this._updateSelectItemHeight = function () {};
-          return;
-        }
-        this._selectItemHeight = this._getSelectedSelectItem().height();
-      },
-
-      _getSelectedSelectItem: function _getSelectedSelectItem() {
-        return this.$selectItems.filter(function () {
-          return $(this).hasClass('m-selected');
-        });
-      },
-
-      _updateSelectItemWrapper: function _updateSelectItemWrapper() {
-        this.$selectItems.each(function () {
-          var $this = $(this),
-              $item = $this.find('@bm-page-catalogue-menu-item');
-          if ($item.hasClass('m-selected')) {
-            $this.addClass('m-selected');
-          } else {
-            $this.removeClass('m-selected');
-          }
-        });
-      },
-
-      _onSelectItemClick: function _onSelectItemClick(event, $item) {
-        $item = $($item);
-        if ($item.hasClass('m-selected')) {
-          this._toggleMenu();
-        } else {
-          this.$selectItems.removeClass('m-selected');
-          $item.addClass('m-selected');
-          this._toggleMenu();
-
-          var $menuItem = $item.find('@bm-page-catalogue-menu-item');
-          this._notify('category-selected', $menuItem.data('name'), $menuItem.data('special'));
-        }
-      },
-
-      _toggleMenu: function _toggleMenu() {
-        if (this._isSelectExpanded()) {
-          this._collapseSelect();
-        } else {
-          this._expandSelect();
-        }
-      },
-
-      _isSelectExpanded: function _isSelectExpanded() {
-        return this.el.hasClass('m-select-expanded');
-      },
-
-      _expandSelect: function _expandSelect() {
-        this.el.addClass('m-select-expanded');
-      },
-
-      _collapseSelect: function _collapseSelect() {
-        this.el.removeClass('m-select-expanded');
-      },
-
-      _onListItemClick: function _onListItemClick(event) {
-        var $item = $(event.target),
-            name = $item.data('name');
-
-        if (BM.tools.isNull($item.data('name'))) {
-          $item = $item.parent('.bm-page-catalogue-menu-item');
-          name = $item.name;
-        }
-
-        this.$listItems.removeClass('m-selected');
-        $item.addClass('m-selected');
-        this._notify('category-selected', $item.data('name'), $item.data('special'));
-      }
-
-    });
-
-    provide(CatalogueMenu);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueBackground', ['extend', 'baseView', 'EventDispatcher'], function (provide, extend, BaseView, EventDispatcher) {
-
-    var CatalogueBackground = extend(BaseView),
-        $class = CatalogueBackground,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._items = {
-          mono: this._getItem('mono'),
-          aroma: this._getItem('aroma')
-        };
-        this._itemsArr = [this._items.mono, this._items.aroma];
-
-        this._baseHeight = null;
-        this._currentItem = this._items.mono;
-        this._lastOffsetValue = null;
-
-        this._updateFull();
-        this._bindEvents();
-
-        setTimeout((function () {
-          this._updateFull();
-        }).bind(this), 300);
-      },
-
-      _getItem: function _getItem(name) {
-        var $elem = this.$elem.find('[data-item=' + name + ']');
-        return {
-          elem: $elem,
-          size: $elem.data('size'),
-          height: $elem.height(),
-          aspect: parseFloat($elem.data('aspect'))
-        };
-      },
-
-      _bindEvents: function _bindEvents() {
-        EventDispatcher.on('window-resize', (function () {
-          this._updateFull();
-        }).bind(this));
-      },
-
-      setCurrentItem: function setCurrentItem(itemName) {
-        if (itemName === this._currentItem.elem.data('item')) {
-          return;
-        }
-
-        var item = this._getItem(itemName);
-        if (item.elem.length < 1) {
-          return;
-        }
-
-        item.elem.prependTo(this.$elem);
-        item.elem.addClass('m-visible');
-        this._currentItem.elem.removeClass('m-visible');
-        this._currentItem = item;
-
-        this._notify('update', item.elem.data('item'));
-      },
-
-      _getCurrentItem: function _getCurrentItem() {},
-
-      setProgress: function setProgress(value) {
-        if (!BM.tools.isNumber(value)) {
-          return;
-        }
-
-        value = Math.min(100, Math.max(0, value));
-        this._setCurrentItemOffset(value);
-      },
-
-      _updateFull: function _updateFull() {
-        this._updateOrientation();
-        this._updateBaseHeightValue();
-        this._updateCurrentItemOffset();
-      },
-
-      _setCurrentItemOffset: function _setCurrentItemOffset(value) {
-        this._lastOffsetValue = value;
-
-        var offset = (this._currentItem.height - this._baseHeight) / 100 * value * -1;
-
-        window.requestAnimationFrame((function () {
-          this._currentItem.elem.css({
-            'transform': 'translateY(' + offset + 'px)'
-          });
-        }).bind(this));
-      },
-
-      _updateOrientation: function _updateOrientation() {
-        var windowAspect = window.innerWidth / window.innerHeight;
-        this._itemsArr.forEach(function (item) {
-          if (item.aspect >= windowAspect) {
-            item.elem.addClass('m-orientation-inverted');
-          } else {
-            item.elem.removeClass('m-orientation-inverted');
-          }
-        });
-      },
-
-      _updateBaseHeightValue: function _updateBaseHeightValue() {
-        this._baseHeight = this.$elem.height();
-      },
-
-      _updateCurrentItemOffset: function _updateCurrentItemOffset() {
-        if (!BM.tools.isNull(this._lastOffsetValue)) {
-          this._setCurrentItemOffset(this._lastOffsetValue);
-        }
-      }
-
-    });
-
-    provide(CatalogueBackground);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueInitOld', ['extend', 'baseView', 'CatalogueBackground', 'CatalogueMenu', 'CatalogueItem', 'EventDispatcher'], function (provide, extend, BaseView, Background, Menu, Item, EventDispatcher) {
-
-    var CatalogueInit = extend(BaseView),
-        $class = CatalogueInit,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._backgroundHandler = null;
-        this._menuHandler = null;
-
-        this.$elemBackground = this.$elem.find('@bm-catalogue-background');
-        this.$elemMenu = this.$elem.find('@bm-catalogue-menu');
-
-        this.$elemItemsWrapper = this.$elem.find('@bm-catalogue-items-wrapper');
-
-        this._groupes = [this.$elemGroupClassic = this.$elem.find('@bm-catalogue-item-group-classic'), this.$elemGroupAroma = this.$elem.find('@bm-catalogue-item-group-aroma')];
-
-        this._groupesRanges = [];
-
-        //this._saveGroupsRanges();
-        //this._initBackground();
-        //this._initMenu();
-        this._initItems();
-        //this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        EventDispatcher.on('window-resize', (function () {
-          this._saveGroupsRanges();
-        }).bind(this));
-      },
-
-      _initBackground: function _initBackground() {
-        if (BM.tools.isNull(this._backgroundHandler)) {
-          this._backgroundHandler = new Background({
-            element: this.$elemBackground
-          });
-          this._backgroundHandler.on('update', (function (itemName) {
-            this._onBackgroundUpdate(itemName);
-          }).bind(this));
-          EventDispatcher.on('window-scroll', (function () {
-            this._updateBackground();
-          }).bind(this));
-        }
-      },
-
-      _initMenu: function _initMenu() {
-        if (BM.tools.isNull(this._menuHandler)) {
-          this._menuHandler = new Menu({
-            element: this.$elemMenu
-          });
-        }
-      },
-
-      _onBackgroundUpdate: function _onBackgroundUpdate(itemName) {
-        if (!BM.tools.isNull(this._menuHandler)) {
-          this._menuHandler.focusItem(itemName);
-        }
-      },
-
-      _initItems: function _initItems() {
-        var lastItem;
-        this.$elemItemsWrapper.each(function () {
-          $(this).find('@bm-catalogue-item').each(function () {
-            lastItem = new Item({
-              element: $(this)
-            });
-          });
-        });
-        //lastItem.showPopup();
-      },
-
-      _saveGroupsRanges: function _saveGroupsRanges() {
-        var previousTopRange = 0;
-
-        this._groupesRanges.length = 0;
-        this._groupesRanges = [];
-
-        this._groupes.forEach((function ($group) {
-          var bottomRange = $group.offset().top + $group.height();
-
-          this._groupesRanges.push({
-            elem: $group,
-            height: $group.height(),
-            top: previousTopRange,
-            bottom: bottomRange
-          });
-          previousTopRange = bottomRange + 1;
-        }).bind(this));
-      },
-
-      _updateBackground: function _updateBackground() {
-        var range = this._getCurrentRange();
-
-        if (BM.tools.isNull(range)) {
-          return;
-        }
-        this._updateParallax(range);
-        this._updateImage(range.elem);
-      },
-
-      _updateParallax: function _updateParallax(range) {
-        var scrollTop = $window.scrollTop(),
-            scrollProgress = parseInt(((scrollTop - range.top) / (range.bottom - range.top) * 100).toFixed(0), 10);
-
-        if (!BM.tools.isNull(this._backgroundHandler)) {
-          this._backgroundHandler.setProgress(scrollProgress);
-        }
-      },
-
-      _updateImage: function _updateImage($group) {
-        if (!BM.tools.isNull(this._backgroundHandler)) {
-          this._backgroundHandler.setCurrentItem($group.data('name'));
-        }
-      },
-
-      _getCurrentGroupByRange: function _getCurrentGroupByRange() {
-        var range = this._getCurrentRange();
-        if (!BM.tools.isNull(range)) {
-          return range.elem;
-        }
-      },
-
-      _getCurrentRange: function _getCurrentRange() {
-        var barrier = $window.scrollTop() + window.innerHeight / 2,
-            range,
-            i,
-            l = this._groupesRanges.length;
-
-        for (i = 0; i < l; ++i) {
-          range = this._groupesRanges[i];
-          if (barrier >= range.top && barrier <= range.bottom) {
-            return range;
-          }
-        }
-        return null;
-      }
-
-    });
-
-    new CatalogueInit({
-      element: $(document.body).find('@bm-catalogue-index')
-    });
-
-    provide(CatalogueInit);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueItemOld', ['extend', 'baseView', 'PopupItem'], function (provide, extend, BaseView, PopupItem) {
-
-    var CatalogueItem = extend(BaseView),
-        $class = CatalogueItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._popupHandler = null;
-
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        this.$elem.on(BM.helper.event.clickName(), (function (event) {
-          this._onClick(event);
-        }).bind(this));
-      },
-
-      _onClick: function _onClick(event) {
-        this.showPopup();
-      },
-
-      _initPopup: function _initPopup() {
-        if (BM.tools.isNull(this._popupHandler)) {
-          this._popupHandler = new PopupItem();
-        }
-      },
-
-      showPopup: function showPopup() {
-        this._initPopup();
-        this._popupHandler.show();
-      }
-
-    });
-
-    provide(CatalogueItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('CatalogueMenuOld', ['extend', 'baseView', 'EventDispatcher'], function (provide, extend, BaseView, EventDispatcher) {
-
-    var CatalogueMenu = extend(BaseView),
-        $class = CatalogueMenu,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this.$elemsItems = this.$elem.find('@bm-catalogue-menu-item');
-        this._offsetTop = this.$elem.offset().top;
-
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        EventDispatcher.on('window-scroll', (function () {
-          this._updatePosition();
-        }).bind(this));
-      },
-
-      _updatePosition: function _updatePosition() {
-        if ($window.scrollTop() >= this._offsetTop) {
-          this.$elem.addClass('m-fixed');
-        } else {
-          this.$elem.removeClass('m-fixed');
-        }
-      },
-
-      focusItem: function focusItem(itemName) {
-        var item = this.$elemsItems.filter('[data-item=' + itemName + ']');
-        if (item.length > 0) {
-          this.$elemsItems.removeClass('m-focused');
-          item.addClass('m-focused');
-        }
-      }
-
-    });
-
-    provide(CatalogueMenu);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ItemModel', ['extend', 'Model'], function (provide, extend, Model) {
-
-    var ItemModel = extend(Model),
-        $class = ItemModel,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-      },
-
-      getPrice: function getPrice() {
-        return this._getPrice(250);
-      },
-
-      getPrice250: function getPrice250() {
-        return this.getPrice();
-      },
-
-      getPrice500: function getPrice500() {
-        return this._getPrice(500);
-      },
-
-      getPrice1000: function getPrice1000() {
-        return this._getPrice(1000);
-      },
-
-      _getPrice: function _getPrice(amount) {
-        var result = null;
-        this._data.price.forEach(function (item) {
-          if (item.amount === amount) {
-            result = item;
-          }
-        });
-        return result.value;
-      }
-
-    });
-
-    BM.tools.mixin($class.prototype, {});
-
-    provide(ItemModel);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $) {
-
-  modules.define('beforeUIModulesInit', ['InitGlobalStylesModifiers', 'InitEventDispatcher'], function (provide) {
-
-    provide();
-  });
-
-  modules.define('ui-modules', ['beforeUIModulesInit', 'initTransformOriginDependentElements', 'SideMenuInit'
-  /*'initFixedHeader'
-  'beforeUIModulesInit',
-  'initCartHeader',
-  'initBlockRecent',
-  'initButtonsAddToCart'*/
-
-  ], function (provide) {
-    if (BM.tools.client.isTouch()) {
-      $('body').addClass('m-touch');
-    } else {
-      $('body').addClass('m-desktop');
-    }
-    provide();
-  });
-})(undefined, undefined.modules, undefined.jQuery);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-    modules.define('HeaderCart', ['basePubSub', 'extend', 'CartProcessor'], function (provide, PubSub, extend, cart) {
-
-        var HeaderCart = extend(PubSub),
-            $class = HeaderCart,
-            $super = $class.superclass;
-
-        BM.tools.mixin($class.prototype, {
-
-            initialize: function initialize(config) {
-                $super.initialize.apply(this, arguments);
-
-                if (!config || !config.element) {
-                    return;
-                }
-
-                this.$elem = config.element;
-                this.$elemCounter = this.$elem.find('@b-header-cart-counter');
-                this.$elemCounterText = this.$elem.find('@b-header-cart-counter-text');
-                this.$elemButtonOrder = this.$elem.find('@b-header-cart-button-order');
-
-                this._setupEvents();
-                this._updateData();
-            },
-
-            _setupEvents: function _setupEvents() {
-                var me = this;
-                cart.on('update', function () {
-                    me._updateData();
-                });
-            },
-
-            _showCounter: function _showCounter() {
-                this.$elemCounter.attr('data-visible', 'true');
-            },
-
-            _hideCounter: function _hideCounter() {
-                this.$elemCounter.attr('data-visible', 'false');
-            },
-
-            _updateData: function _updateData() {
-                this._updateDataCounter();
-            },
-
-            _updateDataCounter: function _updateDataCounter() {
-                var amount = cart.getTotalItems();
-                if (amount < 1) {
-                    this._hideCounter();
-                    this._hideButtonOrder();
-                } else {
-                    this._updateCounterText();
-                    this._showCounter();
-                    this._showButtonOrder();
-                }
-            },
-
-            _showButtonOrder: function _showButtonOrder() {
-                this.$elemButtonOrder.attr('data-visible', 'true');
-            },
-
-            _hideButtonOrder: function _hideButtonOrder() {
-                this.$elemButtonOrder.attr('data-visible', 'false');
-            },
-
-            _updateCounterText: function _updateCounterText() {
-                var amount = cart.getTotalItems();
-                this.$elemCounterText.html(amount);
-            },
-
-            destroy: function destroy() {
-                $super.destroy.apply(this, arguments);
-            }
-
-        });
-
-        provide(HeaderCart);
-    });
-
-    modules.define('initCartHeader', ['HeaderCart'], function (provide, HeaderCart) {
-
-        var headerCart = new HeaderCart({
-            element: $('@b-header-cart')
-        });
-
-        provide();
-    });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, radio) {
-
-    modules.define('CartProcessorClass', ['basePubSub', 'extend'], function (provide, PubSub, extend) {
-
-        var CartProcessor = extend(PubSub),
-            $class = CartProcessor,
-            $super = $class.superclass;
-
-        BM.tools.mixin($class.prototype, {
-
-            initialize: function initialize() {
-                $super.initialize.apply(this, arguments);
-
-                this._data = {
-                    items: []
-                };
-            },
-
-            setData: function setData(data) {
-                if (data) {
-                    if (typeof data === 'string') {
-                        try {
-                            data = JSON.parse(data);
-                        } catch (e) {}
-                    }
-                    this._data = data;
-                    this._notify('update');
-                }
-            },
-
-            getData: function getData() {
-                return this._data;
-            },
-
-            getTotalItems: function getTotalItems() {
-                var total = 0;
-                this._data.items.forEach(function (elem) {
-                    total += elem.amount;
-                });
-                return total;
-            },
-
-            destroy: function destroy() {
-                $super.destroy.apply(this, arguments);
-            }
-
-        });
-
-        provide(CartProcessor);
-    });
-
-    modules.define('CartProcessor', ['CartProcessorClass'], function (provide, CartProcessor) {
-        var $body = $(document.body),
-            cart = new CartProcessor();
-
-        try {
-            cart.setData(JSON.parse($body.attr('data-cart-config')));
-        } catch (e) {}
-
-        provide(cart);
-    });
-
-    modules.define('initCartProcessor', ['CartProcessor'], function (provide, cart) {
-
-        radio('b-cart-update').subscribe(function (data) {
-            cart.setData(data);
-        });
-
-        provide();
-    });
-})(undefined, undefined.modules, undefined.jQuery, undefined.radio);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ButtonNumber', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var ControlButtonNumber = extend(BaseView),
-        $class = ControlButtonNumber,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._value = 0;
-
-        this.$elemInputValue = this.$elem.find('@bm-button-number-input-value');
-        this.$elemMinus = this.$elem.find('@bm-button-number-minus');
-        this.$elemPlus = this.$elem.find('@bm-button-number-plus');
-        this.$elemValue = this.$elem.find('@bm-button-number-value');
-
-        this._bindEvents();
-        this.update();
-      },
-
-      _bindEvents: function _bindEvents() {
-        this.$elemMinus.on(BM.helper.event.clickName(), (function (event) {
-          this._onMinusClick(event);
-        }).bind(this));
-
-        this.$elemPlus.on(BM.helper.event.clickName(), (function (event) {
-          this._onPlusClick(event);
-        }).bind(this));
-      },
-
-      _onMinusClick: function _onMinusClick(event) {
-        this._decValue();
-      },
-
-      _onPlusClick: function _onPlusClick(event) {
-        this._incValue();
-      },
-
-      _incValue: function _incValue() {
-        this.setValue(this._value + 1);
-      },
-
-      _decValue: function _decValue() {
-        this.setValue(Math.max(0, this._value - 1));
-      },
-
-      setValue: function setValue(value) {
-        if (BM.tools.isNumber(value) && value >= 0) {
-          this._value = value;
-          this.update();
-          this._notify('change', this._value);
-        }
-      },
-
-      update: function update() {
-        if (this._value < 1) {
-          this.$elem.removeClass('m-value-present');
-          this.$elemMinus.addClass('m-disabled');
-        } else {
-          this.$elem.addClass('m-value-present');
-          this.$elemValue.html(this._value);
-          this.$elemMinus.removeClass('m-disabled');
-        }
-      }
-
-    });
-
-    provide(ControlButtonNumber);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  var dispatcherInstance = null;
-
-  modules.define('EventDispatcherConstructor', ['extend', 'basePubSub'], function (provide, extend, PubSub) {
-
-    var EventDispatcher = extend(PubSub),
-        $class = EventDispatcher,
-        $super = $class.superclass,
-        $window = $(window);
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        this._timeoutNotifyResize = null;
-
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        $window.one('resize', (function onWindowResize() {
-          if (!BM.tools.isNull(this._timeoutNotifyResize)) {
-            clearTimeout(this._timeoutNotifyResize);
-            this._timeoutNotifyResize = null;
-          }
-
-          this._timeoutNotifyResize = setTimeout((function () {
-            this._notify('window-resize');
-          }).bind(this), 200);
-
-          setTimeout((function () {
-            $window.one('resize', onWindowResize.bind(this));
-          }).bind(this), 50);
-        }).bind(this));
-
-        $window.one('scroll', (function onWindowScroll() {
-          this._notify('window-scroll');
-          setTimeout((function () {
-            $window.one('scroll', onWindowScroll.bind(this));
-          }).bind(this), 25);
-        }).bind(this));
-      }
-
-    });
-
-    provide(EventDispatcher);
-  });
-
-  modules.define('InitEventDispatcher', ['EventDispatcherConstructor'], function (provide, Dispatcher) {
-    dispatcherInstance = new Dispatcher();
-    provide();
-  });
-
-  modules.define('EventDispatcher', [], function (provide) {
-    provide(dispatcherInstance);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, document, BM, $, modules, radio) {
-  'use strict';
-
-  var dynamicContentModule = function dynamicContentModule(provide, extend, PubSub) {
-
-    var DynamicContent = extend(PubSub),
-        $class = DynamicContent,
-        $super = $class.superclass,
-        DynamicEffect = {
-      FADE: 1,
-      SLIDE: 2
-    };
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize(config) {
-        $super.initialize.apply(this, arguments);
-
-        this._element = null;
-
-        if (!config) {
-          return;
-        }
-
-        this.setElement(config.element);
-
-        this._effect = DynamicEffect.FADE;
-        this._firstStep = this._getStepInitial();
-
-        this.setConfig(config);
-
-        this._currentElement = this._firstStep;
-        this._stepsStack = [];
-        this._updateInProgress = false;
-
-        //this._updateSize();
-        //this.updateLayout();
-      },
-
-      setConfig: function setConfig(config) {
-        if (!BM.tools.isUndefined(config)) {
-          if (!BM.tools.isUndefined(config.element)) {
-            this.setElement(config.element);
-          }
-          if (!BM.tools.isUndefined(config.effect)) {
-            this.setDynamicEffect(config.effect);
-          }
-          if (!BM.tools.isUndefined(config.firstStep)) {
-            this.setFirstStep(config.firstStep);
-          }
-        }
-      },
-
-      setElement: function setElement(element) {
-        if (!BM.tools.isUndefined(element)) {
-          this._element = element;
-        }
-      },
-
-      setDynamicEffect: function setDynamicEffect(effect) {
-        if (!BM.tools.isUndefined(effect)) {
-          this._effect = effect;
-        }
-      },
-
-      setFirstStep: function setFirstStep(firstStep) {
-        var step;
-        if (!BM.tools.isUndefined(firstStep)) {
-          step = this._getStep(firstStep);
-          if (step.length > 0) {
-            this._firstStep = step;
-          }
-        }
-      },
-
-      _updateSize: function _updateSize(data) {
-        return;
-        data = data || {};
-
-        var me = this,
-            oldHeight = data.oldHeight || this._currentElement.height(),
-            newHeight = data.newHeight || height,
-            updateCallback = data.callback || function () {};
-
-        /*if (!BM.tools.isUndefined(height) && BM.tools.isUndefined(callback)) {
-         if (BM.tools.isNumber(height)) {
-         newHeight = height;
-         } else if (BM.tools.isFunction(height)) {
-         updateCallback = height;
-         }
-         }*/
-
-        if (BM.tools.isNull(newHeight)) {
-          newHeight = this._currentElement.height();
-        }
-
-        this._element.css('height', this._element.height());
-        this._element.get(0).offsetHeight;
-        this._element.css('height', newHeight);
-
-        setTimeout(function () {
-          me._element.css('height', '');
-          updateCallback();
-        }, 350);
-      },
-
-      update: function update() {
-        //this._updateSize();
-      },
-
-      reset: function reset() {
-        this.setStep(this._getStepFirst().attr('data-step'));
-      },
-
-      clearHeight: function clearHeight() {
-        this._element.css('height', '');
-      },
-
-      clearStepsStack: function clearStepsStack() {
-        this._stepsStack.length = 0;
-        this._stepsStack = [];
-      },
-
-      /*showStepBackup : function(n, callback) {
-       var me = this,
-       nextStep    = n,
-       currentStep = this._currentElement.attr('data-step');
-        if (this._isCurrentStep(n) || !this._isStepExist(n)) {
-       return;
-       }
-        this._stepsStack.push(currentStep);
-        this._notify('fade-out-start', currentStep, nextStep);
-       this._fadeOut(function(){
-       var currentHeight = this._currentElement.height(),
-       newHeight;
-        me._notify('fade-out-end', currentStep, nextStep);
-        me.setStep(n);
-       newHeight = this._currentElement.height();
-        me._notify('resize-start', currentStep, nextStep);
-        me._resize(currentHeight, newHeight, function(){
-        me._notify('resize-end', currentStep, nextStep);
-       me._notify('fade-in-start', currentStep, nextStep);
-        me._fadeIn(function(){
-       me._notify('fade-in-end', currentStep, nextStep);
-       if (BM.tools.isFunction(callback)) {
-       callback();
-       }
-       });
-       });
-       });
-       },*/
-
-      showStep: function showStep(stepNextName, callback, forceCallback, skipStack) {
-        if (this._isCurrentStep(stepNextName) || !this._isStepExist(stepNextName) || this.isUpdateInProgress()) {
-          if (forceCallback === true && BM.tools.isFunction(callback)) {
-            callback();
-          }
-          return;
-        }
-
-        var me = this,
-            stepCurrent = this._currentElement,
-            stepCurrentName = stepCurrent.attr('data-step'),
-            stepNext = this._getStep(stepNextName),
-            heightCurrent = stepCurrent.height(),
-            heightNext;
-
-        this._updateInProgress = true;
-
-        if (skipStack !== true) {
-          this._stepsStack.push(stepCurrent.attr('data-step'));
-        }
-
-        this._notify('fade-out-start', stepCurrentName, stepNextName);
-        this._fadeOut(function () {
-          me._notify('fade-out-end', stepCurrentName, stepNextName);
-
-          me._setHeightNoTransition(heightCurrent);
-          me.setStep(stepNextName);
-          heightNext = stepNext.height();
-
-          me._notify('resize-start', stepCurrentName, stepNextName);
-          me._element.css('height', heightNext);
-
-          setTimeout(function () {
-            me._notify('resize-end', stepCurrentName, stepNextName);
-            me._notify('fade-in-start', stepCurrentName, stepNextName);
-
-            me._fadeIn(function () {
-              me._notify('fade-in-end', stepCurrentName, stepNextName);
-              //me._element.css('height', '');
-              me._setHeightNoTransition('');
-              if (BM.tools.isFunction(callback)) {
-                callback();
-              }
-              me._updateInProgress = false;
-            });
-          }, 350);
-        });
-      },
-
-      showPreviousStep: function showPreviousStep() {
-        var step = this._stepsStack.pop();
-        if (!BM.tools.isUndefined(step)) {
-          this.showStep(step, function () {}, false, true);
-        }
-      },
-
-      isStepsStackEmpty: function isStepsStackEmpty() {
-        return this._stepsStack.length === 0;
-      },
-
-      setStep: function setStep(n) {
-        var stepToShow = this._getStep(n);
-        if (stepToShow.length > 0) {
-          this._element.find('> [data-step]').removeClass('visible');
-          stepToShow.addClass('visible');
-          this._currentElement = stepToShow;
-        }
-      },
-
-      _getStep: function _getStep(n) {
-        return this._element.find('> [data-step=' + n + ']');
-      },
-
-      _getStepInitial: function _getStepInitial() {
-        var result;
-        result = this._element.find('.visible[data-step]');
-        if (result.length > 0) {
-          result = result.eq(0);
-        } else {
-          result = this._getStepFirst();
-        }
-        return result;
-      },
-
-      _getStepFirst: function _getStepFirst() {
-        return this._element.find('> [data-step]').eq(0);
-      },
-
-      _isStepExist: function _isStepExist(n) {
-        return this._element.find('> [data-step=' + n + ']').length > 0;
-      },
-
-      isUpdateInProgress: function isUpdateInProgress() {
-        return this._updateInProgress;
-      },
-
-      _isCurrentStep: function _isCurrentStep(n) {
-        return this._currentElement.attr('data-step') === n.toString();
-      },
-
-      showNext: function showNext() {},
-
-      showPrev: function showPrev() {},
-
-      _fadeOut: function _fadeOut(callback) {
-        this._unbindTransitionEnd();
-        this._bindTransitionEnd(callback);
-        this._element.attr('visible', 'false');
-      },
-
-      _fadeOut2: function _fadeOut2(callback) {
-        this._unbindTransitionEnd();
-        this._bindTransitionEnd(callback);
-        this._element.attr('visible', 'false');
-      },
-
-      /*_resize : function(oldHeight, newHeight, callback) {
-       this._updateSize(function(){
-       if (typeof callback === 'function') {
-       callback();
-       }
-       });
-       },*/
-
-      _fadeIn: function _fadeIn(callback) {
-        this._unbindTransitionEnd();
-        this._bindTransitionEnd(callback);
-        this._element.removeAttr('visible');
-      },
-
-      _unbindTransitionEnd: function _unbindTransitionEnd() {
-        this._element.unbindTransitionEnd();
-      },
-
-      _bindTransitionEnd: function _bindTransitionEnd(callback) {
-        callback = callback || function () {};
-        this._element.transitionEnd((function () {
-          this._unbindTransitionEnd();
-          callback();
-          this._notify('fade-in-end');
-        }).bind(this));
-      },
-
-      collapse: function collapse() {
-        return this._fadeOut((function () {
-          this._updateSize(0);
-        }).bind(this));
-      },
-
-      getCurrentStepName: function getCurrentStepName() {
-        return this._currentElement.attr('data-step');
-      },
-
-      _setHeightNoTransition: function _setHeightNoTransition(height) {
-        this._element.attr('data-no-transition', 'true');
-        this._triggerRender();
-        this._element.css('height', height);
-        this._triggerRender();
-        this._element.removeAttr('data-no-transition');
-      },
-
-      _triggerRender: function _triggerRender() {
-        this._element.get(0).offsetHeight;
-      }
-
-    });
-
-    provide(DynamicContent);
-  };
-
-  modules.define('dynamicContent', ['extend', 'basePubSub'], dynamicContentModule);
-})(undefined, undefined.document, undefined.BM, undefined.jQuery, undefined.modules, undefined.radio);
-'use strict';
-
-(function (window, modules, $, radio) {
-
-  modules.define('InitGlobalStylesModifiers', [], function (provide) {
-
-    var $body = $(document.body);
-
-    if (BM.tools.client.isTouch()) {
-      $body.addClass('m-touch');
-    } else {
-      $body.addClass('m-desktop');
-    }
-
-    provide();
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.radio);
-'use strict';
-
-(function (window, modules, $, radio) {
-
-  modules.define('SideMenuInit', [], function (provide) {
-
-    var $body = $(document.body),
-        buttonToggleSideMenu = $('@bm-side-menu-toggle-button');
-
-    buttonToggleSideMenu.on(BM.helper.event.clickName(), function (event) {
-      if ($body.hasClass('m-side-menu-opened')) {
-        $body.removeClass('m-side-menu-opened');
-      } else {
-        $body.addClass('m-side-menu-opened');
-      }
-    });
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.radio);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ItemBrewingMethodItem', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var ItemBrewingMethodItem = extend(BaseView),
-        $class = ItemBrewingMethodItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize(config) {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-
-        this.$text = this.el.find('@bm-brewing-method-item-text');
-
-        this._config = BM.tools.mixin({}, config);
-
-        this.render();
-      },
-
-      render: function render() {
-        if (!this._config.data) {
-          return;
-        }
-
-        this.el.attr('data-name', this._config.data.name);
-        this.el.attr('data-size', this._config.data.size || "normal");
-        this.$text.html(this._config.data.label);
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-brewing-method-item-template';
-      }
-
-    });
-
-    provide(ItemBrewingMethodItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ItemFormOrder', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var ItemFormOrder = extend(BaseView),
-        $class = ItemFormOrder,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-
-        this._amount = null;
-        this._grind = null;
-
-        this.$amountItems = this.el.find('@bm-item-form-order-amount-item');
-        this.$grindItems = this.el.find('@bm-item-form-order-grind-item');
-        this.$buttonAdd = this.el.find('@bm-item-form-order-button-add');
-
-        this._updateAmount();
-        this._updateGrind();
-        this._updateButton();
-
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        var self = this,
-            clickName = BM.helper.event.clickName();
-
-        this.$buttonAdd.on(clickName, (function (event) {
-          this._onButtonAddClick(event);
-        }).bind(this));
-        this.$amountItems.on(clickName, (function (event) {
-          this._onAmountItemClick(event);
-        }).bind(this));
-        this.$grindItems.on(clickName, (function (event) {
-          this._onGrindItemClick(event);
-        }).bind(this));
-      },
-
-      _onButtonAddClick: function _onButtonAddClick() {
-        this._notifyAdd();
-      },
-
-      _onAmountItemClick: function _onAmountItemClick(event) {
-        var $this = $(event.target);
-        while ($this.filter('[role=bm-item-form-order-amount-item]').length < 1) {
-          $this = $this.parent();
-        }
-
-        this.$amountItems.removeClass('m-selected');
-        $this.addClass('m-selected');
-
-        this._updateButton();
-        this._updateAmount();
-      },
-
-      _onGrindItemClick: function _onGrindItemClick(event) {
-        var $this = $(event.target);
-        while ($this.filter('[role=bm-item-form-order-grind-item]').length < 1) {
-          $this = $this.parent();
-        }
-
-        this.$grindItems.removeClass('m-selected');
-        this.$grindItems.removeClass('m-color-scheme-white');
-        $this.addClass('m-selected');
-        $this.addClass('m-color-scheme-white');
-
-        this._updateButton();
-        this._updateGrind();
-      },
-
-      setPrices: function setPrices(pricesArr) {
-        pricesArr.forEach((function (price) {
-          var $amountItem = this.$amountItems.filter(function () {
-            return $(this).data('amount') == price.amount;
-          }),
-              $itemPrice = $amountItem.find('@bm-item-form-order-amount-item-price');
-
-          $itemPrice.html(price.value + $itemPrice.data('text'));
-        }).bind(this));
-      },
-
-      _updateAmount: function _updateAmount() {
-        this._amount = this._getSelectedItemAmount().data('amount');
-      },
-
-      _updateGrind: function _updateGrind() {
-        this._grind = this.$grindItems.filter('.m-selected').last().data('grind');
-      },
-
-      _getSelectedItemAmount: function _getSelectedItemAmount() {
-        return this.$amountItems.filter('.m-selected').last();
-      },
-
-      _getSelectedItemGrind: function _getSelectedItemGrind() {
-        return this.$grindItems.filter('.m-selected').last();
-      },
-
-      _updateButton: function _updateButton() {
-        var amount = this._getSelectedItemAmount().data('amount');
-        var grind = this._getSelectedItemGrind().find('.bm-brewing-method').data('config').grind;
-        var textTemplate;
-
-        /*if (grind.kind === "extrafine") {
-          textTemplate = this.$buttonAdd.data('text-template-with-comma');
-        } else {
-          textTemplate = this.$buttonAdd.data('text-template-default');
-        }*/
-
-        textTemplate = this.$buttonAdd.data('text-template');
-        textTemplate = textTemplate.replace('${amount}', amount);
-        textTemplate = textTemplate.replace('${grind}', grind.label_full.toLowerCase());
-
-        this.$buttonAdd.html(textTemplate);
-      },
-
-      _notifyAdd: function _notifyAdd() {
-        var obj = {
-          amount: this._amount,
-          grind: this._grind
-        };
-
-        this._notify('add', obj);
-      }
-
-    });
-
-    provide(ItemFormOrder);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('FormItemOrderOld', ['extend', 'baseView', 'FormItemSelectGrind', 'ButtonNumber'], function (provide, extend, BaseView, FormItemSelectGrind, ButtonNumber) {
-
-    var FormItemOrder = extend(BaseView),
-        $class = FormItemOrder,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._formSelectGrind = null;
-        this._buttonNumber250 = null;
-        this._buttonNumber500 = null;
-        this._buttonNumber1kg = null;
-
-        this.$elemFormSelectGrind = this.$elem.find('@bm-form-select-grind');
-        this.$elemButtonNumber250 = this.$elem.find('@bm-button-number-250');
-        this.$elemButtonNumber500 = this.$elem.find('@bm-button-number-500');
-        this.$elemButtonNumber1kg = this.$elem.find('@bm-button-number-1kg');
-
-        this._initFormSelectGrind();
-        this._initButtonsNumber();
-      },
-
-      _initFormSelectGrind: function _initFormSelectGrind() {
-        if (BM.tools.isNull(this._formSelectGrind)) {
-          this._formSelectGrind = new FormItemSelectGrind({
-            element: this.$elemFormSelectGrind
-          });
-          this._formSelectGrind.on('change', (function (value) {
-            this._onFormSelectGrindChange(value);
-          }).bind(this));
-        }
-      },
-
-      _initButtonsNumber: function _initButtonsNumber() {
-        if (BM.tools.isNull(this._buttonNumber250)) {
-          this._buttonNumber250 = new ButtonNumber({
-            element: this.$elemButtonNumber250
-          });
-          this._buttonNumber250.on('change', (function (value) {
-            this._onButtonNumberChange('250', value);
-          }).bind(this));
-        }
-        if (BM.tools.isNull(this._buttonNumber500)) {
-          this._buttonNumber500 = new ButtonNumber({
-            element: this.$elemButtonNumber500
-          });
-          this._buttonNumber500.on('change', (function (value) {
-            this._onButtonNumberChange('500', value);
-          }).bind(this));
-        }
-        if (BM.tools.isNull(this._buttonNumber1kg)) {
-          this._buttonNumber1kg = new ButtonNumber({
-            element: this.$elemButtonNumber1kg
-          });
-          this._buttonNumber1kg.on('change', (function (value) {
-            this._onButtonNumberChange('1kg', value);
-          }).bind(this));
-        }
-      },
-
-      _onFormSelectGrindChange: function _onFormSelectGrindChange(value) {},
-
-      _onButtonNumberChange: function _onButtonNumberChange(kind, value) {
-        console.log(kind, value);
-      }
-
-    });
-
-    provide(FormItemOrder);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('Item', ['extend', 'baseView', 'ItemModel', 'ItemFormOrder', 'ItemSpecsItem', 'ItemBrewingMethodItem'], function (provide, extend, BaseView, ItemModel, FormOrder, ItemSpecsItem, ItemBrewingMethodItem) {
-
-    var Item = extend(BaseView),
-        $class = Item,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize(config) {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this._config = BM.tools.mixin({}, config);
-        this._item = new ItemModel({ data: this._config.data });
-
-        this._formOrder = null;
-        this.$elemFormOrder = this.$elem.find('@bm-item-form-order');
-
-        this.$name = this.el.find('@bm-item-name');
-        this.$descriptionShort = this.el.find('@bm-item-description-short');
-        this.$rating = this.el.find('@bm-item-rating');
-        this.$price = this.el.find('@bm-item-price');
-        this.$specsWrapper = this.el.find('@bm-item-specs');
-        this.$description = this.el.find('@bm-item-description');
-        this.$imageWrapper = this.el.find('@bm-item-image-wrapper');
-        this.$image = this.el.find('@bm-item-image');
-        this.$imagePlantation = this.el.find('@bm-item-image-plantation');
-        this.$methodsWrapper = this.el.find('@bm-item-methods-wrapper');
-
-        this._timeoutZoom = null;
-        this._specs = [];
-        this._methods = [];
-
-        this._initFormOrder();
-        this._updateFormOrder();
-        this._bindEvents();
-        this.render();
-      },
-
-      _bindEvents: function _bindEvents() {
-        if (BM.tools.client.isTouch()) {
-          this.$imageWrapper.on('tap', (function (event) {
-            this._onImageWrapperTap();
-          }).bind(this));
-        } else {
-          this.$imageWrapper.on('mouseover', (function (event) {
-            this._onImageWrapperMouseOver();
-          }).bind(this));
-          this.$imageWrapper.on('mouseout', (function (event) {
-            this._onImageWrapperMouseOut();
-          }).bind(this));
-        }
-      },
-
-      _onImageWrapperTap: function _onImageWrapperTap() {
-        this._toggleZoom();
-      },
-
-      _onImageWrapperMouseOver: function _onImageWrapperMouseOver() {
-        if (this._isZoomVisible()) {
-          return;
-        }
-
-        this._clearTimeoutZoom();
-        this._timeoutZoom = setTimeout((function () {
-          this._showZoom();
-        }).bind(this), 300);
-      },
-
-      _onImageWrapperMouseOut: function _onImageWrapperMouseOut() {
-        this._clearTimeoutZoom();
-        this._hideZoom();
-      },
-
-      _clearTimeoutZoom: function _clearTimeoutZoom() {
-        if (!BM.tools.isNull(this._timeoutZoom)) {
-          clearTimeout(this._timeoutZoom);
-          this._timeoutZoom = null;
-        }
-      },
-
-      _toggleZoom: function _toggleZoom() {
-        if (this._isZoomVisible()) {
-          this._hideZoom();
-        } else {
-          this._showZoom();
-        }
-      },
-
-      _showZoom: function _showZoom() {
-        this.el.addClass('m-scale-visible');
-      },
-
-      _hideZoom: function _hideZoom() {
-        this.el.removeClass('m-scale-visible');
-      },
-
-      _isZoomVisible: function _isZoomVisible() {
-        return this.el.hasClass('m-scale-visible');
-      },
-
-      render: function render() {
-        if (!this._config.data) {
-          return;
-        }
-
-        this.$name.html(this._config.data.name);
-        this.$descriptionShort.html(this._config.data.descriptionShort);
-        this.$rating.attr('data-value', this._config.data.rating);
-        this.$price.html(this._item.getPrice250());
-        this.$description.html(this._config.data.description);
-        this.$image.attr('src', this._config.data.image.large);
-        this.$imagePlantation.attr('src', this._config.data.imagePlantation.default);
-
-        this._renderSpecs();
-        this._renderBrewingMethods();
-      },
-
-      _renderSpecs: function _renderSpecs() {
-        this._specs.forEach(function (spec) {
-          spec.destroy();
-        });
-        this._specs.length = 0;
-        this._specs = [];
-        this.$specsWrapper.html('');
-
-        this._config.data.specsWithLabels.forEach((function (specData) {
-          var spec = new ItemSpecsItem({
-            data: specData,
-            options: {
-              hint: true
-            }
-          });
-          this.$specsWrapper.append(spec.getElement());
-        }).bind(this));
-      },
-
-      _renderBrewingMethods: function _renderBrewingMethods() {
-        this._methods.forEach(function (method) {
-          method.destroy();
-        });
-        this._methods.length = 0;
-        this._methods = [];
-        this.$methodsWrapper.html('');
-
-        this._config.data.methodsWithLabels.forEach((function (methodData) {
-          var method = new ItemBrewingMethodItem({
-            data: methodData
-          });
-          this.$methodsWrapper.append(method.getElement());
-        }).bind(this));
-      },
-
-      _initFormOrder: function _initFormOrder() {
-        if (BM.tools.isNull(this._formOrder)) {
-          this._formOrder = new FormOrder({
-            element: this.$elemFormOrder
-          });
-          this._formOrder.on('add', function (obj) {
-            console.log(obj);
-          });
-        }
-      },
-
-      _updateFormOrder: function _updateFormOrder() {
-        this._formOrder.setPrices(this._item.getData().price);
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-item-template';
-      }
-
-    });
-
-    provide(Item);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ItemSpecsItem', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var ItemSpecsItem = extend(BaseView),
-        $class = ItemSpecsItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize(config) {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-
-        this.$label = this.el.find('@bm-item-specs-item-label');
-        this.$value = this.el.find('@bm-item-specs-item-value');
-        this.$hint = this.el.find('@bm-item-specs-item-hint');
-
-        this._timeoutShowHint = null;
-
-        this._config = BM.tools.mixin({}, config);
-
-        this._bindEvents();
-        this.render();
-      },
-
-      _bindEvents: function _bindEvents() {
-        if (BM.tools.client.isTouch()) {
-          this._onLabelTap();
-        } else {
-          this.$label.on('mouseover', (function (event) {
-            this._onLabelMouseOver();
-          }).bind(this));
-          this.$label.on('mouseout', (function (event) {
-            this._onLabelMouseOut();
-          }).bind(this));
-        }
-      },
-
-      _onLabelMouseOver: function _onLabelMouseOver() {
-        if (!this._isHintAvailable()) {
-          return;
-        }
-
-        this._timeoutShowHint = setTimeout((function () {
-          this._showHint();
-        }).bind(this), 300);
-      },
-
-      _onLabelMouseOut: function _onLabelMouseOut() {
-        if (!BM.tools.isNull(this._timeoutShowHint)) {
-          clearTimeout(this._timeoutShowHint);
-          this._timeoutShowHint = null;
-        }
-        this._hideHint();
-      },
-
-      _onLabelTap: function _onLabelTap() {
-        if (!this._isHintAvailable()) {
-          return;
-        }
-
-        this.$label.on('tap', (function (event) {
-          this._toggleHint();
-        }).bind(this));
-      },
-
-      _toggleHint: function _toggleHint() {
-        if (this._isHintVisible()) {
-          this._hideHint();
-        } else {
-          this._showHint();
-        }
-      },
-
-      _showHint: function _showHint() {
-        this.el.addClass('m-hint-visible');
-      },
-
-      _hideHint: function _hideHint() {
-        this.el.removeClass('m-hint-visible');
-      },
-
-      _isHintVisible: function _isHintVisible() {
-        return this.el.hasClass('m-hint-visible');
-      },
-
-      _isHintAvailable: function _isHintAvailable() {
-        return this._config && this._config.data.description && this._config.options && this._config.options.hint === true;
-      },
-
-      render: function render() {
-        if (!this._config.data) {
-          return;
-        }
-
-        this.el.attr('data-name', this._config.data.name);
-        this.$label.html(this._config.data.label);
-        this.$value.attr('data-value', this._config.data.value);
-        this.$hint.html(this._config.data.description);
-
-        if (this._isHintAvailable()) {
-          this.el.addClass('m-hint-available');
-        }
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-item-specs-all-item-template';
-      }
-    });
-
-    provide(ItemSpecsItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('OrderItem', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var OrderItem = extend(BaseView),
-        $class = OrderItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.el) {
-          return;
-        }
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-order-item-template';
-      }
-
-    });
-
-    provide(OrderItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('PopupItem', ['extend', 'popupBaseClass', 'dynamicContent', 'Item'], function (provide, extend, BasePopup, DynamicContent, Item) {
-
-    var PopupItem = extend(BasePopup),
-        $class = PopupItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize(config) {
-        $super.initialize.call(this, {
-          rootClassName: ['m-version-2', 'bm-popup-item'],
-          useTemplate: true
-        });
-
-        this._config = BM.tools.mixin({}, config);
-
-        this._dynamicContent = null;
-        this._itemHandler = null;
-
-        this.$elemDynamicContent = this.$elem.find('@bm-dynamic-content');
-        this.$elemContent = this.$elem.find('@bm-popup-item-content');
-        this.$elemButtonClose = this.$elem.find('@bm-popup-item-button-close');
-
-        this._initDynamicContent();
-        this._bindEvents();
-        this._initItem();
-      },
-
-      _bindEvents: function _bindEvents() {
-        this.$elemButtonClose.on(BM.helper.event.clickName(), (function () {
-          this._onButtonCloseClick();
-        }).bind(this));
-      },
-
-      _onButtonCloseClick: function _onButtonCloseClick() {
-        this.hide();
-      },
-
-      _initDynamicContent: function _initDynamicContent() {
-        if (BM.tools.isNull(this._dynamicContent)) {
-          this._dynamicContent = new DynamicContent({
-            element: this.$elemDynamicContent
-          });
-          this._dynamicContent.setStep('content');
-        }
-      },
-
-      _initItem: function _initItem() {
-        if (BM.tools.isNull(this._itemHandler)) {
-          this._itemHandler = new Item({
-            data: this._config.data
-          });
-          this.$elemContent.append(this._itemHandler.getElement());
-        }
-      },
-
-      show: function show() {
-        $super.show.apply(this, arguments);
-        /*setTimeout(function() {
-          this._dynamicContent.showStep('content');
-        }.bind(this), 200);*/
-        //this._dynamicContent.showStep('content');
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-popup-item-template';
-      }
-
-    });
-
-    provide(PopupItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-(function (window, modules, $, BM) {
-
-  modules.define('initTransformOriginDependentElements', ['extend', 'baseClass'], function (provide, extend, BaseClass) {
-    var Module = (function (_BaseClass) {
-      _inherits(Module, _BaseClass);
-
-      function Module() {
-        _classCallCheck(this, Module);
-
-        return _possibleConstructorReturn(this, Object.getPrototypeOf(Module).apply(this, arguments));
-      }
-
-      _createClass(Module, [{
-        key: 'initialize',
-        value: function initialize() {
-          _get(Object.getPrototypeOf(Module.prototype), 'initialize', this).apply(this, arguments);
-
-          this.$elements = $('.j-transform-origin-dependent');
-
-          $.each(this.$elements, function (index, element) {
-            var $e = $(element);
-            var savedOffset = $e.offset();
-            var savedWidth = $e.width();
-
-            $e.on('mouseover mousemove', function (e) {
-              var relativeMouseX = undefined;
-              var calculatedOrigin = undefined;
-
-              if (e.pageX) {
-                relativeMouseX = e.pageX - savedOffset.left;
-                calculatedOrigin = (relativeMouseX / savedWidth).toFixed(1) * 100;
-                calculatedOrigin = calculatedOrigin < 0 ? 0 : calculatedOrigin;
-
-                //console.log(calculatedOrigin + '% 50%');
-                //$e.attr('style', 'transform-origin: ' + calculatedOrigin + '% 50%;')
-
-                $e.attr('data-transform-origin', calculatedOrigin);
-              }
-            });
-            $e.on('mouseout', function (e) {
-              //$e.css('transform-origin', '')
-              $e.removeAttr('style');
-            });
-          });
-        }
-      }]);
-
-      return Module;
-    })(BaseClass);
-
-    new Module();
-
-    provide(Module);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('FormItemSelectGrindOld', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var FormItemSelectGrind = extend(BaseView),
-        $class = FormItemSelectGrind,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.apply(this, arguments);
-
-        if (!this.$elem) {
-          return;
-        }
-
-        this.$elemsWithUniqueId = this.$elem.find('@bm-form-unique-element');
-        this.$elemsOptionsViaGrind = this.$elem.find('@bm-form-grind-option-via-grind');
-        this.$elemsBrewingMethods = this.$elem.find('@bm-brewing-method-item');
-
-        this.$elemViaTypeWrapper = this.$elem.find('@bm-form-select-grind-via-type-wrapper');
-
-        this._setUniqueIds();
-        this._bindEvents();
-        window.o = this;
-      },
-
-      _bindEvents: function _bindEvents() {
-        this.$elemsOptionsViaGrind.on('change', (function (event) {
-          this._onOptionViaGrindChange(event);
-        }).bind(this));
-        this.$elemsBrewingMethods.on(BM.helper.event.clickName(), (function (event) {
-          this._onBrewingMethodClick(event);
-        }).bind(this));
-      },
-
-      _onOptionViaGrindChange: function _onOptionViaGrindChange(event) {
-        this._setSelectViaGrindStateBlur(false);
-        this._unselectViaMethodItems();
-        this._notify('change', this.$elemsOptionsViaGrind.filter(':checked').val());
-      },
-
-      _onBrewingMethodClick: function _onBrewingMethodClick(event) {
-        var targetElement = $(event.target);
-        if (!targetElement.hasClass('bm-brewing-method')) {
-          targetElement = targetElement.parent();
-        }
-        targetElement.addClass('m-selected');
-        this.$elemsBrewingMethods.not(targetElement).removeClass('m-selected');
-        this._setSelectViaGrindStateBlur(true);
-        this.$elemsOptionsViaGrind.val([]);
-        this._notify('change', targetElement.data('name'));
-      },
-
-      _setUniqueIds: function _setUniqueIds() {
-        var postfix = this.getInstanceId();
-
-        this.$elemsWithUniqueId.each(function () {
-          var $this = $(this);
-          if ($this.prop('tagName') === 'LABEL') {
-            $this.attr('for', $this.attr('for') + '-' + postfix);
-          } else if ($this.prop('tagName') === 'INPUT') {
-            $this.attr('id', $this.attr('id') + '-' + postfix);
-            $this.attr('name', $this.attr('name') + '-' + postfix);
-          }
-        });
-      },
-
-      _setSelectViaGrindStateBlur: function _setSelectViaGrindStateBlur(bool) {
-        if (bool) {
-          this.$elemViaTypeWrapper.addClass('m-blur');
-        } else {
-          this.$elemViaTypeWrapper.removeClass('m-blur');
-        }
-      },
-
-      _unselectViaMethodItems: function _unselectViaMethodItems() {
-        this.$elemsBrewingMethods.removeClass('m-selected');
-      }
-
-    });
-
-    provide(FormItemSelectGrind);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, modules, $, BM) {
-
-  modules.define('ItemFormOrderSelectedItem', ['extend', 'baseView'], function (provide, extend, BaseView) {
-
-    var ItemFormOrderSelectedItem = extend(BaseView),
-        $class = ItemFormOrderSelectedItem,
-        $super = $class.superclass;
-
-    BM.tools.mixin($class.prototype, {
-
-      initialize: function initialize() {
-        $super.initialize.call(this, {
-          useTemplate: true
-        });
-
-        if (!this.el) {
-          return;
-        }
-
-        this._bindEvents();
-      },
-
-      _bindEvents: function _bindEvents() {
-        var self = this;
-        var clickName = BM.helper.event.clickName();
-      },
-
-      _getTemplateName: function _getTemplateName() {
-        return 'bm-item-form-order-selected-item';
-      }
-
-    });
-
-    provide(ItemFormOrderSelectedItem);
-  });
-})(undefined, undefined.modules, undefined.jQuery, undefined.BM);
-'use strict';
-
-(function (window, document, modules, BM) {
-  var config = BM.config || {},
-      mainConfig = document.body.getAttribute('data-config'),
-      parsedMainConfig = JSON.parse(mainConfig) || {},
-      assetHost = parsedMainConfig.assetHost || '';
-
-  var getWithVersion = function getWithVersion(filename) {
-    var debug = config.debug || parsedMainConfig.debug || false,
-        version = parsedMainConfig.version || new Date();
-
-    //if (!debug) {
-    //filename = filename.replace('js', 'min.js');
-    //}
-
-    return filename += '?t=' + version;
-  };
-
-  config.loadScriptsConfig = {
-
-    'default': function _default() {
-      modules.require('ui-modules');
-    },
-
-    'catalogue-index': function catalogueIndex() {
-      modules.require('ui-modules');
-      modules.require('CatalogueInit');
-    }
-  };
-})(undefined, undefined.document, undefined.modules, undefined.BM = undefined.BM || {});
-'use strict';
-
-/**
- * Загрузчик скриптов
- */
-
-(function (window, document, BM) {
-  var tools = BM.tools = BM.tools || {},
-      config = BM.config = BM.config || {};
-
-  var loadScripts = function loadScripts(templateType) {
-    var loadConfig = config.loadScriptsConfig;
-    if (loadConfig.hasOwnProperty(templateType)) {
-      loadConfig[templateType]();
-    } else {
-      loadConfig['default']();
-    }
-  };
-
-  tools.loadScripts = loadScripts;
-})(undefined, undefined.document, undefined.BM = undefined.BM || {});
-'use strict';
-
-(function (window, document, BM, $) {
-  'use strict';
-
-  var tools = BM.tools = BM.tools || {},
-      config = BM.config = BM.config || {},
-      dataScripts = document.body.getAttribute('data-scripts'),
-      templateType = dataScripts || config.mainConfig.action + '-' + config.mainConfig.scriptTemplate;
-
-  if (true || config.debug) {
-    console.enable();
-  }
-
-  $(function () {
-    tools.loadScripts(templateType);
-  });
-})(undefined, undefined.document, undefined.BM || {}, undefined.jQuery);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/Users/artempetrov/proj/emp/public/javascript";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  __webpack_require__(40);
+	}).call(window);
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+	  !(function (a, b) {
+	    "object" == typeof module && "object" == typeof module.exports ? module.exports = a.document ? b(a, !0) : function (a) {
+	      if (!a.document) throw new Error("jQuery requires a window with a document");return b(a);
+	    } : b(a);
+	  })("undefined" != typeof window ? window : this, function (a, b) {
+	    var c = [],
+	        d = c.slice,
+	        e = c.concat,
+	        f = c.push,
+	        g = c.indexOf,
+	        h = {},
+	        i = h.toString,
+	        j = h.hasOwnProperty,
+	        k = {},
+	        l = a.document,
+	        m = "2.1.1",
+	        n = function n(a, b) {
+	      return new n.fn.init(a, b);
+	    },
+	        o = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
+	        p = /^-ms-/,
+	        q = /-([\da-z])/gi,
+	        r = function r(a, b) {
+	      return b.toUpperCase();
+	    };n.fn = n.prototype = { jquery: m, constructor: n, selector: "", length: 0, toArray: function toArray() {
+	        return d.call(this);
+	      }, get: function get(a) {
+	        return null != a ? 0 > a ? this[a + this.length] : this[a] : d.call(this);
+	      }, pushStack: function pushStack(a) {
+	        var b = n.merge(this.constructor(), a);return b.prevObject = this, b.context = this.context, b;
+	      }, each: function each(a, b) {
+	        return n.each(this, a, b);
+	      }, map: function map(a) {
+	        return this.pushStack(n.map(this, function (b, c) {
+	          return a.call(b, c, b);
+	        }));
+	      }, slice: function slice() {
+	        return this.pushStack(d.apply(this, arguments));
+	      }, first: function first() {
+	        return this.eq(0);
+	      }, last: function last() {
+	        return this.eq(-1);
+	      }, eq: function eq(a) {
+	        var b = this.length,
+	            c = +a + (0 > a ? b : 0);return this.pushStack(c >= 0 && b > c ? [this[c]] : []);
+	      }, end: function end() {
+	        return this.prevObject || this.constructor(null);
+	      }, push: f, sort: c.sort, splice: c.splice }, n.extend = n.fn.extend = function () {
+	      var a,
+	          b,
+	          c,
+	          d,
+	          e,
+	          f,
+	          g = arguments[0] || {},
+	          h = 1,
+	          i = arguments.length,
+	          j = !1;for ("boolean" == typeof g && (j = g, g = arguments[h] || {}, h++), "object" == typeof g || n.isFunction(g) || (g = {}), h === i && (g = this, h--); i > h; h++) if (null != (a = arguments[h])) for (b in a) c = g[b], d = a[b], g !== d && (j && d && (n.isPlainObject(d) || (e = n.isArray(d))) ? (e ? (e = !1, f = c && n.isArray(c) ? c : []) : f = c && n.isPlainObject(c) ? c : {}, g[b] = n.extend(j, f, d)) : void 0 !== d && (g[b] = d));return g;
+	    }, n.extend({ expando: "jQuery" + (m + Math.random()).replace(/\D/g, ""), isReady: !0, error: function error(a) {
+	        throw new Error(a);
+	      }, noop: function noop() {}, isFunction: function isFunction(a) {
+	        return "function" === n.type(a);
+	      }, isArray: Array.isArray, isWindow: function isWindow(a) {
+	        return null != a && a === a.window;
+	      }, isNumeric: function isNumeric(a) {
+	        return !n.isArray(a) && a - parseFloat(a) >= 0;
+	      }, isPlainObject: function isPlainObject(a) {
+	        return "object" !== n.type(a) || a.nodeType || n.isWindow(a) ? !1 : a.constructor && !j.call(a.constructor.prototype, "isPrototypeOf") ? !1 : !0;
+	      }, isEmptyObject: function isEmptyObject(a) {
+	        var b;for (b in a) return !1;return !0;
+	      }, type: function type(a) {
+	        return null == a ? a + "" : "object" == typeof a || "function" == typeof a ? h[i.call(a)] || "object" : typeof a;
+	      }, globalEval: function globalEval(a) {
+	        var b,
+	            c = eval;a = n.trim(a), a && (1 === a.indexOf("use strict") ? (b = l.createElement("script"), b.text = a, l.head.appendChild(b).parentNode.removeChild(b)) : c(a));
+	      }, camelCase: function camelCase(a) {
+	        return a.replace(p, "ms-").replace(q, r);
+	      }, nodeName: function nodeName(a, b) {
+	        return a.nodeName && a.nodeName.toLowerCase() === b.toLowerCase();
+	      }, each: function each(a, b, c) {
+	        var d,
+	            e = 0,
+	            f = a.length,
+	            g = s(a);if (c) {
+	          if (g) {
+	            for (; f > e; e++) if ((d = b.apply(a[e], c), d === !1)) break;
+	          } else for (e in a) if ((d = b.apply(a[e], c), d === !1)) break;
+	        } else if (g) {
+	          for (; f > e; e++) if ((d = b.call(a[e], e, a[e]), d === !1)) break;
+	        } else for (e in a) if ((d = b.call(a[e], e, a[e]), d === !1)) break;return a;
+	      }, trim: function trim(a) {
+	        return null == a ? "" : (a + "").replace(o, "");
+	      }, makeArray: function makeArray(a, b) {
+	        var c = b || [];return null != a && (s(Object(a)) ? n.merge(c, "string" == typeof a ? [a] : a) : f.call(c, a)), c;
+	      }, inArray: function inArray(a, b, c) {
+	        return null == b ? -1 : g.call(b, a, c);
+	      }, merge: function merge(a, b) {
+	        for (var c = +b.length, d = 0, e = a.length; c > d; d++) a[e++] = b[d];return a.length = e, a;
+	      }, grep: function grep(a, b, c) {
+	        for (var d, e = [], f = 0, g = a.length, h = !c; g > f; f++) d = !b(a[f], f), d !== h && e.push(a[f]);return e;
+	      }, map: function map(a, b, c) {
+	        var d,
+	            f = 0,
+	            g = a.length,
+	            h = s(a),
+	            i = [];if (h) for (; g > f; f++) d = b(a[f], f, c), null != d && i.push(d);else for (f in a) d = b(a[f], f, c), null != d && i.push(d);return e.apply([], i);
+	      }, guid: 1, proxy: function proxy(a, b) {
+	        var c, e, f;return "string" == typeof b && (c = a[b], b = a, a = c), n.isFunction(a) ? (e = d.call(arguments, 2), f = function () {
+	          return a.apply(b || this, e.concat(d.call(arguments)));
+	        }, f.guid = a.guid = a.guid || n.guid++, f) : void 0;
+	      }, now: Date.now, support: k }), n.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function (a, b) {
+	      h["[object " + b + "]"] = b.toLowerCase();
+	    });function s(a) {
+	      var b = a.length,
+	          c = n.type(a);return "function" === c || n.isWindow(a) ? !1 : 1 === a.nodeType && b ? !0 : "array" === c || 0 === b || "number" == typeof b && b > 0 && b - 1 in a;
+	    }var t = (function (a) {
+	      var b,
+	          c,
+	          d,
+	          e,
+	          f,
+	          g,
+	          h,
+	          i,
+	          j,
+	          k,
+	          l,
+	          m,
+	          n,
+	          o,
+	          p,
+	          q,
+	          r,
+	          s,
+	          t,
+	          u = "sizzle" + -new Date(),
+	          v = a.document,
+	          w = 0,
+	          x = 0,
+	          y = gb(),
+	          z = gb(),
+	          A = gb(),
+	          B = function B(a, b) {
+	        return a === b && (l = !0), 0;
+	      },
+	          C = "undefined",
+	          D = 1 << 31,
+	          E = ({}).hasOwnProperty,
+	          F = [],
+	          G = F.pop,
+	          H = F.push,
+	          I = F.push,
+	          J = F.slice,
+	          K = F.indexOf || function (a) {
+	        for (var b = 0, c = this.length; c > b; b++) if (this[b] === a) return b;return -1;
+	      },
+	          L = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",
+	          M = "[\\x20\\t\\r\\n\\f]",
+	          N = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
+	          O = N.replace("w", "w#"),
+	          P = "\\[" + M + "*(" + N + ")(?:" + M + "*([*^$|!~]?=)" + M + "*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|(" + O + "))|)" + M + "*\\]",
+	          Q = ":(" + N + ")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|" + P + ")*)|.*)\\)|)",
+	          R = new RegExp("^" + M + "+|((?:^|[^\\\\])(?:\\\\.)*)" + M + "+$", "g"),
+	          S = new RegExp("^" + M + "*," + M + "*"),
+	          T = new RegExp("^" + M + "*([>+~]|" + M + ")" + M + "*"),
+	          U = new RegExp("=" + M + "*([^\\]'\"]*?)" + M + "*\\]", "g"),
+	          V = new RegExp(Q),
+	          W = new RegExp("^" + O + "$"),
+	          X = { ID: new RegExp("^#(" + N + ")"), CLASS: new RegExp("^\\.(" + N + ")"), TAG: new RegExp("^(" + N.replace("w", "w*") + ")"), ATTR: new RegExp("^" + P), PSEUDO: new RegExp("^" + Q), CHILD: new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + M + "*(even|odd|(([+-]|)(\\d*)n|)" + M + "*(?:([+-]|)" + M + "*(\\d+)|))" + M + "*\\)|)", "i"), bool: new RegExp("^(?:" + L + ")$", "i"), needsContext: new RegExp("^" + M + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" + M + "*((?:-\\d)?\\d*)" + M + "*\\)|)(?=[^-]|$)", "i") },
+	          Y = /^(?:input|select|textarea|button)$/i,
+	          Z = /^h\d$/i,
+	          $ = /^[^{]+\{\s*\[native \w/,
+	          _ = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+	          ab = /[+~]/,
+	          bb = /'|\\/g,
+	          cb = new RegExp("\\\\([\\da-f]{1,6}" + M + "?|(" + M + ")|.)", "ig"),
+	          db = function db(a, b, c) {
+	        var d = "0x" + b - 65536;return d !== d || c ? b : 0 > d ? String.fromCharCode(d + 65536) : String.fromCharCode(d >> 10 | 55296, 1023 & d | 56320);
+	      };try {
+	        I.apply(F = J.call(v.childNodes), v.childNodes), F[v.childNodes.length].nodeType;
+	      } catch (eb) {
+	        I = { apply: F.length ? function (a, b) {
+	            H.apply(a, J.call(b));
+	          } : function (a, b) {
+	            var c = a.length,
+	                d = 0;while (a[c++] = b[d++]);a.length = c - 1;
+	          } };
+	      }function fb(a, b, d, e) {
+	        var f, h, j, k, l, o, r, s, w, x;if (((b ? b.ownerDocument || b : v) !== n && m(b), b = b || n, d = d || [], !a || "string" != typeof a)) return d;if (1 !== (k = b.nodeType) && 9 !== k) return [];if (p && !e) {
+	          if (f = _.exec(a)) if (j = f[1]) {
+	            if (9 === k) {
+	              if ((h = b.getElementById(j), !h || !h.parentNode)) return d;if (h.id === j) return d.push(h), d;
+	            } else if (b.ownerDocument && (h = b.ownerDocument.getElementById(j)) && t(b, h) && h.id === j) return d.push(h), d;
+	          } else {
+	            if (f[2]) return I.apply(d, b.getElementsByTagName(a)), d;if ((j = f[3]) && c.getElementsByClassName && b.getElementsByClassName) return I.apply(d, b.getElementsByClassName(j)), d;
+	          }if (c.qsa && (!q || !q.test(a))) {
+	            if ((s = r = u, w = b, x = 9 === k && a, 1 === k && "object" !== b.nodeName.toLowerCase())) {
+	              o = g(a), (r = b.getAttribute("id")) ? s = r.replace(bb, "\\$&") : b.setAttribute("id", s), s = "[id='" + s + "'] ", l = o.length;while (l--) o[l] = s + qb(o[l]);w = ab.test(a) && ob(b.parentNode) || b, x = o.join(",");
+	            }if (x) try {
+	              return I.apply(d, w.querySelectorAll(x)), d;
+	            } catch (y) {} finally {
+	              r || b.removeAttribute("id");
+	            }
+	          }
+	        }return i(a.replace(R, "$1"), b, d, e);
+	      }function gb() {
+	        var a = [];function b(c, e) {
+	          return a.push(c + " ") > d.cacheLength && delete b[a.shift()], b[c + " "] = e;
+	        }return b;
+	      }function hb(a) {
+	        return a[u] = !0, a;
+	      }function ib(a) {
+	        var b = n.createElement("div");try {
+	          return !!a(b);
+	        } catch (c) {
+	          return !1;
+	        } finally {
+	          b.parentNode && b.parentNode.removeChild(b), b = null;
+	        }
+	      }function jb(a, b) {
+	        var c = a.split("|"),
+	            e = a.length;while (e--) d.attrHandle[c[e]] = b;
+	      }function kb(a, b) {
+	        var c = b && a,
+	            d = c && 1 === a.nodeType && 1 === b.nodeType && (~b.sourceIndex || D) - (~a.sourceIndex || D);if (d) return d;if (c) while (c = c.nextSibling) if (c === b) return -1;return a ? 1 : -1;
+	      }function lb(a) {
+	        return function (b) {
+	          var c = b.nodeName.toLowerCase();return "input" === c && b.type === a;
+	        };
+	      }function mb(a) {
+	        return function (b) {
+	          var c = b.nodeName.toLowerCase();return ("input" === c || "button" === c) && b.type === a;
+	        };
+	      }function nb(a) {
+	        return hb(function (b) {
+	          return b = +b, hb(function (c, d) {
+	            var e,
+	                f = a([], c.length, b),
+	                g = f.length;while (g--) c[e = f[g]] && (c[e] = !(d[e] = c[e]));
+	          });
+	        });
+	      }function ob(a) {
+	        return a && typeof a.getElementsByTagName !== C && a;
+	      }c = fb.support = {}, f = fb.isXML = function (a) {
+	        var b = a && (a.ownerDocument || a).documentElement;return b ? "HTML" !== b.nodeName : !1;
+	      }, m = fb.setDocument = function (a) {
+	        var b,
+	            e = a ? a.ownerDocument || a : v,
+	            g = e.defaultView;return e !== n && 9 === e.nodeType && e.documentElement ? (n = e, o = e.documentElement, p = !f(e), g && g !== g.top && (g.addEventListener ? g.addEventListener("unload", function () {
+	          m();
+	        }, !1) : g.attachEvent && g.attachEvent("onunload", function () {
+	          m();
+	        })), c.attributes = ib(function (a) {
+	          return a.className = "i", !a.getAttribute("className");
+	        }), c.getElementsByTagName = ib(function (a) {
+	          return a.appendChild(e.createComment("")), !a.getElementsByTagName("*").length;
+	        }), c.getElementsByClassName = $.test(e.getElementsByClassName) && ib(function (a) {
+	          return a.innerHTML = "<div class='a'></div><div class='a i'></div>", a.firstChild.className = "i", 2 === a.getElementsByClassName("i").length;
+	        }), c.getById = ib(function (a) {
+	          return o.appendChild(a).id = u, !e.getElementsByName || !e.getElementsByName(u).length;
+	        }), c.getById ? (d.find.ID = function (a, b) {
+	          if (typeof b.getElementById !== C && p) {
+	            var c = b.getElementById(a);return c && c.parentNode ? [c] : [];
+	          }
+	        }, d.filter.ID = function (a) {
+	          var b = a.replace(cb, db);return function (a) {
+	            return a.getAttribute("id") === b;
+	          };
+	        }) : (delete d.find.ID, d.filter.ID = function (a) {
+	          var b = a.replace(cb, db);return function (a) {
+	            var c = typeof a.getAttributeNode !== C && a.getAttributeNode("id");return c && c.value === b;
+	          };
+	        }), d.find.TAG = c.getElementsByTagName ? function (a, b) {
+	          return typeof b.getElementsByTagName !== C ? b.getElementsByTagName(a) : void 0;
+	        } : function (a, b) {
+	          var c,
+	              d = [],
+	              e = 0,
+	              f = b.getElementsByTagName(a);if ("*" === a) {
+	            while (c = f[e++]) 1 === c.nodeType && d.push(c);return d;
+	          }return f;
+	        }, d.find.CLASS = c.getElementsByClassName && function (a, b) {
+	          return typeof b.getElementsByClassName !== C && p ? b.getElementsByClassName(a) : void 0;
+	        }, r = [], q = [], (c.qsa = $.test(e.querySelectorAll)) && (ib(function (a) {
+	          a.innerHTML = "<select msallowclip=''><option selected=''></option></select>", a.querySelectorAll("[msallowclip^='']").length && q.push("[*^$]=" + M + "*(?:''|\"\")"), a.querySelectorAll("[selected]").length || q.push("\\[" + M + "*(?:value|" + L + ")"), a.querySelectorAll(":checked").length || q.push(":checked");
+	        }), ib(function (a) {
+	          var b = e.createElement("input");b.setAttribute("type", "hidden"), a.appendChild(b).setAttribute("name", "D"), a.querySelectorAll("[name=d]").length && q.push("name" + M + "*[*^$|!~]?="), a.querySelectorAll(":enabled").length || q.push(":enabled", ":disabled"), a.querySelectorAll("*,:x"), q.push(",.*:");
+	        })), (c.matchesSelector = $.test(s = o.matches || o.webkitMatchesSelector || o.mozMatchesSelector || o.oMatchesSelector || o.msMatchesSelector)) && ib(function (a) {
+	          c.disconnectedMatch = s.call(a, "div"), s.call(a, "[s!='']:x"), r.push("!=", Q);
+	        }), q = q.length && new RegExp(q.join("|")), r = r.length && new RegExp(r.join("|")), b = $.test(o.compareDocumentPosition), t = b || $.test(o.contains) ? function (a, b) {
+	          var c = 9 === a.nodeType ? a.documentElement : a,
+	              d = b && b.parentNode;return a === d || !(!d || 1 !== d.nodeType || !(c.contains ? c.contains(d) : a.compareDocumentPosition && 16 & a.compareDocumentPosition(d)));
+	        } : function (a, b) {
+	          if (b) while (b = b.parentNode) if (b === a) return !0;return !1;
+	        }, B = b ? function (a, b) {
+	          if (a === b) return l = !0, 0;var d = !a.compareDocumentPosition - !b.compareDocumentPosition;return d ? d : (d = (a.ownerDocument || a) === (b.ownerDocument || b) ? a.compareDocumentPosition(b) : 1, 1 & d || !c.sortDetached && b.compareDocumentPosition(a) === d ? a === e || a.ownerDocument === v && t(v, a) ? -1 : b === e || b.ownerDocument === v && t(v, b) ? 1 : k ? K.call(k, a) - K.call(k, b) : 0 : 4 & d ? -1 : 1);
+	        } : function (a, b) {
+	          if (a === b) return l = !0, 0;var c,
+	              d = 0,
+	              f = a.parentNode,
+	              g = b.parentNode,
+	              h = [a],
+	              i = [b];if (!f || !g) return a === e ? -1 : b === e ? 1 : f ? -1 : g ? 1 : k ? K.call(k, a) - K.call(k, b) : 0;if (f === g) return kb(a, b);c = a;while (c = c.parentNode) h.unshift(c);c = b;while (c = c.parentNode) i.unshift(c);while (h[d] === i[d]) d++;return d ? kb(h[d], i[d]) : h[d] === v ? -1 : i[d] === v ? 1 : 0;
+	        }, e) : n;
+	      }, fb.matches = function (a, b) {
+	        return fb(a, null, null, b);
+	      }, fb.matchesSelector = function (a, b) {
+	        if (((a.ownerDocument || a) !== n && m(a), b = b.replace(U, "='$1']"), !(!c.matchesSelector || !p || r && r.test(b) || q && q.test(b)))) try {
+	          var d = s.call(a, b);if (d || c.disconnectedMatch || a.document && 11 !== a.document.nodeType) return d;
+	        } catch (e) {}return fb(b, n, null, [a]).length > 0;
+	      }, fb.contains = function (a, b) {
+	        return (a.ownerDocument || a) !== n && m(a), t(a, b);
+	      }, fb.attr = function (a, b) {
+	        (a.ownerDocument || a) !== n && m(a);var e = d.attrHandle[b.toLowerCase()],
+	            f = e && E.call(d.attrHandle, b.toLowerCase()) ? e(a, b, !p) : void 0;return void 0 !== f ? f : c.attributes || !p ? a.getAttribute(b) : (f = a.getAttributeNode(b)) && f.specified ? f.value : null;
+	      }, fb.error = function (a) {
+	        throw new Error("Syntax error, unrecognized expression: " + a);
+	      }, fb.uniqueSort = function (a) {
+	        var b,
+	            d = [],
+	            e = 0,
+	            f = 0;if ((l = !c.detectDuplicates, k = !c.sortStable && a.slice(0), a.sort(B), l)) {
+	          while (b = a[f++]) b === a[f] && (e = d.push(f));while (e--) a.splice(d[e], 1);
+	        }return k = null, a;
+	      }, e = fb.getText = function (a) {
+	        var b,
+	            c = "",
+	            d = 0,
+	            f = a.nodeType;if (f) {
+	          if (1 === f || 9 === f || 11 === f) {
+	            if ("string" == typeof a.textContent) return a.textContent;for (a = a.firstChild; a; a = a.nextSibling) c += e(a);
+	          } else if (3 === f || 4 === f) return a.nodeValue;
+	        } else while (b = a[d++]) c += e(b);return c;
+	      }, d = fb.selectors = { cacheLength: 50, createPseudo: hb, match: X, attrHandle: {}, find: {}, relative: { ">": { dir: "parentNode", first: !0 }, " ": { dir: "parentNode" }, "+": { dir: "previousSibling", first: !0 }, "~": { dir: "previousSibling" } }, preFilter: { ATTR: function ATTR(a) {
+	            return a[1] = a[1].replace(cb, db), a[3] = (a[3] || a[4] || a[5] || "").replace(cb, db), "~=" === a[2] && (a[3] = " " + a[3] + " "), a.slice(0, 4);
+	          }, CHILD: function CHILD(a) {
+	            return a[1] = a[1].toLowerCase(), "nth" === a[1].slice(0, 3) ? (a[3] || fb.error(a[0]), a[4] = +(a[4] ? a[5] + (a[6] || 1) : 2 * ("even" === a[3] || "odd" === a[3])), a[5] = +(a[7] + a[8] || "odd" === a[3])) : a[3] && fb.error(a[0]), a;
+	          }, PSEUDO: function PSEUDO(a) {
+	            var b,
+	                c = !a[6] && a[2];return X.CHILD.test(a[0]) ? null : (a[3] ? a[2] = a[4] || a[5] || "" : c && V.test(c) && (b = g(c, !0)) && (b = c.indexOf(")", c.length - b) - c.length) && (a[0] = a[0].slice(0, b), a[2] = c.slice(0, b)), a.slice(0, 3));
+	          } }, filter: { TAG: function TAG(a) {
+	            var b = a.replace(cb, db).toLowerCase();return "*" === a ? function () {
+	              return !0;
+	            } : function (a) {
+	              return a.nodeName && a.nodeName.toLowerCase() === b;
+	            };
+	          }, CLASS: function CLASS(a) {
+	            var b = y[a + " "];return b || (b = new RegExp("(^|" + M + ")" + a + "(" + M + "|$)")) && y(a, function (a) {
+	              return b.test("string" == typeof a.className && a.className || typeof a.getAttribute !== C && a.getAttribute("class") || "");
+	            });
+	          }, ATTR: function ATTR(a, b, c) {
+	            return function (d) {
+	              var e = fb.attr(d, a);return null == e ? "!=" === b : b ? (e += "", "=" === b ? e === c : "!=" === b ? e !== c : "^=" === b ? c && 0 === e.indexOf(c) : "*=" === b ? c && e.indexOf(c) > -1 : "$=" === b ? c && e.slice(-c.length) === c : "~=" === b ? (" " + e + " ").indexOf(c) > -1 : "|=" === b ? e === c || e.slice(0, c.length + 1) === c + "-" : !1) : !0;
+	            };
+	          }, CHILD: function CHILD(a, b, c, d, e) {
+	            var f = "nth" !== a.slice(0, 3),
+	                g = "last" !== a.slice(-4),
+	                h = "of-type" === b;return 1 === d && 0 === e ? function (a) {
+	              return !!a.parentNode;
+	            } : function (b, c, i) {
+	              var j,
+	                  k,
+	                  l,
+	                  m,
+	                  n,
+	                  o,
+	                  p = f !== g ? "nextSibling" : "previousSibling",
+	                  q = b.parentNode,
+	                  r = h && b.nodeName.toLowerCase(),
+	                  s = !i && !h;if (q) {
+	                if (f) {
+	                  while (p) {
+	                    l = b;while (l = l[p]) if (h ? l.nodeName.toLowerCase() === r : 1 === l.nodeType) return !1;o = p = "only" === a && !o && "nextSibling";
+	                  }return !0;
+	                }if ((o = [g ? q.firstChild : q.lastChild], g && s)) {
+	                  k = q[u] || (q[u] = {}), j = k[a] || [], n = j[0] === w && j[1], m = j[0] === w && j[2], l = n && q.childNodes[n];while (l = ++n && l && l[p] || (m = n = 0) || o.pop()) if (1 === l.nodeType && ++m && l === b) {
+	                    k[a] = [w, n, m];break;
+	                  }
+	                } else if (s && (j = (b[u] || (b[u] = {}))[a]) && j[0] === w) m = j[1];else while (l = ++n && l && l[p] || (m = n = 0) || o.pop()) if ((h ? l.nodeName.toLowerCase() === r : 1 === l.nodeType) && ++m && (s && ((l[u] || (l[u] = {}))[a] = [w, m]), l === b)) break;return m -= e, m === d || m % d === 0 && m / d >= 0;
+	              }
+	            };
+	          }, PSEUDO: function PSEUDO(a, b) {
+	            var c,
+	                e = d.pseudos[a] || d.setFilters[a.toLowerCase()] || fb.error("unsupported pseudo: " + a);return e[u] ? e(b) : e.length > 1 ? (c = [a, a, "", b], d.setFilters.hasOwnProperty(a.toLowerCase()) ? hb(function (a, c) {
+	              var d,
+	                  f = e(a, b),
+	                  g = f.length;while (g--) d = K.call(a, f[g]), a[d] = !(c[d] = f[g]);
+	            }) : function (a) {
+	              return e(a, 0, c);
+	            }) : e;
+	          } }, pseudos: { not: hb(function (a) {
+	            var b = [],
+	                c = [],
+	                d = h(a.replace(R, "$1"));return d[u] ? hb(function (a, b, c, e) {
+	              var f,
+	                  g = d(a, null, e, []),
+	                  h = a.length;while (h--) (f = g[h]) && (a[h] = !(b[h] = f));
+	            }) : function (a, e, f) {
+	              return b[0] = a, d(b, null, f, c), !c.pop();
+	            };
+	          }), has: hb(function (a) {
+	            return function (b) {
+	              return fb(a, b).length > 0;
+	            };
+	          }), contains: hb(function (a) {
+	            return function (b) {
+	              return (b.textContent || b.innerText || e(b)).indexOf(a) > -1;
+	            };
+	          }), lang: hb(function (a) {
+	            return W.test(a || "") || fb.error("unsupported lang: " + a), a = a.replace(cb, db).toLowerCase(), function (b) {
+	              var c;do if (c = p ? b.lang : b.getAttribute("xml:lang") || b.getAttribute("lang")) return c = c.toLowerCase(), c === a || 0 === c.indexOf(a + "-"); while ((b = b.parentNode) && 1 === b.nodeType);return !1;
+	            };
+	          }), target: function target(b) {
+	            var c = a.location && a.location.hash;return c && c.slice(1) === b.id;
+	          }, root: function root(a) {
+	            return a === o;
+	          }, focus: function focus(a) {
+	            return a === n.activeElement && (!n.hasFocus || n.hasFocus()) && !!(a.type || a.href || ~a.tabIndex);
+	          }, enabled: function enabled(a) {
+	            return a.disabled === !1;
+	          }, disabled: function disabled(a) {
+	            return a.disabled === !0;
+	          }, checked: function checked(a) {
+	            var b = a.nodeName.toLowerCase();return "input" === b && !!a.checked || "option" === b && !!a.selected;
+	          }, selected: function selected(a) {
+	            return a.parentNode && a.parentNode.selectedIndex, a.selected === !0;
+	          }, empty: function empty(a) {
+	            for (a = a.firstChild; a; a = a.nextSibling) if (a.nodeType < 6) return !1;return !0;
+	          }, parent: function parent(a) {
+	            return !d.pseudos.empty(a);
+	          }, header: function header(a) {
+	            return Z.test(a.nodeName);
+	          }, input: function input(a) {
+	            return Y.test(a.nodeName);
+	          }, button: function button(a) {
+	            var b = a.nodeName.toLowerCase();return "input" === b && "button" === a.type || "button" === b;
+	          }, text: function text(a) {
+	            var b;return "input" === a.nodeName.toLowerCase() && "text" === a.type && (null == (b = a.getAttribute("type")) || "text" === b.toLowerCase());
+	          }, first: nb(function () {
+	            return [0];
+	          }), last: nb(function (a, b) {
+	            return [b - 1];
+	          }), eq: nb(function (a, b, c) {
+	            return [0 > c ? c + b : c];
+	          }), even: nb(function (a, b) {
+	            for (var c = 0; b > c; c += 2) a.push(c);return a;
+	          }), odd: nb(function (a, b) {
+	            for (var c = 1; b > c; c += 2) a.push(c);return a;
+	          }), lt: nb(function (a, b, c) {
+	            for (var d = 0 > c ? c + b : c; --d >= 0;) a.push(d);return a;
+	          }), gt: nb(function (a, b, c) {
+	            for (var d = 0 > c ? c + b : c; ++d < b;) a.push(d);return a;
+	          }) } }, d.pseudos.nth = d.pseudos.eq;for (b in { radio: !0, checkbox: !0, file: !0, password: !0, image: !0 }) d.pseudos[b] = lb(b);for (b in { submit: !0, reset: !0 }) d.pseudos[b] = mb(b);function pb() {}pb.prototype = d.filters = d.pseudos, d.setFilters = new pb(), g = fb.tokenize = function (a, b) {
+	        var c,
+	            e,
+	            f,
+	            g,
+	            h,
+	            i,
+	            j,
+	            k = z[a + " "];if (k) return b ? 0 : k.slice(0);h = a, i = [], j = d.preFilter;while (h) {
+	          (!c || (e = S.exec(h))) && (e && (h = h.slice(e[0].length) || h), i.push(f = [])), c = !1, (e = T.exec(h)) && (c = e.shift(), f.push({ value: c, type: e[0].replace(R, " ") }), h = h.slice(c.length));for (g in d.filter) !(e = X[g].exec(h)) || j[g] && !(e = j[g](e)) || (c = e.shift(), f.push({ value: c, type: g, matches: e }), h = h.slice(c.length));if (!c) break;
+	        }return b ? h.length : h ? fb.error(a) : z(a, i).slice(0);
+	      };function qb(a) {
+	        for (var b = 0, c = a.length, d = ""; c > b; b++) d += a[b].value;return d;
+	      }function rb(a, b, c) {
+	        var d = b.dir,
+	            e = c && "parentNode" === d,
+	            f = x++;return b.first ? function (b, c, f) {
+	          while (b = b[d]) if (1 === b.nodeType || e) return a(b, c, f);
+	        } : function (b, c, g) {
+	          var h,
+	              i,
+	              j = [w, f];if (g) {
+	            while (b = b[d]) if ((1 === b.nodeType || e) && a(b, c, g)) return !0;
+	          } else while (b = b[d]) if (1 === b.nodeType || e) {
+	            if ((i = b[u] || (b[u] = {}), (h = i[d]) && h[0] === w && h[1] === f)) return j[2] = h[2];if ((i[d] = j, j[2] = a(b, c, g))) return !0;
+	          }
+	        };
+	      }function sb(a) {
+	        return a.length > 1 ? function (b, c, d) {
+	          var e = a.length;while (e--) if (!a[e](b, c, d)) return !1;return !0;
+	        } : a[0];
+	      }function tb(a, b, c) {
+	        for (var d = 0, e = b.length; e > d; d++) fb(a, b[d], c);return c;
+	      }function ub(a, b, c, d, e) {
+	        for (var f, g = [], h = 0, i = a.length, j = null != b; i > h; h++) (f = a[h]) && (!c || c(f, d, e)) && (g.push(f), j && b.push(h));return g;
+	      }function vb(a, b, c, d, e, f) {
+	        return d && !d[u] && (d = vb(d)), e && !e[u] && (e = vb(e, f)), hb(function (f, g, h, i) {
+	          var j,
+	              k,
+	              l,
+	              m = [],
+	              n = [],
+	              o = g.length,
+	              p = f || tb(b || "*", h.nodeType ? [h] : h, []),
+	              q = !a || !f && b ? p : ub(p, m, a, h, i),
+	              r = c ? e || (f ? a : o || d) ? [] : g : q;if ((c && c(q, r, h, i), d)) {
+	            j = ub(r, n), d(j, [], h, i), k = j.length;while (k--) (l = j[k]) && (r[n[k]] = !(q[n[k]] = l));
+	          }if (f) {
+	            if (e || a) {
+	              if (e) {
+	                j = [], k = r.length;while (k--) (l = r[k]) && j.push(q[k] = l);e(null, r = [], j, i);
+	              }k = r.length;while (k--) (l = r[k]) && (j = e ? K.call(f, l) : m[k]) > -1 && (f[j] = !(g[j] = l));
+	            }
+	          } else r = ub(r === g ? r.splice(o, r.length) : r), e ? e(null, g, r, i) : I.apply(g, r);
+	        });
+	      }function wb(a) {
+	        for (var b, c, e, f = a.length, g = d.relative[a[0].type], h = g || d.relative[" "], i = g ? 1 : 0, k = rb(function (a) {
+	          return a === b;
+	        }, h, !0), l = rb(function (a) {
+	          return K.call(b, a) > -1;
+	        }, h, !0), m = [function (a, c, d) {
+	          return !g && (d || c !== j) || ((b = c).nodeType ? k(a, c, d) : l(a, c, d));
+	        }]; f > i; i++) if (c = d.relative[a[i].type]) m = [rb(sb(m), c)];else {
+	          if ((c = d.filter[a[i].type].apply(null, a[i].matches), c[u])) {
+	            for (e = ++i; f > e; e++) if (d.relative[a[e].type]) break;return vb(i > 1 && sb(m), i > 1 && qb(a.slice(0, i - 1).concat({ value: " " === a[i - 2].type ? "*" : "" })).replace(R, "$1"), c, e > i && wb(a.slice(i, e)), f > e && wb(a = a.slice(e)), f > e && qb(a));
+	          }m.push(c);
+	        }return sb(m);
+	      }function xb(a, b) {
+	        var c = b.length > 0,
+	            e = a.length > 0,
+	            f = function f(_f, g, h, i, k) {
+	          var l,
+	              m,
+	              o,
+	              p = 0,
+	              q = "0",
+	              r = _f && [],
+	              s = [],
+	              t = j,
+	              u = _f || e && d.find.TAG("*", k),
+	              v = w += null == t ? 1 : Math.random() || .1,
+	              x = u.length;for (k && (j = g !== n && g); q !== x && null != (l = u[q]); q++) {
+	            if (e && l) {
+	              m = 0;while (o = a[m++]) if (o(l, g, h)) {
+	                i.push(l);break;
+	              }k && (w = v);
+	            }c && ((l = !o && l) && p--, _f && r.push(l));
+	          }if ((p += q, c && q !== p)) {
+	            m = 0;while (o = b[m++]) o(r, s, g, h);if (_f) {
+	              if (p > 0) while (q--) r[q] || s[q] || (s[q] = G.call(i));s = ub(s);
+	            }I.apply(i, s), k && !_f && s.length > 0 && p + b.length > 1 && fb.uniqueSort(i);
+	          }return k && (w = v, j = t), r;
+	        };return c ? hb(f) : f;
+	      }return h = fb.compile = function (a, b) {
+	        var c,
+	            d = [],
+	            e = [],
+	            f = A[a + " "];if (!f) {
+	          b || (b = g(a)), c = b.length;while (c--) f = wb(b[c]), f[u] ? d.push(f) : e.push(f);f = A(a, xb(e, d)), f.selector = a;
+	        }return f;
+	      }, i = fb.select = function (a, b, e, f) {
+	        var i,
+	            j,
+	            k,
+	            l,
+	            m,
+	            n = "function" == typeof a && a,
+	            o = !f && g(a = n.selector || a);if ((e = e || [], 1 === o.length)) {
+	          if ((j = o[0] = o[0].slice(0), j.length > 2 && "ID" === (k = j[0]).type && c.getById && 9 === b.nodeType && p && d.relative[j[1].type])) {
+	            if ((b = (d.find.ID(k.matches[0].replace(cb, db), b) || [])[0], !b)) return e;n && (b = b.parentNode), a = a.slice(j.shift().value.length);
+	          }i = X.needsContext.test(a) ? 0 : j.length;while (i--) {
+	            if ((k = j[i], d.relative[l = k.type])) break;if ((m = d.find[l]) && (f = m(k.matches[0].replace(cb, db), ab.test(j[0].type) && ob(b.parentNode) || b))) {
+	              if ((j.splice(i, 1), a = f.length && qb(j), !a)) return I.apply(e, f), e;break;
+	            }
+	          }
+	        }return (n || h(a, o))(f, b, !p, e, ab.test(a) && ob(b.parentNode) || b), e;
+	      }, c.sortStable = u.split("").sort(B).join("") === u, c.detectDuplicates = !!l, m(), c.sortDetached = ib(function (a) {
+	        return 1 & a.compareDocumentPosition(n.createElement("div"));
+	      }), ib(function (a) {
+	        return a.innerHTML = "<a href='#'></a>", "#" === a.firstChild.getAttribute("href");
+	      }) || jb("type|href|height|width", function (a, b, c) {
+	        return c ? void 0 : a.getAttribute(b, "type" === b.toLowerCase() ? 1 : 2);
+	      }), c.attributes && ib(function (a) {
+	        return a.innerHTML = "<input/>", a.firstChild.setAttribute("value", ""), "" === a.firstChild.getAttribute("value");
+	      }) || jb("value", function (a, b, c) {
+	        return c || "input" !== a.nodeName.toLowerCase() ? void 0 : a.defaultValue;
+	      }), ib(function (a) {
+	        return null == a.getAttribute("disabled");
+	      }) || jb(L, function (a, b, c) {
+	        var d;return c ? void 0 : a[b] === !0 ? b.toLowerCase() : (d = a.getAttributeNode(b)) && d.specified ? d.value : null;
+	      }), fb;
+	    })(a);n.find = t, n.expr = t.selectors, n.expr[":"] = n.expr.pseudos, n.unique = t.uniqueSort, n.text = t.getText, n.isXMLDoc = t.isXML, n.contains = t.contains;var u = n.expr.match.needsContext,
+	        v = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+	        w = /^.[^:#\[\.,]*$/;function x(a, b, c) {
+	      if (n.isFunction(b)) return n.grep(a, function (a, d) {
+	        return !!b.call(a, d, a) !== c;
+	      });if (b.nodeType) return n.grep(a, function (a) {
+	        return a === b !== c;
+	      });if ("string" == typeof b) {
+	        if (w.test(b)) return n.filter(b, a, c);b = n.filter(b, a);
+	      }return n.grep(a, function (a) {
+	        return g.call(b, a) >= 0 !== c;
+	      });
+	    }n.filter = function (a, b, c) {
+	      var d = b[0];return c && (a = ":not(" + a + ")"), 1 === b.length && 1 === d.nodeType ? n.find.matchesSelector(d, a) ? [d] : [] : n.find.matches(a, n.grep(b, function (a) {
+	        return 1 === a.nodeType;
+	      }));
+	    }, n.fn.extend({ find: function find(a) {
+	        var b,
+	            c = this.length,
+	            d = [],
+	            e = this;if ("string" != typeof a) return this.pushStack(n(a).filter(function () {
+	          for (b = 0; c > b; b++) if (n.contains(e[b], this)) return !0;
+	        }));for (b = 0; c > b; b++) n.find(a, e[b], d);return d = this.pushStack(c > 1 ? n.unique(d) : d), d.selector = this.selector ? this.selector + " " + a : a, d;
+	      }, filter: function filter(a) {
+	        return this.pushStack(x(this, a || [], !1));
+	      }, not: function not(a) {
+	        return this.pushStack(x(this, a || [], !0));
+	      }, is: function is(a) {
+	        return !!x(this, "string" == typeof a && u.test(a) ? n(a) : a || [], !1).length;
+	      } });var y,
+	        z = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,
+	        A = n.fn.init = function (a, b) {
+	      var c, d;if (!a) return this;if ("string" == typeof a) {
+	        if ((c = "<" === a[0] && ">" === a[a.length - 1] && a.length >= 3 ? [null, a, null] : z.exec(a), !c || !c[1] && b)) return !b || b.jquery ? (b || y).find(a) : this.constructor(b).find(a);if (c[1]) {
+	          if ((b = b instanceof n ? b[0] : b, n.merge(this, n.parseHTML(c[1], b && b.nodeType ? b.ownerDocument || b : l, !0)), v.test(c[1]) && n.isPlainObject(b))) for (c in b) n.isFunction(this[c]) ? this[c](b[c]) : this.attr(c, b[c]);return this;
+	        }return d = l.getElementById(c[2]), d && d.parentNode && (this.length = 1, this[0] = d), this.context = l, this.selector = a, this;
+	      }return a.nodeType ? (this.context = this[0] = a, this.length = 1, this) : n.isFunction(a) ? "undefined" != typeof y.ready ? y.ready(a) : a(n) : (void 0 !== a.selector && (this.selector = a.selector, this.context = a.context), n.makeArray(a, this));
+	    };A.prototype = n.fn, y = n(l);var B = /^(?:parents|prev(?:Until|All))/,
+	        C = { children: !0, contents: !0, next: !0, prev: !0 };n.extend({ dir: function dir(a, b, c) {
+	        var d = [],
+	            e = void 0 !== c;while ((a = a[b]) && 9 !== a.nodeType) if (1 === a.nodeType) {
+	          if (e && n(a).is(c)) break;d.push(a);
+	        }return d;
+	      }, sibling: function sibling(a, b) {
+	        for (var c = []; a; a = a.nextSibling) 1 === a.nodeType && a !== b && c.push(a);return c;
+	      } }), n.fn.extend({ has: function has(a) {
+	        var b = n(a, this),
+	            c = b.length;return this.filter(function () {
+	          for (var a = 0; c > a; a++) if (n.contains(this, b[a])) return !0;
+	        });
+	      }, closest: function closest(a, b) {
+	        for (var c, d = 0, e = this.length, f = [], g = u.test(a) || "string" != typeof a ? n(a, b || this.context) : 0; e > d; d++) for (c = this[d]; c && c !== b; c = c.parentNode) if (c.nodeType < 11 && (g ? g.index(c) > -1 : 1 === c.nodeType && n.find.matchesSelector(c, a))) {
+	          f.push(c);break;
+	        }return this.pushStack(f.length > 1 ? n.unique(f) : f);
+	      }, index: function index(a) {
+	        return a ? "string" == typeof a ? g.call(n(a), this[0]) : g.call(this, a.jquery ? a[0] : a) : this[0] && this[0].parentNode ? this.first().prevAll().length : -1;
+	      }, add: function add(a, b) {
+	        return this.pushStack(n.unique(n.merge(this.get(), n(a, b))));
+	      }, addBack: function addBack(a) {
+	        return this.add(null == a ? this.prevObject : this.prevObject.filter(a));
+	      } });function D(a, b) {
+	      while ((a = a[b]) && 1 !== a.nodeType);return a;
+	    }n.each({ parent: function parent(a) {
+	        var b = a.parentNode;return b && 11 !== b.nodeType ? b : null;
+	      }, parents: function parents(a) {
+	        return n.dir(a, "parentNode");
+	      }, parentsUntil: function parentsUntil(a, b, c) {
+	        return n.dir(a, "parentNode", c);
+	      }, next: function next(a) {
+	        return D(a, "nextSibling");
+	      }, prev: function prev(a) {
+	        return D(a, "previousSibling");
+	      }, nextAll: function nextAll(a) {
+	        return n.dir(a, "nextSibling");
+	      }, prevAll: function prevAll(a) {
+	        return n.dir(a, "previousSibling");
+	      }, nextUntil: function nextUntil(a, b, c) {
+	        return n.dir(a, "nextSibling", c);
+	      }, prevUntil: function prevUntil(a, b, c) {
+	        return n.dir(a, "previousSibling", c);
+	      }, siblings: function siblings(a) {
+	        return n.sibling((a.parentNode || {}).firstChild, a);
+	      }, children: function children(a) {
+	        return n.sibling(a.firstChild);
+	      }, contents: function contents(a) {
+	        return a.contentDocument || n.merge([], a.childNodes);
+	      } }, function (a, b) {
+	      n.fn[a] = function (c, d) {
+	        var e = n.map(this, b, c);return "Until" !== a.slice(-5) && (d = c), d && "string" == typeof d && (e = n.filter(d, e)), this.length > 1 && (C[a] || n.unique(e), B.test(a) && e.reverse()), this.pushStack(e);
+	      };
+	    });var E = /\S+/g,
+	        F = {};function G(a) {
+	      var b = F[a] = {};return n.each(a.match(E) || [], function (a, c) {
+	        b[c] = !0;
+	      }), b;
+	    }n.Callbacks = function (a) {
+	      a = "string" == typeof a ? F[a] || G(a) : n.extend({}, a);var b,
+	          c,
+	          d,
+	          e,
+	          f,
+	          g,
+	          h = [],
+	          i = !a.once && [],
+	          j = function j(l) {
+	        for (b = a.memory && l, c = !0, g = e || 0, e = 0, f = h.length, d = !0; h && f > g; g++) if (h[g].apply(l[0], l[1]) === !1 && a.stopOnFalse) {
+	          b = !1;break;
+	        }d = !1, h && (i ? i.length && j(i.shift()) : b ? h = [] : k.disable());
+	      },
+	          k = { add: function add() {
+	          if (h) {
+	            var c = h.length;!(function g(b) {
+	              n.each(b, function (b, c) {
+	                var d = n.type(c);"function" === d ? a.unique && k.has(c) || h.push(c) : c && c.length && "string" !== d && g(c);
+	              });
+	            })(arguments), d ? f = h.length : b && (e = c, j(b));
+	          }return this;
+	        }, remove: function remove() {
+	          return h && n.each(arguments, function (a, b) {
+	            var c;while ((c = n.inArray(b, h, c)) > -1) h.splice(c, 1), d && (f >= c && f--, g >= c && g--);
+	          }), this;
+	        }, has: function has(a) {
+	          return a ? n.inArray(a, h) > -1 : !(!h || !h.length);
+	        }, empty: function empty() {
+	          return h = [], f = 0, this;
+	        }, disable: function disable() {
+	          return h = i = b = void 0, this;
+	        }, disabled: function disabled() {
+	          return !h;
+	        }, lock: function lock() {
+	          return i = void 0, b || k.disable(), this;
+	        }, locked: function locked() {
+	          return !i;
+	        }, fireWith: function fireWith(a, b) {
+	          return !h || c && !i || (b = b || [], b = [a, b.slice ? b.slice() : b], d ? i.push(b) : j(b)), this;
+	        }, fire: function fire() {
+	          return k.fireWith(this, arguments), this;
+	        }, fired: function fired() {
+	          return !!c;
+	        } };return k;
+	    }, n.extend({ Deferred: function Deferred(a) {
+	        var b = [["resolve", "done", n.Callbacks("once memory"), "resolved"], ["reject", "fail", n.Callbacks("once memory"), "rejected"], ["notify", "progress", n.Callbacks("memory")]],
+	            c = "pending",
+	            d = { state: function state() {
+	            return c;
+	          }, always: function always() {
+	            return e.done(arguments).fail(arguments), this;
+	          }, then: function then() {
+	            var a = arguments;return n.Deferred(function (c) {
+	              n.each(b, function (b, f) {
+	                var g = n.isFunction(a[b]) && a[b];e[f[1]](function () {
+	                  var a = g && g.apply(this, arguments);a && n.isFunction(a.promise) ? a.promise().done(c.resolve).fail(c.reject).progress(c.notify) : c[f[0] + "With"](this === d ? c.promise() : this, g ? [a] : arguments);
+	                });
+	              }), a = null;
+	            }).promise();
+	          }, promise: function promise(a) {
+	            return null != a ? n.extend(a, d) : d;
+	          } },
+	            e = {};return d.pipe = d.then, n.each(b, function (a, f) {
+	          var g = f[2],
+	              h = f[3];d[f[1]] = g.add, h && g.add(function () {
+	            c = h;
+	          }, b[1 ^ a][2].disable, b[2][2].lock), e[f[0]] = function () {
+	            return e[f[0] + "With"](this === e ? d : this, arguments), this;
+	          }, e[f[0] + "With"] = g.fireWith;
+	        }), d.promise(e), a && a.call(e, e), e;
+	      }, when: function when(a) {
+	        var b = 0,
+	            c = d.call(arguments),
+	            e = c.length,
+	            f = 1 !== e || a && n.isFunction(a.promise) ? e : 0,
+	            g = 1 === f ? a : n.Deferred(),
+	            h = function h(a, b, c) {
+	          return function (e) {
+	            b[a] = this, c[a] = arguments.length > 1 ? d.call(arguments) : e, c === i ? g.notifyWith(b, c) : --f || g.resolveWith(b, c);
+	          };
+	        },
+	            i,
+	            j,
+	            k;if (e > 1) for (i = new Array(e), j = new Array(e), k = new Array(e); e > b; b++) c[b] && n.isFunction(c[b].promise) ? c[b].promise().done(h(b, k, c)).fail(g.reject).progress(h(b, j, i)) : --f;return f || g.resolveWith(k, c), g.promise();
+	      } });var H;n.fn.ready = function (a) {
+	      return n.ready.promise().done(a), this;
+	    }, n.extend({ isReady: !1, readyWait: 1, holdReady: function holdReady(a) {
+	        a ? n.readyWait++ : n.ready(!0);
+	      }, ready: function ready(a) {
+	        (a === !0 ? --n.readyWait : n.isReady) || (n.isReady = !0, a !== !0 && --n.readyWait > 0 || (H.resolveWith(l, [n]), n.fn.triggerHandler && (n(l).triggerHandler("ready"), n(l).off("ready"))));
+	      } });function I() {
+	      l.removeEventListener("DOMContentLoaded", I, !1), a.removeEventListener("load", I, !1), n.ready();
+	    }n.ready.promise = function (b) {
+	      return H || (H = n.Deferred(), "complete" === l.readyState ? setTimeout(n.ready) : (l.addEventListener("DOMContentLoaded", I, !1), a.addEventListener("load", I, !1))), H.promise(b);
+	    }, n.ready.promise();var J = n.access = function (a, b, c, d, e, f, g) {
+	      var h = 0,
+	          i = a.length,
+	          j = null == c;if ("object" === n.type(c)) {
+	        e = !0;for (h in c) n.access(a, b, h, c[h], !0, f, g);
+	      } else if (void 0 !== d && (e = !0, n.isFunction(d) || (g = !0), j && (g ? (b.call(a, d), b = null) : (j = b, b = function (a, b, c) {
+	        return j.call(n(a), c);
+	      })), b)) for (; i > h; h++) b(a[h], c, g ? d : d.call(a[h], h, b(a[h], c)));return e ? a : j ? b.call(a) : i ? b(a[0], c) : f;
+	    };n.acceptData = function (a) {
+	      return 1 === a.nodeType || 9 === a.nodeType || ! +a.nodeType;
+	    };function K() {
+	      Object.defineProperty(this.cache = {}, 0, { get: function get() {
+	          return {};
+	        } }), this.expando = n.expando + Math.random();
+	    }K.uid = 1, K.accepts = n.acceptData, K.prototype = { key: function key(a) {
+	        if (!K.accepts(a)) return 0;var b = {},
+	            c = a[this.expando];if (!c) {
+	          c = K.uid++;try {
+	            b[this.expando] = { value: c }, Object.defineProperties(a, b);
+	          } catch (d) {
+	            b[this.expando] = c, n.extend(a, b);
+	          }
+	        }return this.cache[c] || (this.cache[c] = {}), c;
+	      }, set: function set(a, b, c) {
+	        var d,
+	            e = this.key(a),
+	            f = this.cache[e];if ("string" == typeof b) f[b] = c;else if (n.isEmptyObject(f)) n.extend(this.cache[e], b);else for (d in b) f[d] = b[d];return f;
+	      }, get: function get(a, b) {
+	        var c = this.cache[this.key(a)];return void 0 === b ? c : c[b];
+	      }, access: function access(a, b, c) {
+	        var d;return void 0 === b || b && "string" == typeof b && void 0 === c ? (d = this.get(a, b), void 0 !== d ? d : this.get(a, n.camelCase(b))) : (this.set(a, b, c), void 0 !== c ? c : b);
+	      }, remove: function remove(a, b) {
+	        var c,
+	            d,
+	            e,
+	            f = this.key(a),
+	            g = this.cache[f];if (void 0 === b) this.cache[f] = {};else {
+	          n.isArray(b) ? d = b.concat(b.map(n.camelCase)) : (e = n.camelCase(b), b in g ? d = [b, e] : (d = e, d = d in g ? [d] : d.match(E) || [])), c = d.length;while (c--) delete g[d[c]];
+	        }
+	      }, hasData: function hasData(a) {
+	        return !n.isEmptyObject(this.cache[a[this.expando]] || {});
+	      }, discard: function discard(a) {
+	        a[this.expando] && delete this.cache[a[this.expando]];
+	      } };var L = new K(),
+	        M = new K(),
+	        N = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
+	        O = /([A-Z])/g;function P(a, b, c) {
+	      var d;if (void 0 === c && 1 === a.nodeType) if ((d = "data-" + b.replace(O, "-$1").toLowerCase(), c = a.getAttribute(d), "string" == typeof c)) {
+	        try {
+	          c = "true" === c ? !0 : "false" === c ? !1 : "null" === c ? null : +c + "" === c ? +c : N.test(c) ? n.parseJSON(c) : c;
+	        } catch (e) {}M.set(a, b, c);
+	      } else c = void 0;return c;
+	    }n.extend({ hasData: function hasData(a) {
+	        return M.hasData(a) || L.hasData(a);
+	      }, data: function data(a, b, c) {
+	        return M.access(a, b, c);
+	      }, removeData: function removeData(a, b) {
+	        M.remove(a, b);
+	      }, _data: function _data(a, b, c) {
+	        return L.access(a, b, c);
+	      }, _removeData: function _removeData(a, b) {
+	        L.remove(a, b);
+	      } }), n.fn.extend({ data: function data(a, b) {
+	        var c,
+	            d,
+	            e,
+	            f = this[0],
+	            g = f && f.attributes;if (void 0 === a) {
+	          if (this.length && (e = M.get(f), 1 === f.nodeType && !L.get(f, "hasDataAttrs"))) {
+	            c = g.length;while (c--) g[c] && (d = g[c].name, 0 === d.indexOf("data-") && (d = n.camelCase(d.slice(5)), P(f, d, e[d])));L.set(f, "hasDataAttrs", !0);
+	          }return e;
+	        }return "object" == typeof a ? this.each(function () {
+	          M.set(this, a);
+	        }) : J(this, function (b) {
+	          var c,
+	              d = n.camelCase(a);if (f && void 0 === b) {
+	            if ((c = M.get(f, a), void 0 !== c)) return c;if ((c = M.get(f, d), void 0 !== c)) return c;if ((c = P(f, d, void 0), void 0 !== c)) return c;
+	          } else this.each(function () {
+	            var c = M.get(this, d);M.set(this, d, b), -1 !== a.indexOf("-") && void 0 !== c && M.set(this, a, b);
+	          });
+	        }, null, b, arguments.length > 1, null, !0);
+	      }, removeData: function removeData(a) {
+	        return this.each(function () {
+	          M.remove(this, a);
+	        });
+	      } }), n.extend({ queue: function queue(a, b, c) {
+	        var d;return a ? (b = (b || "fx") + "queue", d = L.get(a, b), c && (!d || n.isArray(c) ? d = L.access(a, b, n.makeArray(c)) : d.push(c)), d || []) : void 0;
+	      }, dequeue: function dequeue(a, b) {
+	        b = b || "fx";var c = n.queue(a, b),
+	            d = c.length,
+	            e = c.shift(),
+	            f = n._queueHooks(a, b),
+	            g = function g() {
+	          n.dequeue(a, b);
+	        };"inprogress" === e && (e = c.shift(), d--), e && ("fx" === b && c.unshift("inprogress"), delete f.stop, e.call(a, g, f)), !d && f && f.empty.fire();
+	      }, _queueHooks: function _queueHooks(a, b) {
+	        var c = b + "queueHooks";return L.get(a, c) || L.access(a, c, { empty: n.Callbacks("once memory").add(function () {
+	            L.remove(a, [b + "queue", c]);
+	          }) });
+	      } }), n.fn.extend({ queue: function queue(a, b) {
+	        var c = 2;return "string" != typeof a && (b = a, a = "fx", c--), arguments.length < c ? n.queue(this[0], a) : void 0 === b ? this : this.each(function () {
+	          var c = n.queue(this, a, b);n._queueHooks(this, a), "fx" === a && "inprogress" !== c[0] && n.dequeue(this, a);
+	        });
+	      }, dequeue: function dequeue(a) {
+	        return this.each(function () {
+	          n.dequeue(this, a);
+	        });
+	      }, clearQueue: function clearQueue(a) {
+	        return this.queue(a || "fx", []);
+	      }, promise: function promise(a, b) {
+	        var c,
+	            d = 1,
+	            e = n.Deferred(),
+	            f = this,
+	            g = this.length,
+	            h = function h() {
+	          --d || e.resolveWith(f, [f]);
+	        };"string" != typeof a && (b = a, a = void 0), a = a || "fx";while (g--) c = L.get(f[g], a + "queueHooks"), c && c.empty && (d++, c.empty.add(h));return h(), e.promise(b);
+	      } });var Q = /[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source,
+	        R = ["Top", "Right", "Bottom", "Left"],
+	        S = function S(a, b) {
+	      return a = b || a, "none" === n.css(a, "display") || !n.contains(a.ownerDocument, a);
+	    },
+	        T = /^(?:checkbox|radio)$/i;!(function () {
+	      var a = l.createDocumentFragment(),
+	          b = a.appendChild(l.createElement("div")),
+	          c = l.createElement("input");c.setAttribute("type", "radio"), c.setAttribute("checked", "checked"), c.setAttribute("name", "t"), b.appendChild(c), k.checkClone = b.cloneNode(!0).cloneNode(!0).lastChild.checked, b.innerHTML = "<textarea>x</textarea>", k.noCloneChecked = !!b.cloneNode(!0).lastChild.defaultValue;
+	    })();var U = "undefined";k.focusinBubbles = "onfocusin" in a;var V = /^key/,
+	        W = /^(?:mouse|pointer|contextmenu)|click/,
+	        X = /^(?:focusinfocus|focusoutblur)$/,
+	        Y = /^([^.]*)(?:\.(.+)|)$/;function Z() {
+	      return !0;
+	    }function $() {
+	      return !1;
+	    }function _() {
+	      try {
+	        return l.activeElement;
+	      } catch (a) {}
+	    }n.event = { global: {}, add: function add(a, b, c, d, e) {
+	        var f,
+	            g,
+	            h,
+	            i,
+	            j,
+	            k,
+	            l,
+	            m,
+	            o,
+	            p,
+	            q,
+	            r = L.get(a);if (r) {
+	          c.handler && (f = c, c = f.handler, e = f.selector), c.guid || (c.guid = n.guid++), (i = r.events) || (i = r.events = {}), (g = r.handle) || (g = r.handle = function (b) {
+	            return typeof n !== U && n.event.triggered !== b.type ? n.event.dispatch.apply(a, arguments) : void 0;
+	          }), b = (b || "").match(E) || [""], j = b.length;while (j--) h = Y.exec(b[j]) || [], o = q = h[1], p = (h[2] || "").split(".").sort(), o && (l = n.event.special[o] || {}, o = (e ? l.delegateType : l.bindType) || o, l = n.event.special[o] || {}, k = n.extend({ type: o, origType: q, data: d, handler: c, guid: c.guid, selector: e, needsContext: e && n.expr.match.needsContext.test(e), namespace: p.join(".") }, f), (m = i[o]) || (m = i[o] = [], m.delegateCount = 0, l.setup && l.setup.call(a, d, p, g) !== !1 || a.addEventListener && a.addEventListener(o, g, !1)), l.add && (l.add.call(a, k), k.handler.guid || (k.handler.guid = c.guid)), e ? m.splice(m.delegateCount++, 0, k) : m.push(k), n.event.global[o] = !0);
+	        }
+	      }, remove: function remove(a, b, c, d, e) {
+	        var f,
+	            g,
+	            h,
+	            i,
+	            j,
+	            k,
+	            l,
+	            m,
+	            o,
+	            p,
+	            q,
+	            r = L.hasData(a) && L.get(a);if (r && (i = r.events)) {
+	          b = (b || "").match(E) || [""], j = b.length;while (j--) if ((h = Y.exec(b[j]) || [], o = q = h[1], p = (h[2] || "").split(".").sort(), o)) {
+	            l = n.event.special[o] || {}, o = (d ? l.delegateType : l.bindType) || o, m = i[o] || [], h = h[2] && new RegExp("(^|\\.)" + p.join("\\.(?:.*\\.|)") + "(\\.|$)"), g = f = m.length;while (f--) k = m[f], !e && q !== k.origType || c && c.guid !== k.guid || h && !h.test(k.namespace) || d && d !== k.selector && ("**" !== d || !k.selector) || (m.splice(f, 1), k.selector && m.delegateCount--, l.remove && l.remove.call(a, k));g && !m.length && (l.teardown && l.teardown.call(a, p, r.handle) !== !1 || n.removeEvent(a, o, r.handle), delete i[o]);
+	          } else for (o in i) n.event.remove(a, o + b[j], c, d, !0);n.isEmptyObject(i) && (delete r.handle, L.remove(a, "events"));
+	        }
+	      }, trigger: function trigger(b, c, d, e) {
+	        var f,
+	            g,
+	            h,
+	            i,
+	            k,
+	            m,
+	            o,
+	            p = [d || l],
+	            q = j.call(b, "type") ? b.type : b,
+	            r = j.call(b, "namespace") ? b.namespace.split(".") : [];if ((g = h = d = d || l, 3 !== d.nodeType && 8 !== d.nodeType && !X.test(q + n.event.triggered) && (q.indexOf(".") >= 0 && (r = q.split("."), q = r.shift(), r.sort()), k = q.indexOf(":") < 0 && "on" + q, b = b[n.expando] ? b : new n.Event(q, "object" == typeof b && b), b.isTrigger = e ? 2 : 3, b.namespace = r.join("."), b.namespace_re = b.namespace ? new RegExp("(^|\\.)" + r.join("\\.(?:.*\\.|)") + "(\\.|$)") : null, b.result = void 0, b.target || (b.target = d), c = null == c ? [b] : n.makeArray(c, [b]), o = n.event.special[q] || {}, e || !o.trigger || o.trigger.apply(d, c) !== !1))) {
+	          if (!e && !o.noBubble && !n.isWindow(d)) {
+	            for (i = o.delegateType || q, X.test(i + q) || (g = g.parentNode); g; g = g.parentNode) p.push(g), h = g;h === (d.ownerDocument || l) && p.push(h.defaultView || h.parentWindow || a);
+	          }f = 0;while ((g = p[f++]) && !b.isPropagationStopped()) b.type = f > 1 ? i : o.bindType || q, m = (L.get(g, "events") || {})[b.type] && L.get(g, "handle"), m && m.apply(g, c), m = k && g[k], m && m.apply && n.acceptData(g) && (b.result = m.apply(g, c), b.result === !1 && b.preventDefault());return b.type = q, e || b.isDefaultPrevented() || o._default && o._default.apply(p.pop(), c) !== !1 || !n.acceptData(d) || k && n.isFunction(d[q]) && !n.isWindow(d) && (h = d[k], h && (d[k] = null), n.event.triggered = q, d[q](), n.event.triggered = void 0, h && (d[k] = h)), b.result;
+	        }
+	      }, dispatch: function dispatch(a) {
+	        a = n.event.fix(a);var b,
+	            c,
+	            e,
+	            f,
+	            g,
+	            h = [],
+	            i = d.call(arguments),
+	            j = (L.get(this, "events") || {})[a.type] || [],
+	            k = n.event.special[a.type] || {};if ((i[0] = a, a.delegateTarget = this, !k.preDispatch || k.preDispatch.call(this, a) !== !1)) {
+	          h = n.event.handlers.call(this, a, j), b = 0;while ((f = h[b++]) && !a.isPropagationStopped()) {
+	            a.currentTarget = f.elem, c = 0;while ((g = f.handlers[c++]) && !a.isImmediatePropagationStopped()) (!a.namespace_re || a.namespace_re.test(g.namespace)) && (a.handleObj = g, a.data = g.data, e = ((n.event.special[g.origType] || {}).handle || g.handler).apply(f.elem, i), void 0 !== e && (a.result = e) === !1 && (a.preventDefault(), a.stopPropagation()));
+	          }return k.postDispatch && k.postDispatch.call(this, a), a.result;
+	        }
+	      }, handlers: function handlers(a, b) {
+	        var c,
+	            d,
+	            e,
+	            f,
+	            g = [],
+	            h = b.delegateCount,
+	            i = a.target;if (h && i.nodeType && (!a.button || "click" !== a.type)) for (; i !== this; i = i.parentNode || this) if (i.disabled !== !0 || "click" !== a.type) {
+	          for (d = [], c = 0; h > c; c++) f = b[c], e = f.selector + " ", void 0 === d[e] && (d[e] = f.needsContext ? n(e, this).index(i) >= 0 : n.find(e, this, null, [i]).length), d[e] && d.push(f);d.length && g.push({ elem: i, handlers: d });
+	        }return h < b.length && g.push({ elem: this, handlers: b.slice(h) }), g;
+	      }, props: "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" "), fixHooks: {}, keyHooks: { props: "char charCode key keyCode".split(" "), filter: function filter(a, b) {
+	          return null == a.which && (a.which = null != b.charCode ? b.charCode : b.keyCode), a;
+	        } }, mouseHooks: { props: "button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "), filter: function filter(a, b) {
+	          var c,
+	              d,
+	              e,
+	              f = b.button;return null == a.pageX && null != b.clientX && (c = a.target.ownerDocument || l, d = c.documentElement, e = c.body, a.pageX = b.clientX + (d && d.scrollLeft || e && e.scrollLeft || 0) - (d && d.clientLeft || e && e.clientLeft || 0), a.pageY = b.clientY + (d && d.scrollTop || e && e.scrollTop || 0) - (d && d.clientTop || e && e.clientTop || 0)), a.which || void 0 === f || (a.which = 1 & f ? 1 : 2 & f ? 3 : 4 & f ? 2 : 0), a;
+	        } }, fix: function fix(a) {
+	        if (a[n.expando]) return a;var b,
+	            c,
+	            d,
+	            e = a.type,
+	            f = a,
+	            g = this.fixHooks[e];g || (this.fixHooks[e] = g = W.test(e) ? this.mouseHooks : V.test(e) ? this.keyHooks : {}), d = g.props ? this.props.concat(g.props) : this.props, a = new n.Event(f), b = d.length;while (b--) c = d[b], a[c] = f[c];return a.target || (a.target = l), 3 === a.target.nodeType && (a.target = a.target.parentNode), g.filter ? g.filter(a, f) : a;
+	      }, special: { load: { noBubble: !0 }, focus: { trigger: function trigger() {
+	            return this !== _() && this.focus ? (this.focus(), !1) : void 0;
+	          }, delegateType: "focusin" }, blur: { trigger: function trigger() {
+	            return this === _() && this.blur ? (this.blur(), !1) : void 0;
+	          }, delegateType: "focusout" }, click: { trigger: function trigger() {
+	            return "checkbox" === this.type && this.click && n.nodeName(this, "input") ? (this.click(), !1) : void 0;
+	          }, _default: function _default(a) {
+	            return n.nodeName(a.target, "a");
+	          } }, beforeunload: { postDispatch: function postDispatch(a) {
+	            void 0 !== a.result && a.originalEvent && (a.originalEvent.returnValue = a.result);
+	          } } }, simulate: function simulate(a, b, c, d) {
+	        var e = n.extend(new n.Event(), c, { type: a, isSimulated: !0, originalEvent: {} });d ? n.event.trigger(e, null, b) : n.event.dispatch.call(b, e), e.isDefaultPrevented() && c.preventDefault();
+	      } }, n.removeEvent = function (a, b, c) {
+	      a.removeEventListener && a.removeEventListener(b, c, !1);
+	    }, n.Event = function (a, b) {
+	      return this instanceof n.Event ? (a && a.type ? (this.originalEvent = a, this.type = a.type, this.isDefaultPrevented = a.defaultPrevented || void 0 === a.defaultPrevented && a.returnValue === !1 ? Z : $) : this.type = a, b && n.extend(this, b), this.timeStamp = a && a.timeStamp || n.now(), void (this[n.expando] = !0)) : new n.Event(a, b);
+	    }, n.Event.prototype = { isDefaultPrevented: $, isPropagationStopped: $, isImmediatePropagationStopped: $, preventDefault: function preventDefault() {
+	        var a = this.originalEvent;this.isDefaultPrevented = Z, a && a.preventDefault && a.preventDefault();
+	      }, stopPropagation: function stopPropagation() {
+	        var a = this.originalEvent;this.isPropagationStopped = Z, a && a.stopPropagation && a.stopPropagation();
+	      }, stopImmediatePropagation: function stopImmediatePropagation() {
+	        var a = this.originalEvent;this.isImmediatePropagationStopped = Z, a && a.stopImmediatePropagation && a.stopImmediatePropagation(), this.stopPropagation();
+	      } }, n.each({ mouseenter: "mouseover", mouseleave: "mouseout", pointerenter: "pointerover", pointerleave: "pointerout" }, function (a, b) {
+	      n.event.special[a] = { delegateType: b, bindType: b, handle: function handle(a) {
+	          var c,
+	              d = this,
+	              e = a.relatedTarget,
+	              f = a.handleObj;return (!e || e !== d && !n.contains(d, e)) && (a.type = f.origType, c = f.handler.apply(this, arguments), a.type = b), c;
+	        } };
+	    }), k.focusinBubbles || n.each({ focus: "focusin", blur: "focusout" }, function (a, b) {
+	      var c = function c(a) {
+	        n.event.simulate(b, a.target, n.event.fix(a), !0);
+	      };n.event.special[b] = { setup: function setup() {
+	          var d = this.ownerDocument || this,
+	              e = L.access(d, b);e || d.addEventListener(a, c, !0), L.access(d, b, (e || 0) + 1);
+	        }, teardown: function teardown() {
+	          var d = this.ownerDocument || this,
+	              e = L.access(d, b) - 1;e ? L.access(d, b, e) : (d.removeEventListener(a, c, !0), L.remove(d, b));
+	        } };
+	    }), n.fn.extend({ on: function on(a, b, c, d, e) {
+	        var f, g;if ("object" == typeof a) {
+	          "string" != typeof b && (c = c || b, b = void 0);for (g in a) this.on(g, b, c, a[g], e);return this;
+	        }if ((null == c && null == d ? (d = b, c = b = void 0) : null == d && ("string" == typeof b ? (d = c, c = void 0) : (d = c, c = b, b = void 0)), d === !1)) d = $;else if (!d) return this;return 1 === e && (f = d, d = function (a) {
+	          return n().off(a), f.apply(this, arguments);
+	        }, d.guid = f.guid || (f.guid = n.guid++)), this.each(function () {
+	          n.event.add(this, a, d, c, b);
+	        });
+	      }, one: function one(a, b, c, d) {
+	        return this.on(a, b, c, d, 1);
+	      }, off: function off(a, b, c) {
+	        var d, e;if (a && a.preventDefault && a.handleObj) return d = a.handleObj, n(a.delegateTarget).off(d.namespace ? d.origType + "." + d.namespace : d.origType, d.selector, d.handler), this;if ("object" == typeof a) {
+	          for (e in a) this.off(e, b, a[e]);return this;
+	        }return (b === !1 || "function" == typeof b) && (c = b, b = void 0), c === !1 && (c = $), this.each(function () {
+	          n.event.remove(this, a, c, b);
+	        });
+	      }, trigger: function trigger(a, b) {
+	        return this.each(function () {
+	          n.event.trigger(a, b, this);
+	        });
+	      }, triggerHandler: function triggerHandler(a, b) {
+	        var c = this[0];return c ? n.event.trigger(a, b, c, !0) : void 0;
+	      } });var ab = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+	        bb = /<([\w:]+)/,
+	        cb = /<|&#?\w+;/,
+	        db = /<(?:script|style|link)/i,
+	        eb = /checked\s*(?:[^=]|=\s*.checked.)/i,
+	        fb = /^$|\/(?:java|ecma)script/i,
+	        gb = /^true\/(.*)/,
+	        hb = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+	        ib = { option: [1, "<select multiple='multiple'>", "</select>"], thead: [1, "<table>", "</table>"], col: [2, "<table><colgroup>", "</colgroup></table>"], tr: [2, "<table><tbody>", "</tbody></table>"], td: [3, "<table><tbody><tr>", "</tr></tbody></table>"], _default: [0, "", ""] };ib.optgroup = ib.option, ib.tbody = ib.tfoot = ib.colgroup = ib.caption = ib.thead, ib.th = ib.td;function jb(a, b) {
+	      return n.nodeName(a, "table") && n.nodeName(11 !== b.nodeType ? b : b.firstChild, "tr") ? a.getElementsByTagName("tbody")[0] || a.appendChild(a.ownerDocument.createElement("tbody")) : a;
+	    }function kb(a) {
+	      return a.type = (null !== a.getAttribute("type")) + "/" + a.type, a;
+	    }function lb(a) {
+	      var b = gb.exec(a.type);return b ? a.type = b[1] : a.removeAttribute("type"), a;
+	    }function mb(a, b) {
+	      for (var c = 0, d = a.length; d > c; c++) L.set(a[c], "globalEval", !b || L.get(b[c], "globalEval"));
+	    }function nb(a, b) {
+	      var c, d, e, f, g, h, i, j;if (1 === b.nodeType) {
+	        if (L.hasData(a) && (f = L.access(a), g = L.set(b, f), j = f.events)) {
+	          delete g.handle, g.events = {};for (e in j) for (c = 0, d = j[e].length; d > c; c++) n.event.add(b, e, j[e][c]);
+	        }M.hasData(a) && (h = M.access(a), i = n.extend({}, h), M.set(b, i));
+	      }
+	    }function ob(a, b) {
+	      var c = a.getElementsByTagName ? a.getElementsByTagName(b || "*") : a.querySelectorAll ? a.querySelectorAll(b || "*") : [];return void 0 === b || b && n.nodeName(a, b) ? n.merge([a], c) : c;
+	    }function pb(a, b) {
+	      var c = b.nodeName.toLowerCase();"input" === c && T.test(a.type) ? b.checked = a.checked : ("input" === c || "textarea" === c) && (b.defaultValue = a.defaultValue);
+	    }n.extend({ clone: function clone(a, b, c) {
+	        var d,
+	            e,
+	            f,
+	            g,
+	            h = a.cloneNode(!0),
+	            i = n.contains(a.ownerDocument, a);if (!(k.noCloneChecked || 1 !== a.nodeType && 11 !== a.nodeType || n.isXMLDoc(a))) for (g = ob(h), f = ob(a), d = 0, e = f.length; e > d; d++) pb(f[d], g[d]);if (b) if (c) for (f = f || ob(a), g = g || ob(h), d = 0, e = f.length; e > d; d++) nb(f[d], g[d]);else nb(a, h);return g = ob(h, "script"), g.length > 0 && mb(g, !i && ob(a, "script")), h;
+	      }, buildFragment: function buildFragment(a, b, c, d) {
+	        for (var e, f, g, h, i, j, k = b.createDocumentFragment(), l = [], m = 0, o = a.length; o > m; m++) if ((e = a[m], e || 0 === e)) if ("object" === n.type(e)) n.merge(l, e.nodeType ? [e] : e);else if (cb.test(e)) {
+	          f = f || k.appendChild(b.createElement("div")), g = (bb.exec(e) || ["", ""])[1].toLowerCase(), h = ib[g] || ib._default, f.innerHTML = h[1] + e.replace(ab, "<$1></$2>") + h[2], j = h[0];while (j--) f = f.lastChild;n.merge(l, f.childNodes), f = k.firstChild, f.textContent = "";
+	        } else l.push(b.createTextNode(e));k.textContent = "", m = 0;while (e = l[m++]) if ((!d || -1 === n.inArray(e, d)) && (i = n.contains(e.ownerDocument, e), f = ob(k.appendChild(e), "script"), i && mb(f), c)) {
+	          j = 0;while (e = f[j++]) fb.test(e.type || "") && c.push(e);
+	        }return k;
+	      }, cleanData: function cleanData(a) {
+	        for (var b, c, d, e, f = n.event.special, g = 0; void 0 !== (c = a[g]); g++) {
+	          if (n.acceptData(c) && (e = c[L.expando], e && (b = L.cache[e]))) {
+	            if (b.events) for (d in b.events) f[d] ? n.event.remove(c, d) : n.removeEvent(c, d, b.handle);L.cache[e] && delete L.cache[e];
+	          }delete M.cache[c[M.expando]];
+	        }
+	      } }), n.fn.extend({ text: function text(a) {
+	        return J(this, function (a) {
+	          return void 0 === a ? n.text(this) : this.empty().each(function () {
+	            (1 === this.nodeType || 11 === this.nodeType || 9 === this.nodeType) && (this.textContent = a);
+	          });
+	        }, null, a, arguments.length);
+	      }, append: function append() {
+	        return this.domManip(arguments, function (a) {
+	          if (1 === this.nodeType || 11 === this.nodeType || 9 === this.nodeType) {
+	            var b = jb(this, a);b.appendChild(a);
+	          }
+	        });
+	      }, prepend: function prepend() {
+	        return this.domManip(arguments, function (a) {
+	          if (1 === this.nodeType || 11 === this.nodeType || 9 === this.nodeType) {
+	            var b = jb(this, a);b.insertBefore(a, b.firstChild);
+	          }
+	        });
+	      }, before: function before() {
+	        return this.domManip(arguments, function (a) {
+	          this.parentNode && this.parentNode.insertBefore(a, this);
+	        });
+	      }, after: function after() {
+	        return this.domManip(arguments, function (a) {
+	          this.parentNode && this.parentNode.insertBefore(a, this.nextSibling);
+	        });
+	      }, remove: function remove(a, b) {
+	        for (var c, d = a ? n.filter(a, this) : this, e = 0; null != (c = d[e]); e++) b || 1 !== c.nodeType || n.cleanData(ob(c)), c.parentNode && (b && n.contains(c.ownerDocument, c) && mb(ob(c, "script")), c.parentNode.removeChild(c));return this;
+	      }, empty: function empty() {
+	        for (var a, b = 0; null != (a = this[b]); b++) 1 === a.nodeType && (n.cleanData(ob(a, !1)), a.textContent = "");return this;
+	      }, clone: function clone(a, b) {
+	        return a = null == a ? !1 : a, b = null == b ? a : b, this.map(function () {
+	          return n.clone(this, a, b);
+	        });
+	      }, html: function html(a) {
+	        return J(this, function (a) {
+	          var b = this[0] || {},
+	              c = 0,
+	              d = this.length;if (void 0 === a && 1 === b.nodeType) return b.innerHTML;if ("string" == typeof a && !db.test(a) && !ib[(bb.exec(a) || ["", ""])[1].toLowerCase()]) {
+	            a = a.replace(ab, "<$1></$2>");try {
+	              for (; d > c; c++) b = this[c] || {}, 1 === b.nodeType && (n.cleanData(ob(b, !1)), b.innerHTML = a);b = 0;
+	            } catch (e) {}
+	          }b && this.empty().append(a);
+	        }, null, a, arguments.length);
+	      }, replaceWith: function replaceWith() {
+	        var a = arguments[0];return this.domManip(arguments, function (b) {
+	          a = this.parentNode, n.cleanData(ob(this)), a && a.replaceChild(b, this);
+	        }), a && (a.length || a.nodeType) ? this : this.remove();
+	      }, detach: function detach(a) {
+	        return this.remove(a, !0);
+	      }, domManip: function domManip(a, b) {
+	        a = e.apply([], a);var c,
+	            d,
+	            f,
+	            g,
+	            h,
+	            i,
+	            j = 0,
+	            l = this.length,
+	            m = this,
+	            o = l - 1,
+	            p = a[0],
+	            q = n.isFunction(p);if (q || l > 1 && "string" == typeof p && !k.checkClone && eb.test(p)) return this.each(function (c) {
+	          var d = m.eq(c);q && (a[0] = p.call(this, c, d.html())), d.domManip(a, b);
+	        });if (l && (c = n.buildFragment(a, this[0].ownerDocument, !1, this), d = c.firstChild, 1 === c.childNodes.length && (c = d), d)) {
+	          for (f = n.map(ob(c, "script"), kb), g = f.length; l > j; j++) h = c, j !== o && (h = n.clone(h, !0, !0), g && n.merge(f, ob(h, "script"))), b.call(this[j], h, j);if (g) for (i = f[f.length - 1].ownerDocument, n.map(f, lb), j = 0; g > j; j++) h = f[j], fb.test(h.type || "") && !L.access(h, "globalEval") && n.contains(i, h) && (h.src ? n._evalUrl && n._evalUrl(h.src) : n.globalEval(h.textContent.replace(hb, "")));
+	        }return this;
+	      } }), n.each({ appendTo: "append", prependTo: "prepend", insertBefore: "before", insertAfter: "after", replaceAll: "replaceWith" }, function (a, b) {
+	      n.fn[a] = function (a) {
+	        for (var c, d = [], e = n(a), g = e.length - 1, h = 0; g >= h; h++) c = h === g ? this : this.clone(!0), n(e[h])[b](c), f.apply(d, c.get());return this.pushStack(d);
+	      };
+	    });var qb,
+	        rb = {};function sb(b, c) {
+	      var d,
+	          e = n(c.createElement(b)).appendTo(c.body),
+	          f = a.getDefaultComputedStyle && (d = a.getDefaultComputedStyle(e[0])) ? d.display : n.css(e[0], "display");return e.detach(), f;
+	    }function tb(a) {
+	      var b = l,
+	          c = rb[a];return c || (c = sb(a, b), "none" !== c && c || (qb = (qb || n("<iframe frameborder='0' width='0' height='0'/>")).appendTo(b.documentElement), b = qb[0].contentDocument, b.write(), b.close(), c = sb(a, b), qb.detach()), rb[a] = c), c;
+	    }var ub = /^margin/,
+	        vb = new RegExp("^(" + Q + ")(?!px)[a-z%]+$", "i"),
+	        wb = function wb(a) {
+	      return a.ownerDocument.defaultView.getComputedStyle(a, null);
+	    };function xb(a, b, c) {
+	      var d,
+	          e,
+	          f,
+	          g,
+	          h = a.style;return c = c || wb(a), c && (g = c.getPropertyValue(b) || c[b]), c && ("" !== g || n.contains(a.ownerDocument, a) || (g = n.style(a, b)), vb.test(g) && ub.test(b) && (d = h.width, e = h.minWidth, f = h.maxWidth, h.minWidth = h.maxWidth = h.width = g, g = c.width, h.width = d, h.minWidth = e, h.maxWidth = f)), void 0 !== g ? g + "" : g;
+	    }function yb(a, b) {
+	      return { get: function get() {
+	          return a() ? void delete this.get : (this.get = b).apply(this, arguments);
+	        } };
+	    }!(function () {
+	      var b,
+	          c,
+	          d = l.documentElement,
+	          e = l.createElement("div"),
+	          f = l.createElement("div");if (f.style) {
+	        (function () {
+	          var g = function g() {
+	            f.style.cssText = "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;display:block;margin-top:1%;top:1%;border:1px;padding:1px;width:4px;position:absolute", f.innerHTML = "", d.appendChild(e);var g = a.getComputedStyle(f, null);b = "1%" !== g.top, c = "4px" === g.width, d.removeChild(e);
+	          };
+
+	          f.style.backgroundClip = "content-box", f.cloneNode(!0).style.backgroundClip = "", k.clearCloneStyle = "content-box" === f.style.backgroundClip, e.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;position:absolute", e.appendChild(f);a.getComputedStyle && n.extend(k, { pixelPosition: function pixelPosition() {
+	              return g(), b;
+	            }, boxSizingReliable: function boxSizingReliable() {
+	              return null == c && g(), c;
+	            }, reliableMarginRight: function reliableMarginRight() {
+	              var b,
+	                  c = f.appendChild(l.createElement("div"));return c.style.cssText = f.style.cssText = "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:0", c.style.marginRight = c.style.width = "0", f.style.width = "1px", d.appendChild(e), b = !parseFloat(a.getComputedStyle(c, null).marginRight), d.removeChild(e), b;
+	            } });
+	        })();
+	      }
+	    })(), n.swap = function (a, b, c, d) {
+	      var e,
+	          f,
+	          g = {};for (f in b) g[f] = a.style[f], a.style[f] = b[f];e = c.apply(a, d || []);for (f in b) a.style[f] = g[f];return e;
+	    };var zb = /^(none|table(?!-c[ea]).+)/,
+	        Ab = new RegExp("^(" + Q + ")(.*)$", "i"),
+	        Bb = new RegExp("^([+-])=(" + Q + ")", "i"),
+	        Cb = { position: "absolute", visibility: "hidden", display: "block" },
+	        Db = { letterSpacing: "0", fontWeight: "400" },
+	        Eb = ["Webkit", "O", "Moz", "ms"];function Fb(a, b) {
+	      if (b in a) return b;var c = b[0].toUpperCase() + b.slice(1),
+	          d = b,
+	          e = Eb.length;while (e--) if ((b = Eb[e] + c, b in a)) return b;return d;
+	    }function Gb(a, b, c) {
+	      var d = Ab.exec(b);return d ? Math.max(0, d[1] - (c || 0)) + (d[2] || "px") : b;
+	    }function Hb(a, b, c, d, e) {
+	      for (var f = c === (d ? "border" : "content") ? 4 : "width" === b ? 1 : 0, g = 0; 4 > f; f += 2) "margin" === c && (g += n.css(a, c + R[f], !0, e)), d ? ("content" === c && (g -= n.css(a, "padding" + R[f], !0, e)), "margin" !== c && (g -= n.css(a, "border" + R[f] + "Width", !0, e))) : (g += n.css(a, "padding" + R[f], !0, e), "padding" !== c && (g += n.css(a, "border" + R[f] + "Width", !0, e)));return g;
+	    }function Ib(a, b, c) {
+	      var d = !0,
+	          e = "width" === b ? a.offsetWidth : a.offsetHeight,
+	          f = wb(a),
+	          g = "border-box" === n.css(a, "boxSizing", !1, f);if (0 >= e || null == e) {
+	        if ((e = xb(a, b, f), (0 > e || null == e) && (e = a.style[b]), vb.test(e))) return e;d = g && (k.boxSizingReliable() || e === a.style[b]), e = parseFloat(e) || 0;
+	      }return e + Hb(a, b, c || (g ? "border" : "content"), d, f) + "px";
+	    }function Jb(a, b) {
+	      for (var c, d, e, f = [], g = 0, h = a.length; h > g; g++) d = a[g], d.style && (f[g] = L.get(d, "olddisplay"), c = d.style.display, b ? (f[g] || "none" !== c || (d.style.display = ""), "" === d.style.display && S(d) && (f[g] = L.access(d, "olddisplay", tb(d.nodeName)))) : (e = S(d), "none" === c && e || L.set(d, "olddisplay", e ? c : n.css(d, "display"))));for (g = 0; h > g; g++) d = a[g], d.style && (b && "none" !== d.style.display && "" !== d.style.display || (d.style.display = b ? f[g] || "" : "none"));return a;
+	    }n.extend({ cssHooks: { opacity: { get: function get(a, b) {
+	            if (b) {
+	              var c = xb(a, "opacity");return "" === c ? "1" : c;
+	            }
+	          } } }, cssNumber: { columnCount: !0, fillOpacity: !0, flexGrow: !0, flexShrink: !0, fontWeight: !0, lineHeight: !0, opacity: !0, order: !0, orphans: !0, widows: !0, zIndex: !0, zoom: !0 }, cssProps: { "float": "cssFloat" }, style: function style(a, b, c, d) {
+	        if (a && 3 !== a.nodeType && 8 !== a.nodeType && a.style) {
+	          var e,
+	              f,
+	              g,
+	              h = n.camelCase(b),
+	              i = a.style;return b = n.cssProps[h] || (n.cssProps[h] = Fb(i, h)), g = n.cssHooks[b] || n.cssHooks[h], void 0 === c ? g && "get" in g && void 0 !== (e = g.get(a, !1, d)) ? e : i[b] : (f = typeof c, "string" === f && (e = Bb.exec(c)) && (c = (e[1] + 1) * e[2] + parseFloat(n.css(a, b)), f = "number"), null != c && c === c && ("number" !== f || n.cssNumber[h] || (c += "px"), k.clearCloneStyle || "" !== c || 0 !== b.indexOf("background") || (i[b] = "inherit"), g && "set" in g && void 0 === (c = g.set(a, c, d)) || (i[b] = c)), void 0);
+	        }
+	      }, css: function css(a, b, c, d) {
+	        var e,
+	            f,
+	            g,
+	            h = n.camelCase(b);return b = n.cssProps[h] || (n.cssProps[h] = Fb(a.style, h)), g = n.cssHooks[b] || n.cssHooks[h], g && "get" in g && (e = g.get(a, !0, c)), void 0 === e && (e = xb(a, b, d)), "normal" === e && b in Db && (e = Db[b]), "" === c || c ? (f = parseFloat(e), c === !0 || n.isNumeric(f) ? f || 0 : e) : e;
+	      } }), n.each(["height", "width"], function (a, b) {
+	      n.cssHooks[b] = { get: function get(a, c, d) {
+	          return c ? zb.test(n.css(a, "display")) && 0 === a.offsetWidth ? n.swap(a, Cb, function () {
+	            return Ib(a, b, d);
+	          }) : Ib(a, b, d) : void 0;
+	        }, set: function set(a, c, d) {
+	          var e = d && wb(a);return Gb(a, c, d ? Hb(a, b, d, "border-box" === n.css(a, "boxSizing", !1, e), e) : 0);
+	        } };
+	    }), n.cssHooks.marginRight = yb(k.reliableMarginRight, function (a, b) {
+	      return b ? n.swap(a, { display: "inline-block" }, xb, [a, "marginRight"]) : void 0;
+	    }), n.each({ margin: "", padding: "", border: "Width" }, function (a, b) {
+	      n.cssHooks[a + b] = { expand: function expand(c) {
+	          for (var d = 0, e = {}, f = "string" == typeof c ? c.split(" ") : [c]; 4 > d; d++) e[a + R[d] + b] = f[d] || f[d - 2] || f[0];return e;
+	        } }, ub.test(a) || (n.cssHooks[a + b].set = Gb);
+	    }), n.fn.extend({ css: function css(a, b) {
+	        return J(this, function (a, b, c) {
+	          var d,
+	              e,
+	              f = {},
+	              g = 0;if (n.isArray(b)) {
+	            for (d = wb(a), e = b.length; e > g; g++) f[b[g]] = n.css(a, b[g], !1, d);return f;
+	          }return void 0 !== c ? n.style(a, b, c) : n.css(a, b);
+	        }, a, b, arguments.length > 1);
+	      }, show: function show() {
+	        return Jb(this, !0);
+	      }, hide: function hide() {
+	        return Jb(this);
+	      }, toggle: function toggle(a) {
+	        return "boolean" == typeof a ? a ? this.show() : this.hide() : this.each(function () {
+	          S(this) ? n(this).show() : n(this).hide();
+	        });
+	      } });function Kb(a, b, c, d, e) {
+	      return new Kb.prototype.init(a, b, c, d, e);
+	    }n.Tween = Kb, Kb.prototype = { constructor: Kb, init: function init(a, b, c, d, e, f) {
+	        this.elem = a, this.prop = c, this.easing = e || "swing", this.options = b, this.start = this.now = this.cur(), this.end = d, this.unit = f || (n.cssNumber[c] ? "" : "px");
+	      }, cur: function cur() {
+	        var a = Kb.propHooks[this.prop];return a && a.get ? a.get(this) : Kb.propHooks._default.get(this);
+	      }, run: function run(a) {
+	        var b,
+	            c = Kb.propHooks[this.prop];return this.pos = b = this.options.duration ? n.easing[this.easing](a, this.options.duration * a, 0, 1, this.options.duration) : a, this.now = (this.end - this.start) * b + this.start, this.options.step && this.options.step.call(this.elem, this.now, this), c && c.set ? c.set(this) : Kb.propHooks._default.set(this), this;
+	      } }, Kb.prototype.init.prototype = Kb.prototype, Kb.propHooks = { _default: { get: function get(a) {
+	          var b;return null == a.elem[a.prop] || a.elem.style && null != a.elem.style[a.prop] ? (b = n.css(a.elem, a.prop, ""), b && "auto" !== b ? b : 0) : a.elem[a.prop];
+	        }, set: function set(a) {
+	          n.fx.step[a.prop] ? n.fx.step[a.prop](a) : a.elem.style && (null != a.elem.style[n.cssProps[a.prop]] || n.cssHooks[a.prop]) ? n.style(a.elem, a.prop, a.now + a.unit) : a.elem[a.prop] = a.now;
+	        } } }, Kb.propHooks.scrollTop = Kb.propHooks.scrollLeft = { set: function set(a) {
+	        a.elem.nodeType && a.elem.parentNode && (a.elem[a.prop] = a.now);
+	      } }, n.easing = { linear: function linear(a) {
+	        return a;
+	      }, swing: function swing(a) {
+	        return .5 - Math.cos(a * Math.PI) / 2;
+	      } }, n.fx = Kb.prototype.init, n.fx.step = {};var Lb,
+	        Mb,
+	        Nb = /^(?:toggle|show|hide)$/,
+	        Ob = new RegExp("^(?:([+-])=|)(" + Q + ")([a-z%]*)$", "i"),
+	        Pb = /queueHooks$/,
+	        Qb = [Vb],
+	        Rb = { "*": [function (a, b) {
+	        var c = this.createTween(a, b),
+	            d = c.cur(),
+	            e = Ob.exec(b),
+	            f = e && e[3] || (n.cssNumber[a] ? "" : "px"),
+	            g = (n.cssNumber[a] || "px" !== f && +d) && Ob.exec(n.css(c.elem, a)),
+	            h = 1,
+	            i = 20;if (g && g[3] !== f) {
+	          f = f || g[3], e = e || [], g = +d || 1;do h = h || ".5", g /= h, n.style(c.elem, a, g + f); while (h !== (h = c.cur() / d) && 1 !== h && --i);
+	        }return e && (g = c.start = +g || +d || 0, c.unit = f, c.end = e[1] ? g + (e[1] + 1) * e[2] : +e[2]), c;
+	      }] };function Sb() {
+	      return setTimeout(function () {
+	        Lb = void 0;
+	      }), Lb = n.now();
+	    }function Tb(a, b) {
+	      var c,
+	          d = 0,
+	          e = { height: a };for (b = b ? 1 : 0; 4 > d; d += 2 - b) c = R[d], e["margin" + c] = e["padding" + c] = a;return b && (e.opacity = e.width = a), e;
+	    }function Ub(a, b, c) {
+	      for (var d, e = (Rb[b] || []).concat(Rb["*"]), f = 0, g = e.length; g > f; f++) if (d = e[f].call(c, b, a)) return d;
+	    }function Vb(a, b, c) {
+	      var d,
+	          e,
+	          f,
+	          g,
+	          h,
+	          i,
+	          j,
+	          k,
+	          l = this,
+	          m = {},
+	          o = a.style,
+	          p = a.nodeType && S(a),
+	          q = L.get(a, "fxshow");c.queue || (h = n._queueHooks(a, "fx"), null == h.unqueued && (h.unqueued = 0, i = h.empty.fire, h.empty.fire = function () {
+	        h.unqueued || i();
+	      }), h.unqueued++, l.always(function () {
+	        l.always(function () {
+	          h.unqueued--, n.queue(a, "fx").length || h.empty.fire();
+	        });
+	      })), 1 === a.nodeType && ("height" in b || "width" in b) && (c.overflow = [o.overflow, o.overflowX, o.overflowY], j = n.css(a, "display"), k = "none" === j ? L.get(a, "olddisplay") || tb(a.nodeName) : j, "inline" === k && "none" === n.css(a, "float") && (o.display = "inline-block")), c.overflow && (o.overflow = "hidden", l.always(function () {
+	        o.overflow = c.overflow[0], o.overflowX = c.overflow[1], o.overflowY = c.overflow[2];
+	      }));for (d in b) if ((e = b[d], Nb.exec(e))) {
+	        if ((delete b[d], f = f || "toggle" === e, e === (p ? "hide" : "show"))) {
+	          if ("show" !== e || !q || void 0 === q[d]) continue;p = !0;
+	        }m[d] = q && q[d] || n.style(a, d);
+	      } else j = void 0;if (n.isEmptyObject(m)) "inline" === ("none" === j ? tb(a.nodeName) : j) && (o.display = j);else {
+	        q ? "hidden" in q && (p = q.hidden) : q = L.access(a, "fxshow", {}), f && (q.hidden = !p), p ? n(a).show() : l.done(function () {
+	          n(a).hide();
+	        }), l.done(function () {
+	          var b;L.remove(a, "fxshow");for (b in m) n.style(a, b, m[b]);
+	        });for (d in m) g = Ub(p ? q[d] : 0, d, l), d in q || (q[d] = g.start, p && (g.end = g.start, g.start = "width" === d || "height" === d ? 1 : 0));
+	      }
+	    }function Wb(a, b) {
+	      var c, d, e, f, g;for (c in a) if ((d = n.camelCase(c), e = b[d], f = a[c], n.isArray(f) && (e = f[1], f = a[c] = f[0]), c !== d && (a[d] = f, delete a[c]), g = n.cssHooks[d], g && "expand" in g)) {
+	        f = g.expand(f), delete a[d];for (c in f) c in a || (a[c] = f[c], b[c] = e);
+	      } else b[d] = e;
+	    }function Xb(a, b, c) {
+	      var d,
+	          e,
+	          f = 0,
+	          g = Qb.length,
+	          h = n.Deferred().always(function () {
+	        delete i.elem;
+	      }),
+	          i = function i() {
+	        if (e) return !1;for (var b = Lb || Sb(), c = Math.max(0, j.startTime + j.duration - b), d = c / j.duration || 0, f = 1 - d, g = 0, i = j.tweens.length; i > g; g++) j.tweens[g].run(f);return h.notifyWith(a, [j, f, c]), 1 > f && i ? c : (h.resolveWith(a, [j]), !1);
+	      },
+	          j = h.promise({ elem: a, props: n.extend({}, b), opts: n.extend(!0, { specialEasing: {} }, c), originalProperties: b, originalOptions: c, startTime: Lb || Sb(), duration: c.duration, tweens: [], createTween: function createTween(b, c) {
+	          var d = n.Tween(a, j.opts, b, c, j.opts.specialEasing[b] || j.opts.easing);return j.tweens.push(d), d;
+	        }, stop: function stop(b) {
+	          var c = 0,
+	              d = b ? j.tweens.length : 0;if (e) return this;for (e = !0; d > c; c++) j.tweens[c].run(1);return b ? h.resolveWith(a, [j, b]) : h.rejectWith(a, [j, b]), this;
+	        } }),
+	          k = j.props;for (Wb(k, j.opts.specialEasing); g > f; f++) if (d = Qb[f].call(j, a, k, j.opts)) return d;return n.map(k, Ub, j), n.isFunction(j.opts.start) && j.opts.start.call(a, j), n.fx.timer(n.extend(i, { elem: a, anim: j, queue: j.opts.queue })), j.progress(j.opts.progress).done(j.opts.done, j.opts.complete).fail(j.opts.fail).always(j.opts.always);
+	    }n.Animation = n.extend(Xb, { tweener: function tweener(a, b) {
+	        n.isFunction(a) ? (b = a, a = ["*"]) : a = a.split(" ");for (var c, d = 0, e = a.length; e > d; d++) c = a[d], Rb[c] = Rb[c] || [], Rb[c].unshift(b);
+	      }, prefilter: function prefilter(a, b) {
+	        b ? Qb.unshift(a) : Qb.push(a);
+	      } }), n.speed = function (a, b, c) {
+	      var d = a && "object" == typeof a ? n.extend({}, a) : { complete: c || !c && b || n.isFunction(a) && a, duration: a, easing: c && b || b && !n.isFunction(b) && b };return d.duration = n.fx.off ? 0 : "number" == typeof d.duration ? d.duration : d.duration in n.fx.speeds ? n.fx.speeds[d.duration] : n.fx.speeds._default, (null == d.queue || d.queue === !0) && (d.queue = "fx"), d.old = d.complete, d.complete = function () {
+	        n.isFunction(d.old) && d.old.call(this), d.queue && n.dequeue(this, d.queue);
+	      }, d;
+	    }, n.fn.extend({ fadeTo: function fadeTo(a, b, c, d) {
+	        return this.filter(S).css("opacity", 0).show().end().animate({ opacity: b }, a, c, d);
+	      }, animate: function animate(a, b, c, d) {
+	        var e = n.isEmptyObject(a),
+	            f = n.speed(b, c, d),
+	            g = function g() {
+	          var b = Xb(this, n.extend({}, a), f);(e || L.get(this, "finish")) && b.stop(!0);
+	        };return g.finish = g, e || f.queue === !1 ? this.each(g) : this.queue(f.queue, g);
+	      }, stop: function stop(a, b, c) {
+	        var d = function d(a) {
+	          var b = a.stop;delete a.stop, b(c);
+	        };return "string" != typeof a && (c = b, b = a, a = void 0), b && a !== !1 && this.queue(a || "fx", []), this.each(function () {
+	          var b = !0,
+	              e = null != a && a + "queueHooks",
+	              f = n.timers,
+	              g = L.get(this);if (e) g[e] && g[e].stop && d(g[e]);else for (e in g) g[e] && g[e].stop && Pb.test(e) && d(g[e]);for (e = f.length; e--;) f[e].elem !== this || null != a && f[e].queue !== a || (f[e].anim.stop(c), b = !1, f.splice(e, 1));(b || !c) && n.dequeue(this, a);
+	        });
+	      }, finish: function finish(a) {
+	        return a !== !1 && (a = a || "fx"), this.each(function () {
+	          var b,
+	              c = L.get(this),
+	              d = c[a + "queue"],
+	              e = c[a + "queueHooks"],
+	              f = n.timers,
+	              g = d ? d.length : 0;for (c.finish = !0, n.queue(this, a, []), e && e.stop && e.stop.call(this, !0), b = f.length; b--;) f[b].elem === this && f[b].queue === a && (f[b].anim.stop(!0), f.splice(b, 1));for (b = 0; g > b; b++) d[b] && d[b].finish && d[b].finish.call(this);delete c.finish;
+	        });
+	      } }), n.each(["toggle", "show", "hide"], function (a, b) {
+	      var c = n.fn[b];n.fn[b] = function (a, d, e) {
+	        return null == a || "boolean" == typeof a ? c.apply(this, arguments) : this.animate(Tb(b, !0), a, d, e);
+	      };
+	    }), n.each({ slideDown: Tb("show"), slideUp: Tb("hide"), slideToggle: Tb("toggle"), fadeIn: { opacity: "show" }, fadeOut: { opacity: "hide" }, fadeToggle: { opacity: "toggle" } }, function (a, b) {
+	      n.fn[a] = function (a, c, d) {
+	        return this.animate(b, a, c, d);
+	      };
+	    }), n.timers = [], n.fx.tick = function () {
+	      var a,
+	          b = 0,
+	          c = n.timers;for (Lb = n.now(); b < c.length; b++) a = c[b], a() || c[b] !== a || c.splice(b--, 1);c.length || n.fx.stop(), Lb = void 0;
+	    }, n.fx.timer = function (a) {
+	      n.timers.push(a), a() ? n.fx.start() : n.timers.pop();
+	    }, n.fx.interval = 13, n.fx.start = function () {
+	      Mb || (Mb = setInterval(n.fx.tick, n.fx.interval));
+	    }, n.fx.stop = function () {
+	      clearInterval(Mb), Mb = null;
+	    }, n.fx.speeds = { slow: 600, fast: 200, _default: 400 }, n.fn.delay = function (a, b) {
+	      return a = n.fx ? n.fx.speeds[a] || a : a, b = b || "fx", this.queue(b, function (b, c) {
+	        var d = setTimeout(b, a);c.stop = function () {
+	          clearTimeout(d);
+	        };
+	      });
+	    }, (function () {
+	      var a = l.createElement("input"),
+	          b = l.createElement("select"),
+	          c = b.appendChild(l.createElement("option"));a.type = "checkbox", k.checkOn = "" !== a.value, k.optSelected = c.selected, b.disabled = !0, k.optDisabled = !c.disabled, a = l.createElement("input"), a.value = "t", a.type = "radio", k.radioValue = "t" === a.value;
+	    })();var Yb,
+	        Zb,
+	        $b = n.expr.attrHandle;n.fn.extend({ attr: function attr(a, b) {
+	        return J(this, n.attr, a, b, arguments.length > 1);
+	      }, removeAttr: function removeAttr(a) {
+	        return this.each(function () {
+	          n.removeAttr(this, a);
+	        });
+	      } }), n.extend({ attr: function attr(a, b, c) {
+	        var d,
+	            e,
+	            f = a.nodeType;if (a && 3 !== f && 8 !== f && 2 !== f) return typeof a.getAttribute === U ? n.prop(a, b, c) : (1 === f && n.isXMLDoc(a) || (b = b.toLowerCase(), d = n.attrHooks[b] || (n.expr.match.bool.test(b) ? Zb : Yb)), void 0 === c ? d && "get" in d && null !== (e = d.get(a, b)) ? e : (e = n.find.attr(a, b), null == e ? void 0 : e) : null !== c ? d && "set" in d && void 0 !== (e = d.set(a, c, b)) ? e : (a.setAttribute(b, c + ""), c) : void n.removeAttr(a, b));
+	      }, removeAttr: function removeAttr(a, b) {
+	        var c,
+	            d,
+	            e = 0,
+	            f = b && b.match(E);if (f && 1 === a.nodeType) while (c = f[e++]) d = n.propFix[c] || c, n.expr.match.bool.test(c) && (a[d] = !1), a.removeAttribute(c);
+	      }, attrHooks: { type: { set: function set(a, b) {
+	            if (!k.radioValue && "radio" === b && n.nodeName(a, "input")) {
+	              var c = a.value;return a.setAttribute("type", b), c && (a.value = c), b;
+	            }
+	          } } } }), Zb = { set: function set(a, b, c) {
+	        return b === !1 ? n.removeAttr(a, c) : a.setAttribute(c, c), c;
+	      } }, n.each(n.expr.match.bool.source.match(/\w+/g), function (a, b) {
+	      var c = $b[b] || n.find.attr;$b[b] = function (a, b, d) {
+	        var e, f;return d || (f = $b[b], $b[b] = e, e = null != c(a, b, d) ? b.toLowerCase() : null, $b[b] = f), e;
+	      };
+	    });var _b = /^(?:input|select|textarea|button)$/i;n.fn.extend({ prop: function prop(a, b) {
+	        return J(this, n.prop, a, b, arguments.length > 1);
+	      }, removeProp: function removeProp(a) {
+	        return this.each(function () {
+	          delete this[n.propFix[a] || a];
+	        });
+	      } }), n.extend({ propFix: { "for": "htmlFor", "class": "className" }, prop: function prop(a, b, c) {
+	        var d,
+	            e,
+	            f,
+	            g = a.nodeType;if (a && 3 !== g && 8 !== g && 2 !== g) return f = 1 !== g || !n.isXMLDoc(a), f && (b = n.propFix[b] || b, e = n.propHooks[b]), void 0 !== c ? e && "set" in e && void 0 !== (d = e.set(a, c, b)) ? d : a[b] = c : e && "get" in e && null !== (d = e.get(a, b)) ? d : a[b];
+	      }, propHooks: { tabIndex: { get: function get(a) {
+	            return a.hasAttribute("tabindex") || _b.test(a.nodeName) || a.href ? a.tabIndex : -1;
+	          } } } }), k.optSelected || (n.propHooks.selected = { get: function get(a) {
+	        var b = a.parentNode;return b && b.parentNode && b.parentNode.selectedIndex, null;
+	      } }), n.each(["tabIndex", "readOnly", "maxLength", "cellSpacing", "cellPadding", "rowSpan", "colSpan", "useMap", "frameBorder", "contentEditable"], function () {
+	      n.propFix[this.toLowerCase()] = this;
+	    });var ac = /[\t\r\n\f]/g;n.fn.extend({ addClass: function addClass(a) {
+	        var b,
+	            c,
+	            d,
+	            e,
+	            f,
+	            g,
+	            h = "string" == typeof a && a,
+	            i = 0,
+	            j = this.length;if (n.isFunction(a)) return this.each(function (b) {
+	          n(this).addClass(a.call(this, b, this.className));
+	        });if (h) for (b = (a || "").match(E) || []; j > i; i++) if ((c = this[i], d = 1 === c.nodeType && (c.className ? (" " + c.className + " ").replace(ac, " ") : " "))) {
+	          f = 0;while (e = b[f++]) d.indexOf(" " + e + " ") < 0 && (d += e + " ");g = n.trim(d), c.className !== g && (c.className = g);
+	        }return this;
+	      }, removeClass: function removeClass(a) {
+	        var b,
+	            c,
+	            d,
+	            e,
+	            f,
+	            g,
+	            h = 0 === arguments.length || "string" == typeof a && a,
+	            i = 0,
+	            j = this.length;if (n.isFunction(a)) return this.each(function (b) {
+	          n(this).removeClass(a.call(this, b, this.className));
+	        });if (h) for (b = (a || "").match(E) || []; j > i; i++) if ((c = this[i], d = 1 === c.nodeType && (c.className ? (" " + c.className + " ").replace(ac, " ") : ""))) {
+	          f = 0;while (e = b[f++]) while (d.indexOf(" " + e + " ") >= 0) d = d.replace(" " + e + " ", " ");g = a ? n.trim(d) : "", c.className !== g && (c.className = g);
+	        }return this;
+	      }, toggleClass: function toggleClass(a, b) {
+	        var c = typeof a;return "boolean" == typeof b && "string" === c ? b ? this.addClass(a) : this.removeClass(a) : this.each(n.isFunction(a) ? function (c) {
+	          n(this).toggleClass(a.call(this, c, this.className, b), b);
+	        } : function () {
+	          if ("string" === c) {
+	            var b,
+	                d = 0,
+	                e = n(this),
+	                f = a.match(E) || [];while (b = f[d++]) e.hasClass(b) ? e.removeClass(b) : e.addClass(b);
+	          } else (c === U || "boolean" === c) && (this.className && L.set(this, "__className__", this.className), this.className = this.className || a === !1 ? "" : L.get(this, "__className__") || "");
+	        });
+	      }, hasClass: function hasClass(a) {
+	        for (var b = " " + a + " ", c = 0, d = this.length; d > c; c++) if (1 === this[c].nodeType && (" " + this[c].className + " ").replace(ac, " ").indexOf(b) >= 0) return !0;return !1;
+	      } });var bc = /\r/g;n.fn.extend({ val: function val(a) {
+	        var b,
+	            c,
+	            d,
+	            e = this[0];{
+	          if (arguments.length) return d = n.isFunction(a), this.each(function (c) {
+	            var e;1 === this.nodeType && (e = d ? a.call(this, c, n(this).val()) : a, null == e ? e = "" : "number" == typeof e ? e += "" : n.isArray(e) && (e = n.map(e, function (a) {
+	              return null == a ? "" : a + "";
+	            })), b = n.valHooks[this.type] || n.valHooks[this.nodeName.toLowerCase()], b && "set" in b && void 0 !== b.set(this, e, "value") || (this.value = e));
+	          });if (e) return b = n.valHooks[e.type] || n.valHooks[e.nodeName.toLowerCase()], b && "get" in b && void 0 !== (c = b.get(e, "value")) ? c : (c = e.value, "string" == typeof c ? c.replace(bc, "") : null == c ? "" : c);
+	        }
+	      } }), n.extend({ valHooks: { option: { get: function get(a) {
+	            var b = n.find.attr(a, "value");return null != b ? b : n.trim(n.text(a));
+	          } }, select: { get: function get(a) {
+	            for (var b, c, d = a.options, e = a.selectedIndex, f = "select-one" === a.type || 0 > e, g = f ? null : [], h = f ? e + 1 : d.length, i = 0 > e ? h : f ? e : 0; h > i; i++) if ((c = d[i], !(!c.selected && i !== e || (k.optDisabled ? c.disabled : null !== c.getAttribute("disabled")) || c.parentNode.disabled && n.nodeName(c.parentNode, "optgroup")))) {
+	              if ((b = n(c).val(), f)) return b;g.push(b);
+	            }return g;
+	          }, set: function set(a, b) {
+	            var c,
+	                d,
+	                e = a.options,
+	                f = n.makeArray(b),
+	                g = e.length;while (g--) d = e[g], (d.selected = n.inArray(d.value, f) >= 0) && (c = !0);return c || (a.selectedIndex = -1), f;
+	          } } } }), n.each(["radio", "checkbox"], function () {
+	      n.valHooks[this] = { set: function set(a, b) {
+	          return n.isArray(b) ? a.checked = n.inArray(n(a).val(), b) >= 0 : void 0;
+	        } }, k.checkOn || (n.valHooks[this].get = function (a) {
+	        return null === a.getAttribute("value") ? "on" : a.value;
+	      });
+	    }), n.each("blur focus focusin focusout load resize scroll unload click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup error contextmenu".split(" "), function (a, b) {
+	      n.fn[b] = function (a, c) {
+	        return arguments.length > 0 ? this.on(b, null, a, c) : this.trigger(b);
+	      };
+	    }), n.fn.extend({ hover: function hover(a, b) {
+	        return this.mouseenter(a).mouseleave(b || a);
+	      }, bind: function bind(a, b, c) {
+	        return this.on(a, null, b, c);
+	      }, unbind: function unbind(a, b) {
+	        return this.off(a, null, b);
+	      }, delegate: function delegate(a, b, c, d) {
+	        return this.on(b, a, c, d);
+	      }, undelegate: function undelegate(a, b, c) {
+	        return 1 === arguments.length ? this.off(a, "**") : this.off(b, a || "**", c);
+	      } });var cc = n.now(),
+	        dc = /\?/;n.parseJSON = function (a) {
+	      return JSON.parse(a + "");
+	    }, n.parseXML = function (a) {
+	      var b, c;if (!a || "string" != typeof a) return null;try {
+	        c = new DOMParser(), b = c.parseFromString(a, "text/xml");
+	      } catch (d) {
+	        b = void 0;
+	      }return (!b || b.getElementsByTagName("parsererror").length) && n.error("Invalid XML: " + a), b;
+	    };var ec,
+	        fc,
+	        gc = /#.*$/,
+	        hc = /([?&])_=[^&]*/,
+	        ic = /^(.*?):[ \t]*([^\r\n]*)$/gm,
+	        jc = /^(?:about|app|app-storage|.+-extension|file|res|widget):$/,
+	        kc = /^(?:GET|HEAD)$/,
+	        lc = /^\/\//,
+	        mc = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/,
+	        nc = {},
+	        oc = {},
+	        pc = "*/".concat("*");try {
+	      fc = location.href;
+	    } catch (qc) {
+	      fc = l.createElement("a"), fc.href = "", fc = fc.href;
+	    }ec = mc.exec(fc.toLowerCase()) || [];function rc(a) {
+	      return function (b, c) {
+	        "string" != typeof b && (c = b, b = "*");var d,
+	            e = 0,
+	            f = b.toLowerCase().match(E) || [];if (n.isFunction(c)) while (d = f[e++]) "+" === d[0] ? (d = d.slice(1) || "*", (a[d] = a[d] || []).unshift(c)) : (a[d] = a[d] || []).push(c);
+	      };
+	    }function sc(a, b, c, d) {
+	      var e = {},
+	          f = a === oc;function g(h) {
+	        var i;return e[h] = !0, n.each(a[h] || [], function (a, h) {
+	          var j = h(b, c, d);return "string" != typeof j || f || e[j] ? f ? !(i = j) : void 0 : (b.dataTypes.unshift(j), g(j), !1);
+	        }), i;
+	      }return g(b.dataTypes[0]) || !e["*"] && g("*");
+	    }function tc(a, b) {
+	      var c,
+	          d,
+	          e = n.ajaxSettings.flatOptions || {};for (c in b) void 0 !== b[c] && ((e[c] ? a : d || (d = {}))[c] = b[c]);return d && n.extend(!0, a, d), a;
+	    }function uc(a, b, c) {
+	      var d,
+	          e,
+	          f,
+	          g,
+	          h = a.contents,
+	          i = a.dataTypes;while ("*" === i[0]) i.shift(), void 0 === d && (d = a.mimeType || b.getResponseHeader("Content-Type"));if (d) for (e in h) if (h[e] && h[e].test(d)) {
+	        i.unshift(e);break;
+	      }if (i[0] in c) f = i[0];else {
+	        for (e in c) {
+	          if (!i[0] || a.converters[e + " " + i[0]]) {
+	            f = e;break;
+	          }g || (g = e);
+	        }f = f || g;
+	      }return f ? (f !== i[0] && i.unshift(f), c[f]) : void 0;
+	    }function vc(a, b, c, d) {
+	      var e,
+	          f,
+	          g,
+	          h,
+	          i,
+	          j = {},
+	          k = a.dataTypes.slice();if (k[1]) for (g in a.converters) j[g.toLowerCase()] = a.converters[g];f = k.shift();while (f) if ((a.responseFields[f] && (c[a.responseFields[f]] = b), !i && d && a.dataFilter && (b = a.dataFilter(b, a.dataType)), i = f, f = k.shift())) if ("*" === f) f = i;else if ("*" !== i && i !== f) {
+	        if ((g = j[i + " " + f] || j["* " + f], !g)) for (e in j) if ((h = e.split(" "), h[1] === f && (g = j[i + " " + h[0]] || j["* " + h[0]]))) {
+	          g === !0 ? g = j[e] : j[e] !== !0 && (f = h[0], k.unshift(h[1]));break;
+	        }if (g !== !0) if (g && a["throws"]) b = g(b);else try {
+	          b = g(b);
+	        } catch (l) {
+	          return { state: "parsererror", error: g ? l : "No conversion from " + i + " to " + f };
+	        }
+	      }return { state: "success", data: b };
+	    }n.extend({ active: 0, lastModified: {}, etag: {}, ajaxSettings: { url: fc, type: "GET", isLocal: jc.test(ec[1]), global: !0, processData: !0, async: !0, contentType: "application/x-www-form-urlencoded; charset=UTF-8", accepts: { "*": pc, text: "text/plain", html: "text/html", xml: "application/xml, text/xml", json: "application/json, text/javascript" }, contents: { xml: /xml/, html: /html/, json: /json/ }, responseFields: { xml: "responseXML", text: "responseText", json: "responseJSON" }, converters: { "* text": String, "text html": !0, "text json": n.parseJSON, "text xml": n.parseXML }, flatOptions: { url: !0, context: !0 } }, ajaxSetup: function ajaxSetup(a, b) {
+	        return b ? tc(tc(a, n.ajaxSettings), b) : tc(n.ajaxSettings, a);
+	      }, ajaxPrefilter: rc(nc), ajaxTransport: rc(oc), ajax: function ajax(a, b) {
+	        "object" == typeof a && (b = a, a = void 0), b = b || {};var c,
+	            d,
+	            e,
+	            f,
+	            g,
+	            h,
+	            i,
+	            j,
+	            k = n.ajaxSetup({}, b),
+	            l = k.context || k,
+	            m = k.context && (l.nodeType || l.jquery) ? n(l) : n.event,
+	            o = n.Deferred(),
+	            p = n.Callbacks("once memory"),
+	            q = k.statusCode || {},
+	            r = {},
+	            s = {},
+	            t = 0,
+	            u = "canceled",
+	            v = { readyState: 0, getResponseHeader: function getResponseHeader(a) {
+	            var b;if (2 === t) {
+	              if (!f) {
+	                f = {};while (b = ic.exec(e)) f[b[1].toLowerCase()] = b[2];
+	              }b = f[a.toLowerCase()];
+	            }return null == b ? null : b;
+	          }, getAllResponseHeaders: function getAllResponseHeaders() {
+	            return 2 === t ? e : null;
+	          }, setRequestHeader: function setRequestHeader(a, b) {
+	            var c = a.toLowerCase();return t || (a = s[c] = s[c] || a, r[a] = b), this;
+	          }, overrideMimeType: function overrideMimeType(a) {
+	            return t || (k.mimeType = a), this;
+	          }, statusCode: function statusCode(a) {
+	            var b;if (a) if (2 > t) for (b in a) q[b] = [q[b], a[b]];else v.always(a[v.status]);return this;
+	          }, abort: function abort(a) {
+	            var b = a || u;return c && c.abort(b), x(0, b), this;
+	          } };if ((o.promise(v).complete = p.add, v.success = v.done, v.error = v.fail, k.url = ((a || k.url || fc) + "").replace(gc, "").replace(lc, ec[1] + "//"), k.type = b.method || b.type || k.method || k.type, k.dataTypes = n.trim(k.dataType || "*").toLowerCase().match(E) || [""], null == k.crossDomain && (h = mc.exec(k.url.toLowerCase()), k.crossDomain = !(!h || h[1] === ec[1] && h[2] === ec[2] && (h[3] || ("http:" === h[1] ? "80" : "443")) === (ec[3] || ("http:" === ec[1] ? "80" : "443")))), k.data && k.processData && "string" != typeof k.data && (k.data = n.param(k.data, k.traditional)), sc(nc, k, b, v), 2 === t)) return v;i = k.global, i && 0 === n.active++ && n.event.trigger("ajaxStart"), k.type = k.type.toUpperCase(), k.hasContent = !kc.test(k.type), d = k.url, k.hasContent || (k.data && (d = k.url += (dc.test(d) ? "&" : "?") + k.data, delete k.data), k.cache === !1 && (k.url = hc.test(d) ? d.replace(hc, "$1_=" + cc++) : d + (dc.test(d) ? "&" : "?") + "_=" + cc++)), k.ifModified && (n.lastModified[d] && v.setRequestHeader("If-Modified-Since", n.lastModified[d]), n.etag[d] && v.setRequestHeader("If-None-Match", n.etag[d])), (k.data && k.hasContent && k.contentType !== !1 || b.contentType) && v.setRequestHeader("Content-Type", k.contentType), v.setRequestHeader("Accept", k.dataTypes[0] && k.accepts[k.dataTypes[0]] ? k.accepts[k.dataTypes[0]] + ("*" !== k.dataTypes[0] ? ", " + pc + "; q=0.01" : "") : k.accepts["*"]);for (j in k.headers) v.setRequestHeader(j, k.headers[j]);if (k.beforeSend && (k.beforeSend.call(l, v, k) === !1 || 2 === t)) return v.abort();u = "abort";for (j in { success: 1, error: 1, complete: 1 }) v[j](k[j]);if (c = sc(oc, k, b, v)) {
+	          v.readyState = 1, i && m.trigger("ajaxSend", [v, k]), k.async && k.timeout > 0 && (g = setTimeout(function () {
+	            v.abort("timeout");
+	          }, k.timeout));try {
+	            t = 1, c.send(r, x);
+	          } catch (w) {
+	            if (!(2 > t)) throw w;x(-1, w);
+	          }
+	        } else x(-1, "No Transport");function x(a, b, f, h) {
+	          var j,
+	              r,
+	              s,
+	              u,
+	              w,
+	              x = b;2 !== t && (t = 2, g && clearTimeout(g), c = void 0, e = h || "", v.readyState = a > 0 ? 4 : 0, j = a >= 200 && 300 > a || 304 === a, f && (u = uc(k, v, f)), u = vc(k, u, v, j), j ? (k.ifModified && (w = v.getResponseHeader("Last-Modified"), w && (n.lastModified[d] = w), w = v.getResponseHeader("etag"), w && (n.etag[d] = w)), 204 === a || "HEAD" === k.type ? x = "nocontent" : 304 === a ? x = "notmodified" : (x = u.state, r = u.data, s = u.error, j = !s)) : (s = x, (a || !x) && (x = "error", 0 > a && (a = 0))), v.status = a, v.statusText = (b || x) + "", j ? o.resolveWith(l, [r, x, v]) : o.rejectWith(l, [v, x, s]), v.statusCode(q), q = void 0, i && m.trigger(j ? "ajaxSuccess" : "ajaxError", [v, k, j ? r : s]), p.fireWith(l, [v, x]), i && (m.trigger("ajaxComplete", [v, k]), --n.active || n.event.trigger("ajaxStop")));
+	        }return v;
+	      }, getJSON: function getJSON(a, b, c) {
+	        return n.get(a, b, c, "json");
+	      }, getScript: function getScript(a, b) {
+	        return n.get(a, void 0, b, "script");
+	      } }), n.each(["get", "post"], function (a, b) {
+	      n[b] = function (a, c, d, e) {
+	        return n.isFunction(c) && (e = e || d, d = c, c = void 0), n.ajax({ url: a, type: b, dataType: e, data: c, success: d });
+	      };
+	    }), n.each(["ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend"], function (a, b) {
+	      n.fn[b] = function (a) {
+	        return this.on(b, a);
+	      };
+	    }), n._evalUrl = function (a) {
+	      return n.ajax({ url: a, type: "GET", dataType: "script", async: !1, global: !1, "throws": !0 });
+	    }, n.fn.extend({ wrapAll: function wrapAll(a) {
+	        var b;return n.isFunction(a) ? this.each(function (b) {
+	          n(this).wrapAll(a.call(this, b));
+	        }) : (this[0] && (b = n(a, this[0].ownerDocument).eq(0).clone(!0), this[0].parentNode && b.insertBefore(this[0]), b.map(function () {
+	          var a = this;while (a.firstElementChild) a = a.firstElementChild;return a;
+	        }).append(this)), this);
+	      }, wrapInner: function wrapInner(a) {
+	        return this.each(n.isFunction(a) ? function (b) {
+	          n(this).wrapInner(a.call(this, b));
+	        } : function () {
+	          var b = n(this),
+	              c = b.contents();c.length ? c.wrapAll(a) : b.append(a);
+	        });
+	      }, wrap: function wrap(a) {
+	        var b = n.isFunction(a);return this.each(function (c) {
+	          n(this).wrapAll(b ? a.call(this, c) : a);
+	        });
+	      }, unwrap: function unwrap() {
+	        return this.parent().each(function () {
+	          n.nodeName(this, "body") || n(this).replaceWith(this.childNodes);
+	        }).end();
+	      } }), n.expr.filters.hidden = function (a) {
+	      return a.offsetWidth <= 0 && a.offsetHeight <= 0;
+	    }, n.expr.filters.visible = function (a) {
+	      return !n.expr.filters.hidden(a);
+	    };var wc = /%20/g,
+	        xc = /\[\]$/,
+	        yc = /\r?\n/g,
+	        zc = /^(?:submit|button|image|reset|file)$/i,
+	        Ac = /^(?:input|select|textarea|keygen)/i;function Bc(a, b, c, d) {
+	      var e;if (n.isArray(b)) n.each(b, function (b, e) {
+	        c || xc.test(a) ? d(a, e) : Bc(a + "[" + ("object" == typeof e ? b : "") + "]", e, c, d);
+	      });else if (c || "object" !== n.type(b)) d(a, b);else for (e in b) Bc(a + "[" + e + "]", b[e], c, d);
+	    }n.param = function (a, b) {
+	      var c,
+	          d = [],
+	          e = function e(a, b) {
+	        b = n.isFunction(b) ? b() : null == b ? "" : b, d[d.length] = encodeURIComponent(a) + "=" + encodeURIComponent(b);
+	      };if ((void 0 === b && (b = n.ajaxSettings && n.ajaxSettings.traditional), n.isArray(a) || a.jquery && !n.isPlainObject(a))) n.each(a, function () {
+	        e(this.name, this.value);
+	      });else for (c in a) Bc(c, a[c], b, e);return d.join("&").replace(wc, "+");
+	    }, n.fn.extend({ serialize: function serialize() {
+	        return n.param(this.serializeArray());
+	      }, serializeArray: function serializeArray() {
+	        return this.map(function () {
+	          var a = n.prop(this, "elements");return a ? n.makeArray(a) : this;
+	        }).filter(function () {
+	          var a = this.type;return this.name && !n(this).is(":disabled") && Ac.test(this.nodeName) && !zc.test(a) && (this.checked || !T.test(a));
+	        }).map(function (a, b) {
+	          var c = n(this).val();return null == c ? null : n.isArray(c) ? n.map(c, function (a) {
+	            return { name: b.name, value: a.replace(yc, "\r\n") };
+	          }) : { name: b.name, value: c.replace(yc, "\r\n") };
+	        }).get();
+	      } }), n.ajaxSettings.xhr = function () {
+	      try {
+	        return new XMLHttpRequest();
+	      } catch (a) {}
+	    };var Cc = 0,
+	        Dc = {},
+	        Ec = { 0: 200, 1223: 204 },
+	        Fc = n.ajaxSettings.xhr();a.ActiveXObject && n(a).on("unload", function () {
+	      for (var a in Dc) Dc[a]();
+	    }), k.cors = !!Fc && "withCredentials" in Fc, k.ajax = Fc = !!Fc, n.ajaxTransport(function (a) {
+	      var b;return k.cors || Fc && !a.crossDomain ? { send: function send(c, d) {
+	          var e,
+	              f = a.xhr(),
+	              g = ++Cc;if ((f.open(a.type, a.url, a.async, a.username, a.password), a.xhrFields)) for (e in a.xhrFields) f[e] = a.xhrFields[e];a.mimeType && f.overrideMimeType && f.overrideMimeType(a.mimeType), a.crossDomain || c["X-Requested-With"] || (c["X-Requested-With"] = "XMLHttpRequest");for (e in c) f.setRequestHeader(e, c[e]);b = function (a) {
+	            return function () {
+	              b && (delete Dc[g], b = f.onload = f.onerror = null, "abort" === a ? f.abort() : "error" === a ? d(f.status, f.statusText) : d(Ec[f.status] || f.status, f.statusText, "string" == typeof f.responseText ? { text: f.responseText } : void 0, f.getAllResponseHeaders()));
+	            };
+	          }, f.onload = b(), f.onerror = b("error"), b = Dc[g] = b("abort");try {
+	            f.send(a.hasContent && a.data || null);
+	          } catch (h) {
+	            if (b) throw h;
+	          }
+	        }, abort: function abort() {
+	          b && b();
+	        } } : void 0;
+	    }), n.ajaxSetup({ accepts: { script: "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript" }, contents: { script: /(?:java|ecma)script/ }, converters: { "text script": function textScript(a) {
+	          return n.globalEval(a), a;
+	        } } }), n.ajaxPrefilter("script", function (a) {
+	      void 0 === a.cache && (a.cache = !1), a.crossDomain && (a.type = "GET");
+	    }), n.ajaxTransport("script", function (a) {
+	      if (a.crossDomain) {
+	        var b, c;return { send: function send(d, e) {
+	            b = n("<script>").prop({ async: !0, charset: a.scriptCharset, src: a.url }).on("load error", c = function (a) {
+	              b.remove(), c = null, a && e("error" === a.type ? 404 : 200, a.type);
+	            }), l.head.appendChild(b[0]);
+	          }, abort: function abort() {
+	            c && c();
+	          } };
+	      }
+	    });var Gc = [],
+	        Hc = /(=)\?(?=&|$)|\?\?/;n.ajaxSetup({ jsonp: "callback", jsonpCallback: function jsonpCallback() {
+	        var a = Gc.pop() || n.expando + "_" + cc++;return this[a] = !0, a;
+	      } }), n.ajaxPrefilter("json jsonp", function (b, c, d) {
+	      var e,
+	          f,
+	          g,
+	          h = b.jsonp !== !1 && (Hc.test(b.url) ? "url" : "string" == typeof b.data && !(b.contentType || "").indexOf("application/x-www-form-urlencoded") && Hc.test(b.data) && "data");return h || "jsonp" === b.dataTypes[0] ? (e = b.jsonpCallback = n.isFunction(b.jsonpCallback) ? b.jsonpCallback() : b.jsonpCallback, h ? b[h] = b[h].replace(Hc, "$1" + e) : b.jsonp !== !1 && (b.url += (dc.test(b.url) ? "&" : "?") + b.jsonp + "=" + e), b.converters["script json"] = function () {
+	        return g || n.error(e + " was not called"), g[0];
+	      }, b.dataTypes[0] = "json", f = a[e], a[e] = function () {
+	        g = arguments;
+	      }, d.always(function () {
+	        a[e] = f, b[e] && (b.jsonpCallback = c.jsonpCallback, Gc.push(e)), g && n.isFunction(f) && f(g[0]), g = f = void 0;
+	      }), "script") : void 0;
+	    }), n.parseHTML = function (a, b, c) {
+	      if (!a || "string" != typeof a) return null;"boolean" == typeof b && (c = b, b = !1), b = b || l;var d = v.exec(a),
+	          e = !c && [];return d ? [b.createElement(d[1])] : (d = n.buildFragment([a], b, e), e && e.length && n(e).remove(), n.merge([], d.childNodes));
+	    };var Ic = n.fn.load;n.fn.load = function (a, b, c) {
+	      if ("string" != typeof a && Ic) return Ic.apply(this, arguments);var d,
+	          e,
+	          f,
+	          g = this,
+	          h = a.indexOf(" ");return h >= 0 && (d = n.trim(a.slice(h)), a = a.slice(0, h)), n.isFunction(b) ? (c = b, b = void 0) : b && "object" == typeof b && (e = "POST"), g.length > 0 && n.ajax({ url: a, type: e, dataType: "html", data: b }).done(function (a) {
+	        f = arguments, g.html(d ? n("<div>").append(n.parseHTML(a)).find(d) : a);
+	      }).complete(c && function (a, b) {
+	        g.each(c, f || [a.responseText, b, a]);
+	      }), this;
+	    }, n.expr.filters.animated = function (a) {
+	      return n.grep(n.timers, function (b) {
+	        return a === b.elem;
+	      }).length;
+	    };var Jc = a.document.documentElement;function Kc(a) {
+	      return n.isWindow(a) ? a : 9 === a.nodeType && a.defaultView;
+	    }n.offset = { setOffset: function setOffset(a, b, c) {
+	        var d,
+	            e,
+	            f,
+	            g,
+	            h,
+	            i,
+	            j,
+	            k = n.css(a, "position"),
+	            l = n(a),
+	            m = {};"static" === k && (a.style.position = "relative"), h = l.offset(), f = n.css(a, "top"), i = n.css(a, "left"), j = ("absolute" === k || "fixed" === k) && (f + i).indexOf("auto") > -1, j ? (d = l.position(), g = d.top, e = d.left) : (g = parseFloat(f) || 0, e = parseFloat(i) || 0), n.isFunction(b) && (b = b.call(a, c, h)), null != b.top && (m.top = b.top - h.top + g), null != b.left && (m.left = b.left - h.left + e), "using" in b ? b.using.call(a, m) : l.css(m);
+	      } }, n.fn.extend({ offset: function offset(a) {
+	        if (arguments.length) return void 0 === a ? this : this.each(function (b) {
+	          n.offset.setOffset(this, a, b);
+	        });var b,
+	            c,
+	            d = this[0],
+	            e = { top: 0, left: 0 },
+	            f = d && d.ownerDocument;if (f) return b = f.documentElement, n.contains(b, d) ? (typeof d.getBoundingClientRect !== U && (e = d.getBoundingClientRect()), c = Kc(f), { top: e.top + c.pageYOffset - b.clientTop, left: e.left + c.pageXOffset - b.clientLeft }) : e;
+	      }, position: function position() {
+	        if (this[0]) {
+	          var a,
+	              b,
+	              c = this[0],
+	              d = { top: 0, left: 0 };return "fixed" === n.css(c, "position") ? b = c.getBoundingClientRect() : (a = this.offsetParent(), b = this.offset(), n.nodeName(a[0], "html") || (d = a.offset()), d.top += n.css(a[0], "borderTopWidth", !0), d.left += n.css(a[0], "borderLeftWidth", !0)), { top: b.top - d.top - n.css(c, "marginTop", !0), left: b.left - d.left - n.css(c, "marginLeft", !0) };
+	        }
+	      }, offsetParent: function offsetParent() {
+	        return this.map(function () {
+	          var a = this.offsetParent || Jc;while (a && !n.nodeName(a, "html") && "static" === n.css(a, "position")) a = a.offsetParent;return a || Jc;
+	        });
+	      } }), n.each({ scrollLeft: "pageXOffset", scrollTop: "pageYOffset" }, function (b, c) {
+	      var d = "pageYOffset" === c;n.fn[b] = function (e) {
+	        return J(this, function (b, e, f) {
+	          var g = Kc(b);return void 0 === f ? g ? g[c] : b[e] : void (g ? g.scrollTo(d ? a.pageXOffset : f, d ? f : a.pageYOffset) : b[e] = f);
+	        }, b, e, arguments.length, null);
+	      };
+	    }), n.each(["top", "left"], function (a, b) {
+	      n.cssHooks[b] = yb(k.pixelPosition, function (a, c) {
+	        return c ? (c = xb(a, b), vb.test(c) ? n(a).position()[b] + "px" : c) : void 0;
+	      });
+	    }), n.each({ Height: "height", Width: "width" }, function (a, b) {
+	      n.each({ padding: "inner" + a, content: b, "": "outer" + a }, function (c, d) {
+	        n.fn[d] = function (d, e) {
+	          var f = arguments.length && (c || "boolean" != typeof d),
+	              g = c || (d === !0 || e === !0 ? "margin" : "border");return J(this, function (b, c, d) {
+	            var e;return n.isWindow(b) ? b.document.documentElement["client" + a] : 9 === b.nodeType ? (e = b.documentElement, Math.max(b.body["scroll" + a], e["scroll" + a], b.body["offset" + a], e["offset" + a], e["client" + a])) : void 0 === d ? n.css(b, c, g) : n.style(b, c, d, g);
+	          }, b, f ? d : void 0, f, null);
+	        };
+	      });
+	    }), n.fn.size = function () {
+	      return this.length;
+	    }, n.fn.andSelf = n.fn.addBack, "function" == "function" && __webpack_require__(2) && !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+	      return n;
+	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));var Lc = a.jQuery,
+	        Mc = a.$;return n.noConflict = function (b) {
+	      return a.$ === n && (a.$ = Mc), b && a.jQuery === n && (a.jQuery = Lc), n;
+	    }, typeof b === U && (a.jQuery = a.$ = n), n;
+	  });
+	}).call(window);
+
+	/*! jQuery v2.1.1 | (c) 2005, 2014 jQuery Foundation, Inc. | jquery.org/license */
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
+
+	/* WEBPACK VAR INJECTION */}.call(exports, {}))
+
+/***/ },
+/* 3 */,
+/* 4 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	  /**
+	   Radio.js - Chainable, Dependency Free Publish/Subscribe for Javascript
+	   http://radio.uxder.com
+	   Author: Scott Murphy 2011
+	   twitter: @hellocreation, github: uxder
+	   
+	   Permission is hereby granted, free of charge, to any person
+	   obtaining a copy of this software and associated documentation
+	   files (the "Software"), to deal in the Software without
+	   restriction, including without limitation the rights to use,
+	   copy, modify, merge, publish, distribute, sublicense, and/or sell
+	   copies of the Software, and to permit persons to whom the
+	   Software is furnished to do so, subject to the following
+	   conditions:
+	   
+	   The above copyright notice and this permission notice shall be
+	   included in all copies or substantial portions of the Software.
+	   
+	   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+	   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+	   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+	   HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+	   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+	   OTHER DEALINGS IN THE SOFTWARE.
+	   */
+	  // (function (name, global, definition) {
+	  //   if (typeof module !== 'undefined') module.exports = definition(name, global);
+	  //   else if (typeof define === 'function' && typeof define.amd  === 'object') define(definition);
+	  //   else global[name] = definition(name, global);
+	  // })('radio', this, function (name, global) {
+	  window.radio = (function (name, global) {
+
+	    "use strict";
+
+	    /**
+	     * Main Wrapper for radio.$ and create a function radio to accept the channelName
+	     * @param {String} channelName topic of event
+	     */
+	    function radio(channelName) {
+	      arguments.length ? radio.$.channel(channelName) : radio.$.reset();
+	      return radio.$;
+	    }
+
+	    radio.$ = {
+	      version: '0.2',
+	      channelName: "",
+	      channels: [],
+
+	      /**
+	       * Reset global state, by removing all channels
+	       * @example
+	       *    radio()
+	       */
+	      reset: function reset() {
+	        radio.$.channelName = "";
+	        radio.$.channels = [];
+	      },
+
+	      /**
+	       * Broadcast (publish)
+	       * Iterate through all listeners (callbacks) in current channel and pass arguments to subscribers
+	       * @param arguments data to be sent to listeners
+	       * @example
+	       *    //basic usage
+	       *    radio('channel1').broadcast('my message'); 
+	       *    //send an unlimited number of parameters
+	       *    radio('channel2').broadcast(param1, param2, param3 ... );
+	       */
+	      broadcast: function broadcast() {
+	        var i,
+	            c = this.channels[this.channelName],
+	            l = c.length,
+	            subscriber,
+	            callback,
+	            context;
+	        //iterate through current channel and run each subscriber
+	        for (i = 0; i < l; i++) {
+	          subscriber = c[i];
+	          //if subscriber was an array, set the callback and context.
+	          if (typeof subscriber === 'object' && subscriber.length) {
+	            callback = subscriber[0];
+	            //if user set the context, set it to the context otherwise, it is a globally scoped function
+	            context = subscriber[1] || global;
+	          }
+	          callback.apply(context, arguments);
+	        }
+	        return this;
+	      },
+
+	      /**
+	       * Create the channel if it doesn't exist and set the current channel/event name
+	       * @param {String} name the name of the channel
+	       * @example
+	       *    radio('channel1');
+	       */
+	      channel: function channel(name) {
+	        var c = this.channels;
+	        //create a new channel if it doesn't exists
+	        if (!c[name]) c[name] = [];
+	        this.channelName = name;
+	        return this;
+	      },
+
+	      /**
+	       * Add Subscriber to channel
+	       * Take the arguments and add it to the this.channels array.
+	       * @param {Function|Array} arguments list of callbacks or arrays[callback, context] separated by commas
+	       * @example
+	       *      //basic usage
+	       *      var callback = function() {};
+	       *      radio('channel1').subscribe(callback); 
+	       *
+	       *      //subscribe an endless amount of callbacks
+	       *      radio('channel1').subscribe(callback, callback2, callback3 ...);
+	       *
+	       *      //adding callbacks with context
+	       *      radio('channel1').subscribe([callback, context],[callback1, context], callback3);
+	       *     
+	       *      //subscribe by chaining
+	       *      radio('channel1').subscribe(callback).radio('channel2').subscribe(callback).subscribe(callback2);
+	       */
+	      subscribe: function subscribe() {
+	        var a = arguments,
+	            c = this.channels[this.channelName],
+	            i,
+	            l = a.length,
+	            p,
+	            ai = [];
+
+	        //run through each arguments and subscribe it to the channel
+	        for (i = 0; i < l; i++) {
+	          ai = a[i];
+	          //if the user sent just a function, wrap the fucntion in an array [function]
+	          p = typeof ai === "function" ? [ai] : ai;
+	          if (typeof p === 'object' && p.length) c.push(p);
+	        }
+	        return this;
+	      },
+
+	      /**
+	       * Remove subscriber from channel
+	       * Take arguments with functions and unsubscribe it if there is a match against existing subscribers.
+	       * @param {Function} arguments callbacks separated by commas
+	       * @example
+	       *      //basic usage
+	       *      radio('channel1').unsubscribe(callback); 
+	       *      //you can unsubscribe as many callbacks as you want
+	       *      radio('channel1').unsubscribe(callback, callback2, callback3 ...);
+	       *       //removing callbacks with context is the same
+	       *      radio('channel1').subscribe([callback, context]).unsubscribe(callback);
+	       */
+	      unsubscribe: function unsubscribe() {
+	        var a = arguments,
+	            i,
+	            j,
+	            c = this.channels[this.channelName],
+	            l = a.length,
+	            cl = c.length,
+	            offset = 0,
+	            jo;
+	        //loop through each argument
+	        for (i = 0; i < l; i++) {
+	          //need to reset vars that change as the channel array items are removed
+	          offset = 0;
+	          cl = c.length;
+	          //loop through the channel
+	          for (j = 0; j < cl; j++) {
+	            jo = j - offset;
+	            //if there is a match with the argument and the channel function, unsubscribe it from the channel array
+	            if (c[jo][0] === a[i]) {
+	              //unsubscribe matched item from the channel array
+	              c.splice(jo, 1);
+	              offset++;
+	            }
+	          }
+	        }
+	        return this;
+	      }
+	    };
+
+	    return radio;
+	  })('radio', this);
+	}).call(window);
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var map = {
+		"./client.js": 6,
+		"./clone.js": 7,
+		"./debounce.js": 8,
+		"./defer.js": 9,
+		"./domHelper.js": 10,
+		"./extend.js": 11,
+		"./files.js": 12,
+		"./helpful.js": 13,
+		"./is.js": 14,
+		"./keys.js": 15,
+		"./loadScripts.js": 16,
+		"./logToServer.js": 17,
+		"./mixin.js": 18,
+		"./rubyHashString2JSON.js": 19,
+		"./storageHelper.js": 20,
+		"./template.js": 21
+	};
+	function webpackContext(req) {
+		return __webpack_require__(webpackContextResolve(req));
+	};
+	function webpackContextResolve(req) {
+		return map[req] || (function() { throw new Error("Cannot find module '" + req + "'.") }());
+	};
+	webpackContext.keys = function webpackContextKeys() {
+		return Object.keys(map);
+	};
+	webpackContext.resolve = webpackContextResolve;
+	module.exports = webpackContext;
+	webpackContext.id = 5;
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	  /**
+	   * @fileOverview Вспомогательные функции для проверок переменных
+	   */
+
+	  (function (window, document, navigator, BM, undefined) {
+	    var
+	    /**
+	     * @alias       BM.tools.client
+	     */
+	    Breakpoint = {
+	      MOBILE: 639
+	    },
+	        tools = BM.tools = BM.tools || {},
+	        reload = function reload() {
+	      window.location.reload();
+	    },
+	        client = BM.tools.client = BM.tools.client || {},
+	        isWindows = function isWindows() {
+	      return navigator.appVersion.indexOf("Win") !== -1;
+	    },
+	        isMacOS = function isMacOS() {
+	      return navigator.appVersion.indexOf("Mac") !== -1;
+	    },
+	        isUnix = function isUnix() {
+	      return navigator.appVersion.indexOf("X11") !== -1;
+	    },
+	        isLinux = function isLinux() {
+	      return navigator.appVersion.indexOf("Linux") !== -1;
+	    },
+	        isTouch = function isTouch() {
+	      return 'ontouchstart' in window || navigator.msMaxTouchPoints !== undefined;
+	    },
+	        isDesktop = function isDesktop() {
+	      return !isTouch();
+	    },
+	        isiOS = function isiOS() {
+	      return (/(iPad|iPhone|iPod)/g.test(window.navigator.userAgent)
+	      );
+	    },
+	        isAndroid = function isAndroid() {
+	      return window.navigator.userAgent.toLowerCase().indexOf('android') !== -1;
+	    },
+	        isWindowsPhone = function isWindowsPhone() {
+	      return window.navigator.userAgent.match(/Windows Phone/i);
+	    },
+	        isBreakpointMobile = function isBreakpointMobile() {
+	      return $(window).width() <= Breakpoint.MOBILE;
+	    };
+	    // end of vars
+
+	    tools.reload = reload;
+
+	    client.isWindows = isWindows;
+	    client.isMacOS = isMacOS;
+	    client.isUnix = isUnix;
+	    client.isLinux = isLinux;
+	    client.isTouch = isTouch;
+	    client.isiOS = isiOS;
+	    client.isAndroid = isAndroid;
+	    client.isWindowsPhone = isWindowsPhone;
+	    client.isBreakpointMobile = isBreakpointMobile;
+	  })(this, this.document, this.navigator, this.BM = this.BM || {});
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Клонирование объектов
+	     */
+
+	    (function (window, document, BM) {
+	        var
+	        /**
+	         * @alias       BM.tools
+	         */
+	        tools = BM.tools = BM.tools || {},
+
+	        /**
+	         * Clone object
+	         *
+	         * @alias    BM.tools.clone
+	         * 
+	         * @param    {Object}    obj
+	         * @return   {Object}
+	         */
+	        clone = function clone(obj) {
+	            var copy, attr, i, len;
+
+	            // Handle the 3 simple types, and null or undefined
+	            if (obj === null || typeof obj !== 'object') {
+	                return obj;
+	            }
+
+	            // Handle Date
+	            if (obj instanceof Date) {
+	                copy = new Date();
+	                copy.setTime(obj.getTime());
+
+	                return copy;
+	            }
+
+	            // Handle Array
+	            if (obj instanceof Array) {
+	                copy = [];
+
+	                for (i = 0, len = obj.length; i < len; i++) {
+	                    copy[i] = clone(obj[i]);
+	                }
+
+	                return copy;
+	            }
+
+	            // Handle Object
+	            if (obj instanceof Object) {
+	                copy = {};
+
+	                for (attr in obj) {
+	                    if (obj.hasOwnProperty(attr)) {
+	                        copy[attr] = clone(obj[attr]);
+	                    }
+	                }
+
+	                return copy;
+	            }
+	        };
+	        // end of vars
+
+	        tools.clone = clone;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	  function debounce(fn, delay) {
+	    var timer = null;
+	    return function () {
+	      var context = this,
+	          args = arguments;
+	      clearTimeout(timer);
+	      timer = setTimeout(function () {
+	        fn.apply(context, args);
+	      }, delay);
+	    };
+	  }
+	}).call(window);
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	  (function (window, document, BM) {
+
+	    var tools = BM.tools = BM.tools || {};
+
+	    var slice = Array.prototype.slice;
+
+	    // Delays a function for the given number of milliseconds, and then calls
+	    // it with the arguments supplied.
+	    var delay = function delay(func, wait) {
+	      var args = slice.call(arguments, 2);
+	      return setTimeout(function () {
+	        return func.apply(null, args);
+	      }, wait);
+	    };
+
+	    // Defers a function, scheduling it to run after the current call stack has
+	    // cleared.
+	    var defer = function defer(func) {
+	      return delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+	    };
+
+	    tools.defer = defer;
+	  })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    (function (window, document, BM, $) {
+	        BM.tools = BM.tools || {};
+
+	        BM.tools.domHelper = {
+
+	            tojQueryObject: function tojQueryObject(element) {
+	                if (typeof element === 'string') {
+	                    return $(element);
+	                } else if (element instanceof window.HTMLElement) {
+	                    return $(element);
+	                } else if (element instanceof $) {
+	                    return element;
+	                } else {
+	                    return null;
+	                }
+	            }
+
+	        };
+	    })(this, this.document, this.BM = this.BM || {}, this.jQuery);
+	}).call(window);
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Реализация наследования
+	     */
+
+	    (function (window, document, modules) {
+	        var
+	        /**
+	         * @param       {Function}  provide     Ассинхронный экспорт модуля
+	         */
+	        extendModule = function extendModule(provide) {
+	            var extend = function extend(parent) {
+	                var f = function f() {},
+	                    c = function c() {
+	                    return this.initialize.apply(this, arguments);
+	                };
+	                // end of vars
+
+	                f.prototype = parent.prototype;
+	                c.prototype = new f();
+	                c.prototype.constructor = c;
+	                c.superclass = f.prototype;
+
+	                return c;
+	            };
+	            // end of vars
+
+	            // Export
+	            provide(extend);
+	        };
+	        // end of vars
+
+	        /**
+	         * Модуль реализации наследования
+	         * 
+	         * @module      extend
+	         */
+	        modules.define('extend', // Module name
+	        [], // Dependies
+	        extendModule // Module realization
+	        );
+	    })(this, this.document, this.modules);
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    modules     Ссылка на модульную систему YModules
+	 */
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  function dataURItoBlob(dataURI) {
+	    // convert base64 to raw binary data held in a string
+	    // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+	    var byteString = atob(dataURI.split(',')[1]);
+
+	    // separate out the mime component
+	    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+	    // write the bytes of the string to an ArrayBuffer
+	    var ab = new ArrayBuffer(byteString.length);
+	    var ia = new Uint8Array(ab);
+	    for (var i = 0; i < byteString.length; i++) {
+	      ia[i] = byteString.charCodeAt(i);
+	    }
+
+	    try {
+	      return new Blob([ab], { type: mimeString });
+	    } catch (e) {
+	      // The BlobBuilder API has been deprecated in favour of Blob, but older
+	      // browsers don't know about the Blob constructor
+	      // IE10 also supports BlobBuilder, but since the `Blob` constructor
+	      //  also works, there's no need to add `MSBlobBuilder`.
+	      var BlobBuilder = window.WebKitBlobBuilder || window.MozBlobBuilder;
+	      var bb = new BlobBuilder();
+	      bb.append(ab);
+	      return bb.getBlob(mimeString);
+	    }
+	  }
+	}).call(window);
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	    (function (window) {
+	        var tools = BM.tools = BM.tools || {};
+
+	        tools.debounce = function (func, wait, immediate) {
+	            var timeout;
+	            return function () {
+	                var context = this,
+	                    args = arguments;
+	                var later = function later() {
+	                    timeout = null;
+	                    if (!immediate) func.apply(context, args);
+	                };
+	                var callNow = immediate && !timeout;
+	                clearTimeout(timeout);
+	                timeout = setTimeout(later, wait);
+	                if (callNow) func.apply(context, args);
+	            };
+	        };
+	    })(this);
+	}).call(window);
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    (function (window, document, BM, undefined) {
+	        var tools = BM.tools = BM.tools || {},
+	            isUndefined = function isUndefined(obj) {
+	            if (typeof obj === 'undefined') {
+	                return true;
+	            }
+
+	            return false;
+	        },
+	            isNull = function isNull(obj) {
+	            if (tools.isUndefined(obj)) {
+	                return true;
+	            }
+
+	            if (obj === null) {
+	                return true;
+	            }
+
+	            return false;
+	        },
+	            isPresent = function isPresent(obj) {
+	            return !tools.isUndefined(obj) && !tools.isNull(obj);
+	        },
+	            isNumber = function isNumber(obj) {
+	            if (typeof obj === 'number') {
+	                return true;
+	            }
+
+	            return false;
+	        },
+	            isPowerOfTwo = function isPowerOfTwo(n) {
+	            if (tools.isNumber(n)) {
+	                return n !== 0 && (n & n - 1) === 0;
+	            } else {
+	                return false;
+	            }
+	        },
+	            isObject = function isObject(obj) {
+	            if (obj === null) {
+	                return false;
+	            }
+
+	            if (typeof obj !== 'object') {
+	                return false;
+	            }
+
+	            return true;
+	        },
+	            isRegExp = function isRegExp(obj) {
+	            return Object.prototype.toString.call(obj) === '[object RegExp]';
+	        },
+	            isArray = function isArray(obj) {
+	            return Object.prototype.toString.call(obj) === '[object Array]';
+	        },
+	            isString = function isString(obj) {
+	            if (typeof obj === 'string') {
+	                return true;
+	            }
+
+	            return false;
+	        },
+	            isFunction = function isFunction(obj) {
+	            return !!(obj && obj.constructor && obj.call && obj.apply);
+	        },
+	            isConstructor = function isConstructor(obj) {
+	            return !!(tools.isFunction(obj) && obj.superclass);
+	        },
+	            isInstance = function isInstance(obj) {
+	            if (tools.isNull(obj)) {
+	                return false;
+	            }
+
+	            if (tools.isConstructor(obj)) {
+	                return false;
+	            }
+
+	            if (!tools.isObject(obj)) {
+	                return false;
+	            }
+
+	            return true;
+	        },
+	            isInstanceOf = function isInstanceOf(obj, classObj) {
+	            if (obj instanceof classObj) {
+	                return true;
+	            }
+
+	            return false;
+	        },
+	            isNaN = function isNaN(obj) {
+	            return obj !== obj;
+	        },
+	            isElement = function isElement(obj) {
+	            return !!(obj && obj.nodeType === 1);
+	        },
+	            isDate = function isDate(obj) {
+	            return !!(obj && obj.getTimezoneOffset && obj.setUTCFullYear);
+	        },
+	            isBoolean = function isBoolean(obj) {
+	            return typeof obj === 'boolean';
+	        },
+	            isEqual = function isEqual(a, b) {
+	            var atype, btype, aKeys, bKeys, key;
+	            // end of vars
+
+	            // Check object identity.
+	            if (a === b) {
+	                return true;
+	            }
+	            // Different types?
+	            atype = typeof a;
+	            btype = typeof b;
+
+	            if (atype !== btype) {
+	                return false;
+	            }
+	            // Basic equality test (watch out for coercions).
+	            if (a === b) {
+	                return true;
+	            }
+	            // One is falsy and the other truthy.
+	            if (!a && b || a && !b) {
+	                return false;
+	            }
+	            // Check dates' integer values.
+	            if (tools.isDate(a) && tools.isDate(b)) {
+	                return a.getTime() === b.getTime();
+	            }
+	            // Both are NaN?
+	            if (tools.isNaN(a) && tools.isNaN(b)) {
+	                return false;
+	            }
+	            // If a is not an object by this point, we can't handle it.
+	            if (atype !== 'object') {
+	                return false;
+	            }
+	            // Check for different array lengths before comparing contents.
+	            if (a.length && a.length !== b.length) {
+	                return false;
+	            }
+	            // if is a DOM elements and is not '==' then false
+	            if (tools.isElement(a) || tools.isElement(b)) {
+	                return false;
+	            }
+	            // Nothing else worked, deep compare the contents.
+
+	            aKeys = tools.keys(a);
+	            bKeys = tools.keys(b);
+
+	            // Different object sizes?
+	            if (aKeys.length !== bKeys.length) {
+	                return false;
+	            }
+	            // Recursive comparison of contents.
+	            for (key in a) {
+	                if (!(key in b) || !tools.isEqual(a[key], b[key])) {
+	                    return false;
+	                }
+	            }
+
+	            return true;
+	        },
+	            isEmpty = function isEmpty(obj) {
+	            if (!isObject(obj)) {
+	                return;
+	            }
+	            if (isArray(obj)) {
+	                return obj.length > 0;
+	            }
+	            var prop,
+	                hasOwnProp = Object.prototype.hasOwnProperty;
+	            for (prop in obj) {
+	                if (hasOwnProp.call(obj, prop)) {
+	                    return false;
+	                }
+	            }
+	            return true;
+	        };
+	        // end of vars
+
+	        tools.isUndefined = isUndefined;
+	        tools.isNull = isNull;
+	        tools.isPresent = isPresent;
+	        tools.isNumber = isNumber;
+	        tools.isPowerOfTwo = isPowerOfTwo;
+	        tools.isObject = isObject;
+	        tools.isRegExp = isRegExp;
+	        tools.isArray = Array.isArray || isArray;
+	        tools.isString = isString;
+	        tools.isFunction = isFunction;
+	        tools.isConstructor = isConstructor;
+	        tools.isInstance = isInstance;
+	        tools.isInstanceOf = isInstanceOf;
+	        tools.isNaN = isNaN;
+	        tools.isElement = isElement;
+	        tools.isDate = isDate;
+	        tools.isBoolean = isBoolean;
+	        tools.isEqual = isEqual;
+	        tools.isEmpty = isEmpty;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+	    (function (window, document, BM) {
+	        var
+	        /**
+	         * @alias       BM.tools
+	         */
+	        tools = BM.tools = BM.tools || {},
+
+	        /**
+	         * Метод возвращает массив из имен всех собственных аттрибутов объекта.
+	         * 
+	         * @alias    BM.tools.keys
+	         * 
+	         * @param    {*}            obj
+	         * @return   {string[]}
+	         */
+	        keys = function keys(obj) {
+	            var keysArray = [],
+	                key,
+	                hop = Object.prototype.hasOwnProperty;
+	            // end of vars
+
+	            for (key in obj) {
+	                if (hop.call(obj, key)) {
+	                    keysArray[keysArray.length] = key;
+	                }
+	            }
+
+	            return keysArray;
+	        };
+	        // end of vars
+
+	        tools.keys = Object.keys || keys;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @file Загрузчик скриптов
+	     */
+
+	    (function (window, document, BM) {
+	        var tools = BM.tools = BM.tools || {},
+	            config = BM.config = BM.config || {},
+
+	        /**
+	         * Script loader
+	         *
+	         * @memberOf    BM.tools
+	         * @alias       BM.tools.loadScripts
+	         *
+	         * @param       {string}    templateType    Имя шаблона который необходимо загрузить
+	         */
+	        loadScripts = function loadScripts(templateType) {
+	            var loadConfig = config.loadScriptsConfig;
+	            // end of vars
+
+	            if (loadConfig.hasOwnProperty(templateType)) {
+	                loadConfig[templateType]();
+	            } else {
+	                loadConfig['default']();
+	            }
+	        };
+	        // end of vars
+
+	        tools.loadScripts = loadScripts;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Логирование на сервер
+	     */
+
+	    (function (window, document, BM) {
+	        var
+	        /**
+	         * @alias       BM.tools
+	         */
+	        tools = BM.tools = BM.tools || {},
+
+	        /**
+	         * Логирование данных с клиента на сервер
+	         * 
+	         * @alias    BM.tools.logToServer
+	         * 
+	         * @param    {Object}    data    Данные отсылаемые на сервер
+	         */
+	        logToServer = function logToServer(data) {
+	            var s = document.createElement('script'),
+	                l = document.getElementsByTagName('script')[0],
+	                key;
+	            // end of vars
+
+	            s.type = 'text/javascript';
+	            s.async = true;
+	            s.src = '/log-json';
+
+	            for (key in data) {
+	                if (data.hasOwnProperty(key)) {
+	                    s.src += s.src.indexOf('?') !== -1 ? '&' : '?';
+	                    s.src += key + '=' + data[key];
+	                }
+	            }
+
+	            l.parentNode.insertBefore(s, l);
+	        };
+	        // end of vars
+
+	        tools.logToServer = logToServer;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+	/**
+	 * @param    {Object}    window     Ссылка на window
+	 * @param    {Object}    document   Ссылка на document
+	 * @param    {Object}    BM         Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 18 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	    /**
+	     * @fileOverview Функция создания примесей
+	     */
+
+	    (function (window, document, BM) {
+	        var
+	        /**
+	         * @alias       BM.tools
+	         */
+	        tools = BM.tools = BM.tools || {},
+
+	        /**
+	         * Примешивает реализацию к объекту
+	         *
+	         * @alias    BM.tools.mixin
+	         *
+	         * @param    {Object}    obj              Объект, к которому примешивается имплементация
+	         * @param    {Object}    implementation   Примешиваемая имплементация
+	         */
+	        mixin = function mixin(obj, implementation) {
+	            var prop, iprop, descr, getter, setter, oldImplementation;
+	            // end of vars
+
+	            for (prop in implementation) {
+	                if (!implementation.hasOwnProperty(prop)) {
+	                    continue;
+	                }
+
+	                if (Object.defineProperty) {
+	                    descr = Object.getOwnPropertyDescriptor(implementation, prop);
+	                    if (descr) {
+	                        getter = descr.get;
+	                        setter = descr.set;
+	                    } else {
+	                        getter = undefined;
+	                        setter = undefined;
+	                    }
+	                    if (getter || setter) {
+	                        Object.defineProperty(obj, prop, {
+	                            get: getter,
+	                            set: setter
+	                        });
+	                        continue;
+	                    }
+	                }
+
+	                iprop = implementation[prop];
+
+	                // ссылки на функции просто копируются
+	                if (tools.isFunction(iprop)) {
+
+	                    obj[prop] = iprop;
+
+	                    // элементы также просто копируем
+	                } else if (tools.isElement(iprop)) {
+
+	                        obj[prop] = iprop;
+
+	                        // с объектами работает более тонко
+	                    } else if (tools.isObject(iprop)) {
+
+	                            // регулярные выражения копируем, как ссылку
+	                            if (tools.isRegExp(iprop)) {
+
+	                                obj[prop] = iprop;
+	                            } else if (tools.isConstructor()) {
+	                                obj[prop] = iprop;
+
+	                                // ссылки на массивы просто сохраняет
+	                            } else if (tools.isArray(iprop)) {
+	                                    obj[prop] = iprop;
+
+	                                    // объект-экземпляры классов тоже
+	                                } else if (tools.isInstance(iprop)) {
+	                                        obj[prop] = iprop;
+
+	                                        // ссылки на jQuery instances просто копируются
+	                                    } else if (iprop instanceof tools.$) {
+
+	                                            obj[prop] = iprop;
+
+	                                            // обычные объекты js аккуратно копируем
+	                                        } else {
+
+	                                                // если объект не был создан, то создаем его
+	                                                if (tools.isUndefined(obj[prop])) {
+
+	                                                    obj[prop] = {};
+
+	                                                    // если на этом месте не объект, а еще что-то
+	                                                    // то создаем объект
+	                                                } else if (!tools.isObject(obj[prop])) {
+
+	                                                        obj[prop] = {};
+
+	                                                        // если объект на самом деле не принадлежит нам,
+	                                                        // то создаем новый объект, а старый копируем в него
+	                                                    } else if (!obj.hasOwnProperty(prop)) {
+
+	                                                            oldImplementation = obj[prop];
+	                                                            obj[prop] = {};
+	                                                            tools.mixin(obj[prop], oldImplementation);
+	                                                        }
+
+	                                                // примешиваем объект
+	                                                tools.mixin(obj[prop], iprop);
+	                                            }
+
+	                            // значения просто копируются
+	                        } else {
+	                                obj[prop] = iprop;
+	                            }
+	            }
+
+	            return obj;
+	        };
+	        // end of vars
+
+	        tools.mixin = mixin;
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  (function (window, modules, BM) {
+
+	    var tools = BM.tools = BM.tools || {};
+
+	    tools.rubyHashString2JSON = function (hash_string) {
+	      return JSON.parse(hash_string.replace(/=>/g, ':;').replace(/:/g, '"').replace(/;/g, ':'));
+	    };
+	  })(this, this.modules, this.BM = this.BM || {});
+	}).call(window);
+
+/***/ },
+/* 20 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+	    (function (window, document, modules, docCookies, localStorage, undefined) {
+	        'use strict';
+
+	        var
+	        /**
+	         * @param       {Function}  provide     Ассинхронный экспорт модуля
+	         * @param       {Object}    tools       Ссылка на нэймспейс BM.tools
+	         */
+	        moduleStorage = function moduleStorage(provide, tools) {
+
+	            /**
+	             * Модуль вспомогательных функций для работы с Local Storage
+	             *
+	             * @memberOf    BM.tools
+	             *
+	             * @see         {@link module:storage}  Описание модуля storage
+	             */
+	            var storage = (function () {
+	                var
+	                /**
+	                 * Есть ли поддержка local storage в браузере
+	                 * 
+	                 * @memberOf    module:storage#
+	                 * @private
+	                 * 
+	                 * @type        {Boolean}
+	                 */
+	                availableLocalStorage = (function availableLocalStorage() {
+	                    try {
+	                        return 'localStorage' in window && window.localStorage !== null;
+	                    } catch (e) {
+	                        return false;
+	                    }
+	                })(),
+
+	                /**
+	                 * ======================
+	                 * === Public Methods ===
+	                 * ======================
+	                 */
+
+	                /**
+	                 * Получение значения по ключу
+	                 *
+	                 * @memberOf    module:storage#
+	                 * @public
+	                 * 
+	                 * @param       {String}     key    Ключ
+	                 *
+	                 * @return      {String|Object}     Значение ключа
+	                 */
+	                getItem = function getItem(key) {
+	                    var res;
+	                    // end of vars
+
+	                    if (availableLocalStorage) {
+	                        // Если localStorage поддерживается
+	                        res = localStorageMethods.getItem(key);
+	                    } else {
+	                        // Если localStorage не поддерживается
+	                        res = cookieMethods.getItem(key);
+	                    }
+
+	                    try {
+	                        return JSON.parse(res);
+	                    } catch (e) {
+	                        return res;
+	                    }
+	                },
+
+	                /**
+	                 * Установка заначения по ключу
+	                 *
+	                 * @memberOf    module:storage#
+	                 * @public
+	                 * 
+	                 * @param       {String}            key     Ключ
+	                 * @param       {String|Object}     value   Значение
+	                 *
+	                 * @return      {Boolean}                   Флаг успешности записи данных в хранилище
+	                 */
+	                setItem = function setItem(key, value) {
+	                    if (typeof value === 'object') {
+	                        value = JSON.stringify(value);
+	                    }
+
+	                    if (availableLocalStorage) {
+	                        // Если localStorage поддерживается
+	                        return localStorageMethods.setItem(key, value);
+	                    } else {
+	                        // Если localStorage не поддерживается
+	                        return cookieMethods.setItem(key, value);
+	                    }
+
+	                    return true;
+	                },
+
+	                /**
+	                 * Удаление значения по ключу
+	                 * 
+	                 * @memberOf    module:storage#
+	                 * @public
+	                 * 
+	                 * @param       {String}     key    Ключ
+	                 *
+	                 * @return      {Boolean}
+	                 */
+	                removeItem = function removeItem(key) {
+	                    if (availableLocalStorage) {
+	                        // Если localStorage поддерживается
+	                        return localStorageMethods.removeItem(key);
+	                    } else {
+	                        // Если localStorage не поддерживается
+	                        return cookieMethods.removeItem(key);
+	                    }
+	                },
+
+	                /**
+	                 * Очистка хранилища
+	                 * 
+	                 * @memberOf    module:storage#
+	                 * @public
+	                 */
+	                clearStorage = function clearStorage() {
+	                    if (availableLocalStorage) {
+	                        // Если localStorage поддерживается
+	                        localStorageMethods.clearStorage();
+	                    } else {
+	                        // Если localStorage не поддерживается
+	                        cookieMethods.clearStorage();
+	                    }
+	                },
+
+	                /**
+	                 * =======================
+	                 * === Private Methods ===
+	                 * =======================
+	                 */
+
+	                /**
+	                 * Обертка вокруг методов localeStorage
+	                 *
+	                 * @memberOf    module:storage#
+	                 * @private
+	                 * 
+	                 * @type        {Object}
+	                 */
+	                localStorageMethods = {
+	                    /**
+	                     * Получение значения по ключу
+	                     *
+	                     * @param       {String}     key    Ключ
+	                     *
+	                     * @return      {String}            Значение ключа
+	                     */
+	                    getItem: function getItem(key) {
+	                        return localStorage.getItem(key);
+	                    },
+
+	                    /**
+	                     * Установка заначения по ключу
+	                     *
+	                     * @param       {String}            key    Ключ
+	                     * @param       {String|Object}     value  Значение
+	                     *
+	                     * @return      {boolean}           Флаг успешности записи данных в хранилище
+	                     */
+	                    setItem: function setItem(key, value) {
+	                        try {
+	                            localStorage.setItem(key, value);
+
+	                            return true;
+	                        } catch (e) {
+	                            return false;
+	                        }
+	                    },
+
+	                    /**
+	                     * Удаление значения по ключу
+	                     * 
+	                     * @param       {String}     key    Ключ
+	                     *
+	                     * @return      {Boolean}
+	                     */
+	                    removeItem: function removeItem(key) {
+	                        try {
+	                            localStorage.removeItem(key);
+
+	                            return true;
+	                        } catch (e) {
+	                            return false;
+	                        }
+	                    },
+
+	                    /**
+	                     * Очистка хранилища
+	                     */
+	                    clearStorage: function clearStorage() {
+	                        localStorage.clear();
+	                    }
+	                },
+
+	                /**
+	                 * Обертка вокруг cookies для имитирования работы локального хранилища в куках
+	                 *
+	                 * @memberOf    module:storage#
+	                 * @private
+	                 *
+	                 * @type        {Object}
+	                 */
+	                cookieMethods = {
+	                    _defaultPrefix: 'bm_storage_',
+	                    /**
+	                     * Получение значения по ключу
+	                     *
+	                     * @param       {String}     key    Ключ
+	                     *
+	                     * @return      {String}            Значение ключа
+	                     */
+	                    getItem: function getItem(key) {
+	                        var newKey = cookieMethods._defaultPrefix + key;
+	                        // end of vars
+
+	                        return docCookies.getItem(newKey);
+	                    },
+
+	                    /**
+	                     * Установка заначения по ключу
+	                     *
+	                     * @param       {String}            key    Ключ
+	                     * @param       {String|Object}     value  Значение
+	                     *
+	                     * @return      {boolean}           Флаг успешности записи данных в хранилище
+	                     */
+	                    setItem: function setItem(key, value) {
+	                        var newKey = cookieMethods._defaultPrefix + key;
+	                        // end of vars
+
+	                        return docCookies.setItem(newKey, value, 4 * 7 * 24 * 60 * 60, '/');
+	                    },
+
+	                    /**
+	                     * Удаление значения по ключу
+	                     * 
+	                     * @param       {String}     key    Ключ
+	                     *
+	                     * @return      {Boolean}
+	                     */
+	                    removeItem: function removeItem(key) {
+	                        var newKey = cookieMethods._defaultPrefix + key;
+	                        // end of vars
+
+	                        return docCookies.setItem(newKey, 0, 0, '/');
+	                    },
+
+	                    /**
+	                     * Очистка хранилища
+	                     */
+	                    clearStorage: function clearStorage() {
+	                        return;
+	                    }
+	                };
+	                // end of vars
+
+	                return {
+	                    getItem: getItem,
+	                    setItem: setItem,
+	                    removeItem: removeItem,
+	                    clearStorage: clearStorage
+	                };
+	            })();
+
+	            tools.storage = storage;
+
+	            // Export
+	            provide(storage);
+	        };
+	        // end of vars
+
+	        /**
+	         * Модуль вспомогательных функций для работы с Local Storage
+	         * @module      storage
+	         */
+	        modules.define('storage', // Module name
+	        ['tools'], // Dependies
+	        moduleStorage // Module realization
+	        );
+	    })(this, this.document, this.modules, this.docCookies, this.localStorage || null);
+	}).call(window);
+
+	/**
+	 * @fileOverview Реализация модуля для работы с Local Storage
+	 * 
+	 * @param       {Object}     window         Ссылка на window
+	 * @param       {Object}     document       Ссылка на document
+	 * @param       {Object}     modules        Ссылка на модульную систему YModules
+	 * @param       {Object}     docCookies     Ссылка на docCookies
+	 * @param       {Object}     localStorage   Ссылка на localStorage
+	 */
+
+/***/ },
+/* 21 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  (function (window, document, BM) {
+
+	    var tools = BM.tools = BM.tools || {};
+
+	    // From Underscore 1.7.0
+	    //
+	    // JavaScript micro-templating, similar to John Resig's implementation.
+	    // Underscore templating handles arbitrary delimiters, preserves whitespace,
+	    // and correctly escapes quotes within interpolated code.
+	    // NB: `oldSettings` only exists for backwards compatibility.
+
+	    // Create a safe reference to the Underscore object for use below.
+	    var _ = function _(obj) {
+	      if (obj instanceof _) return obj;
+	      if (!(this instanceof _)) return new _(obj);
+	      this._wrapped = obj;
+	    };
+
+	    // All **ECMAScript 5** native function implementations that we hope to use
+	    // are declared here.
+	    var nativeIsArray = Array.isArray,
+	        nativeKeys = Object.keys;
+	    // nativeBind         = FuncProto.bind;
+
+	    // Is a given variable an object?
+	    _.isObject = function (obj) {
+	      var type = typeof obj;
+	      return type === 'function' || type === 'object' && !!obj;
+	    };
+
+	    // Retrieve the names of an object's properties.
+	    // Delegates to **ECMAScript 5**'s native `Object.keys`
+	    _.keys = function (obj) {
+	      if (!_.isObject(obj)) return [];
+	      if (nativeKeys) return nativeKeys(obj);
+	      var keys = [];
+	      for (var key in obj) if (_.has(obj, key)) keys.push(key);
+	      return keys;
+	    };
+
+	    // Invert the keys and values of an object. The values must be serializable.
+	    _.invert = function (obj) {
+	      var result = {};
+	      var keys = _.keys(obj);
+	      for (var i = 0, length = keys.length; i < length; i++) {
+	        result[obj[keys[i]]] = keys[i];
+	      }
+	      return result;
+	    };
+
+	    // List of HTML entities for escaping.
+	    var escapeMap = {
+	      '&': '&amp;',
+	      '<': '&lt;',
+	      '>': '&gt;',
+	      '"': '&quot;',
+	      "'": '&#x27;',
+	      '`': '&#x60;'
+	    };
+
+	    var unescapeMap = _.invert(escapeMap);
+
+	    var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+
+	    var escapeChar = function escapeChar(match) {
+	      return '\\' + escapes[match];
+	    };
+
+	    // Functions for escaping and unescaping strings to/from HTML interpolation.
+	    var createEscaper = function createEscaper(map) {
+	      var escaper = function escaper(match) {
+	        return map[match];
+	      };
+	      // Regexes for identifying a key that needs to be escaped
+	      var source = '(?:' + _.keys(map).join('|') + ')';
+	      var testRegexp = RegExp(source);
+	      var replaceRegexp = RegExp(source, 'g');
+	      return function (string) {
+	        string = string == null ? '' : '' + string;
+	        return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
+	      };
+	    };
+	    _.escape = createEscaper(escapeMap);
+	    _.unescape = createEscaper(unescapeMap);
+
+	    // Fill in a given object with default properties.
+	    _.defaults = function (obj) {
+	      if (!_.isObject(obj)) return obj;
+	      for (var i = 1, length = arguments.length; i < length; i++) {
+	        var source = arguments[i];
+	        for (var prop in source) {
+	          if (obj[prop] === void 0) obj[prop] = source[prop];
+	        }
+	      }
+	      return obj;
+	    };
+
+	    // By default, Underscore uses ERB-style template delimiters, change the
+	    // following template settings to use alternative delimiters.
+	    _.templateSettings = {
+	      evaluate: /<%([\s\S]+?)%>/g,
+	      interpolate: /<%=([\s\S]+?)%>/g,
+	      escape: /<%-([\s\S]+?)%>/g
+	    };
+
+	    var template = function template(text, settings, oldSettings) {
+	      if (!settings && oldSettings) settings = oldSettings;
+	      settings = _.defaults({}, settings, _.templateSettings);
+
+	      // Combine delimiters into one regular expression via alternation.
+	      var matcher = RegExp([(settings.escape || noMatch).source, (settings.interpolate || noMatch).source, (settings.evaluate || noMatch).source].join('|') + '|$', 'g');
+
+	      // Compile the template source, escaping string literals appropriately.
+	      var index = 0;
+	      var source = "__p+='";
+	      text.replace(matcher, function (match, escape, interpolate, evaluate, offset) {
+	        source += text.slice(index, offset).replace(escaper, escapeChar);
+	        index = offset + match.length;
+
+	        if (escape) {
+	          source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
+	        } else if (interpolate) {
+	          source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
+	        } else if (evaluate) {
+	          source += "';\n" + evaluate + "\n__p+='";
+	        }
+
+	        // Adobe VMs need the match returned to produce the correct offest.
+	        return match;
+	      });
+	      source += "';\n";
+
+	      // If a variable is not specified, place data values in local scope.
+	      if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+
+	      source = "var __t,__p='',__j=Array.prototype.join," + "print=function(){__p+=__j.call(arguments,'');};\n" + source + 'return __p;\n';
+
+	      try {
+	        var render = new Function(settings.variable || 'obj', '_', source);
+	      } catch (e) {
+	        e.source = source;
+	        throw e;
+	      }
+
+	      var template = function template(data) {
+	        return render.call(this, data, _);
+	      };
+
+	      // Provide the compiled source as a convenience for precompilation.
+	      var argument = settings.variable || 'obj';
+	      template.source = 'function(' + argument + '){\n' + source + '}';
+
+	      return template;
+	    };
+
+	    tools.template = template;
+	  })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+/***/ },
+/* 22 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+	    (function (console) {
+
+	        var i,
+	            global = this,
+	            fnProto = Function.prototype,
+	            fnApply = fnProto.apply,
+	            fnBind = fnProto.bind,
+	            bind = function bind(context, fn) {
+	            return fnBind ? fnBind.call(fn, context) : function () {
+	                return fnApply.call(fn, context, arguments);
+	            };
+	        },
+	            methods = 'assert count debug dir dirxml error group groupCollapsed groupEnd info log markTimeline profile profileEnd table time timeEnd trace warn'.split(' '),
+	            emptyFn = function emptyFn() {},
+	            empty = {},
+	            timeCounters;
+
+	        for (i = methods.length; i--;) empty[methods[i]] = emptyFn;
+
+	        if (console) {
+
+	            if (!console.time) {
+	                console.timeCounters = timeCounters = {};
+
+	                console.time = function (name, reset) {
+	                    if (name) {
+	                        var time = +new Date(),
+	                            key = "KEY" + name.toString();
+	                        if (reset || !timeCounters[key]) timeCounters[key] = time;
+	                    }
+	                };
+
+	                console.timeEnd = function (name) {
+	                    var diff,
+	                        time = +new Date(),
+	                        key = "KEY" + name.toString(),
+	                        timeCounter = timeCounters[key];
+
+	                    if (timeCounter) {
+	                        diff = time - timeCounter;
+	                        console.info(name + ": " + diff + "ms");
+	                        delete timeCounters[key];
+	                    }
+	                    return diff;
+	                };
+	            }
+
+	            for (i = methods.length; i--;) {
+	                console[methods[i]] = methods[i] in console ? bind(console, console[methods[i]]) : emptyFn;
+	            }
+	            console.disable = function () {
+	                global.console = empty;
+	            };
+	            empty.enable = function () {
+	                global.console = console;
+	            };
+
+	            empty.disable = console.enable = emptyFn;
+	        } else {
+	            console = global.console = empty;
+	            console.disable = console.enable = emptyFn;
+	        }
+	    })(typeof console === 'undefined' ? null : console);
+
+	    //console.disable();
+	}).call(window);
+
+	/**
+	 * Console
+	 *
+	 * @link https://github.com/theshock/console-cap
+	 *
+	 * @param    {Object}    console    Ссылка на console
+	 */
+
+/***/ },
+/* 23 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	"use strict";
+
+	(function () {
+
+	  /*\
+	  |*|
+	  |*|  :: cookies.js ::
+	  |*|
+	  |*|  A complete cookies reader/writer framework with full unicode support.
+	  |*|
+	  |*|  https://developer.mozilla.org/en-US/docs/DOM/document.cookie
+	  |*|
+	  |*|  This framework is released under the GNU Public License, version 3 or later.
+	  |*|  http://www.gnu.org/licenses/gpl-3.0-standalone.html
+	  |*|
+	  |*|  Syntaxes:
+	  |*|
+	  |*|  * docCookies.setItem(name, value[, end[, path[, domain[, secure]]]])
+	  |*|  * docCookies.getItem(name)
+	  |*|  * docCookies.removeItem(name[, path], domain)
+	  |*|  * docCookies.hasItem(name)
+	  |*|  * docCookies.keys()
+	  |*|
+	  \*/
+
+	  window.docCookies = {
+	    getItem: function getItem(sKey) {
+	      return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+	    },
+	    setItem: function setItem(sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+	      if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) {
+	        return false;
+	      }
+	      var sExpires = "";
+	      if (vEnd) {
+	        switch (vEnd.constructor) {
+	          case Number:
+	            sExpires = vEnd === Infinity ? "; expires=Fri, 31 Dec 9999 23:59:59 GMT" : "; max-age=" + vEnd;
+	            break;
+	          case String:
+	            sExpires = "; expires=" + vEnd;
+	            break;
+	          case Date:
+	            sExpires = "; expires=" + vEnd.toUTCString();
+	            break;
+	        }
+	      }
+	      document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+	      return true;
+	    },
+	    removeItem: function removeItem(sKey, sPath, sDomain) {
+	      if (!sKey || !this.hasItem(sKey)) {
+	        return false;
+	      }
+	      document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "");
+	      return true;
+	    },
+	    hasItem: function hasItem(sKey) {
+	      return new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=").test(document.cookie);
+	    },
+	    keys: /* optional method: you can safely remove it! */function keys() {
+	      var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+	      for (var nIdx = 0; nIdx < aKeys.length; nIdx++) {
+	        aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]);
+	      }
+	      return aKeys;
+	    }
+	  };
+	}).call(window);
+
+/***/ },
+/* 24 */,
+/* 25 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    (function (window) {
+	        var Tap = {};
+
+	        var utils = {};
+
+	        utils.attachEvent = function (element, eventName, callback) {
+	            return element.addEventListener(eventName, callback, false);
+	        };
+
+	        utils.fireFakeEvent = function (e, eventName) {
+	            return e.target.dispatchEvent(utils.createEvent(eventName));
+	        };
+
+	        utils.createEvent = function (name) {
+	            var evnt = window.document.createEvent('HTMLEvents');
+	            evnt.initEvent(name, true, true);
+	            evnt.eventName = name;
+
+	            return evnt;
+	        };
+
+	        utils.getRealEvent = function (e) {
+	            return e.originalEvent && e.originalEvent.touches && e.originalEvent.touches.length ? e.originalEvent.touches[0] : e;
+	        };
+
+	        var eventMatrix = [{
+	            // Touchable devices
+	            test: ('propertyIsEnumerable' in window || 'hasOwnProperty' in document) && (window.propertyIsEnumerable('ontouchstart') || document.hasOwnProperty('ontouchstart')),
+	            events: {
+	                start: 'touchstart',
+	                move: 'touchmove',
+	                end: 'touchend'
+	            }
+	        }, {
+	            // IE10
+	            test: window.navigator.msPointerEnabled,
+	            events: {
+	                start: 'MSPointerDown',
+	                move: 'MSPointerMove',
+	                end: 'MSPointerUp'
+	            }
+	        }, {
+	            // Modern device agnostic web
+	            test: window.navigator.pointerEnabled,
+	            events: {
+	                start: 'pointerdown',
+	                move: 'pointermove',
+	                end: 'pointerup'
+	            }
+	        }];
+
+	        Tap.options = {
+	            eventName: 'tap',
+	            fingerMaxOffset: 11
+	        };
+
+	        var attachDeviceEvent,
+	            init,
+	            handlers,
+	            deviceEvents,
+	            coords = {};
+
+	        attachDeviceEvent = function (eventName) {
+	            return utils.attachEvent(document.body, deviceEvents[eventName], handlers[eventName]);
+	        };
+
+	        handlers = {
+	            start: function start(e) {
+	                e = utils.getRealEvent(e);
+
+	                coords.start = [e.pageX, e.pageY];
+	                coords.offset = [0, 0];
+	            },
+
+	            move: function move(e) {
+	                if (!coords['start'] && !coords['move']) return false;
+
+	                e = utils.getRealEvent(e);
+
+	                coords.move = [e.pageX, e.pageY];
+	                coords.offset = [Math.abs(coords.move[0] - coords.start[0]), Math.abs(coords.move[1] - coords.start[1])];
+	            },
+
+	            end: function end(e) {
+	                e = utils.getRealEvent(e);
+
+	                if (coords.offset[0] < Tap.options.fingerMaxOffset && coords.offset[1] < Tap.options.fingerMaxOffset && !utils.fireFakeEvent(e, Tap.options.eventName)) {
+	                    if (window.navigator.msPointerEnabled || window.navigator.pointerEnabled) {
+	                        var preventDefault = function preventDefault(clickEvent) {
+	                            clickEvent.preventDefault();
+	                            e.target.removeEventListener('click', preventDefault);
+	                        };
+
+	                        e.target.addEventListener('click', preventDefault, false);
+	                    }
+
+	                    e.preventDefault();
+	                }
+
+	                coords = {};
+	            },
+
+	            click: function click(e) {
+	                if (!utils.fireFakeEvent(e, Tap.options.eventName)) {
+	                    return e.preventDefault();
+	                }
+	            }
+	        };
+
+	        init = function () {
+	            for (var i = 0, l = eventMatrix.length; i < l; i++) {
+	                if (eventMatrix[i].test) {
+	                    deviceEvents = eventMatrix[i].events;
+
+	                    attachDeviceEvent('start');
+	                    attachDeviceEvent('move');
+	                    attachDeviceEvent('end');
+
+	                    return false;
+	                }
+	            }
+
+	            return utils.attachEvent(document.body, 'click', handlers['click']);
+	        };
+
+	        utils.attachEvent(window, 'load', init);
+
+	        window.Tap = Tap;
+	    })(window);
+	}).call(window);
+
+/***/ },
+/* 26 */,
+/* 27 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /*
+	        json2.js
+	        2014-02-04
+	    
+	        Public Domain.
+	    
+	        NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+	    
+	        See http://www.JSON.org/js.html
+	    
+	    
+	        This code should be minified before deployment.
+	        See http://javascript.crockford.com/jsmin.html
+	    
+	        USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
+	        NOT CONTROL.
+	    
+	    
+	        This file creates a global JSON object containing two methods: stringify
+	        and parse.
+	    
+	            JSON.stringify(value, replacer, space)
+	                value       any JavaScript value, usually an object or array.
+	    
+	                replacer    an optional parameter that determines how object
+	                            values are stringified for objects. It can be a
+	                            function or an array of strings.
+	    
+	                space       an optional parameter that specifies the indentation
+	                            of nested structures. If it is omitted, the text will
+	                            be packed without extra whitespace. If it is a number,
+	                            it will specify the number of spaces to indent at each
+	                            level. If it is a string (such as '\t' or '&nbsp;'),
+	                            it contains the characters used to indent at each level.
+	    
+	                This method produces a JSON text from a JavaScript value.
+	    
+	                When an object value is found, if the object contains a toJSON
+	                method, its toJSON method will be called and the result will be
+	                stringified. A toJSON method does not serialize: it returns the
+	                value represented by the name/value pair that should be serialized,
+	                or undefined if nothing should be serialized. The toJSON method
+	                will be passed the key associated with the value, and this will be
+	                bound to the value
+	    
+	                For example, this would serialize Dates as ISO strings.
+	    
+	                    Date.prototype.toJSON = function (key) {
+	                        function f(n) {
+	                            // Format integers to have at least two digits.
+	                            return n < 10 ? '0' + n : n;
+	                        }
+	    
+	                        return this.getUTCFullYear()   + '-' +
+	                             f(this.getUTCMonth() + 1) + '-' +
+	                             f(this.getUTCDate())      + 'T' +
+	                             f(this.getUTCHours())     + ':' +
+	                             f(this.getUTCMinutes())   + ':' +
+	                             f(this.getUTCSeconds())   + 'Z';
+	                    };
+	    
+	                You can provide an optional replacer method. It will be passed the
+	                key and value of each member, with this bound to the containing
+	                object. The value that is returned from your method will be
+	                serialized. If your method returns undefined, then the member will
+	                be excluded from the serialization.
+	    
+	                If the replacer parameter is an array of strings, then it will be
+	                used to select the members to be serialized. It filters the results
+	                such that only members with keys listed in the replacer array are
+	                stringified.
+	    
+	                Values that do not have JSON representations, such as undefined or
+	                functions, will not be serialized. Such values in objects will be
+	                dropped; in arrays they will be replaced with null. You can use
+	                a replacer function to replace those with JSON values.
+	                JSON.stringify(undefined) returns undefined.
+	    
+	                The optional space parameter produces a stringification of the
+	                value that is filled with line breaks and indentation to make it
+	                easier to read.
+	    
+	                If the space parameter is a non-empty string, then that string will
+	                be used for indentation. If the space parameter is a number, then
+	                the indentation will be that many spaces.
+	    
+	                Example:
+	    
+	                text = JSON.stringify(['e', {pluribus: 'unum'}]);
+	                // text is '["e",{"pluribus":"unum"}]'
+	    
+	    
+	                text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+	                // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+	    
+	                text = JSON.stringify([new Date()], function (key, value) {
+	                    return this[key] instanceof Date ?
+	                        'Date(' + this[key] + ')' : value;
+	                });
+	                // text is '["Date(---current time---)"]'
+	    
+	    
+	            JSON.parse(text, reviver)
+	                This method parses a JSON text to produce an object or array.
+	                It can throw a SyntaxError exception.
+	    
+	                The optional reviver parameter is a function that can filter and
+	                transform the results. It receives each of the keys and values,
+	                and its return value is used instead of the original value.
+	                If it returns what it received, then the structure is not modified.
+	                If it returns undefined then the member is deleted.
+	    
+	                Example:
+	    
+	                // Parse the text. Values that look like ISO date strings will
+	                // be converted to Date objects.
+	    
+	                myData = JSON.parse(text, function (key, value) {
+	                    var a;
+	                    if (typeof value === 'string') {
+	                        a =
+	    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+	                        if (a) {
+	                            return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+	                                +a[5], +a[6]));
+	                        }
+	                    }
+	                    return value;
+	                });
+	    
+	                myData = JSON.parse('["Date(09/09/2001)"]', function (key, value) {
+	                    var d;
+	                    if (typeof value === 'string' &&
+	                            value.slice(0, 5) === 'Date(' &&
+	                            value.slice(-1) === ')') {
+	                        d = new Date(value.slice(5, -1));
+	                        if (d) {
+	                            return d;
+	                        }
+	                    }
+	                    return value;
+	                });
+	    
+	    
+	        This is a reference implementation. You are free to copy, modify, or
+	        redistribute.
+	    */
+
+	    /*jslint evil: true, regexp: true */
+
+	    /*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+	        call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
+	        getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
+	        lastIndex, length, parse, prototype, push, replace, slice, stringify,
+	        test, toJSON, toString, valueOf
+	    */
+
+	    // Create a JSON object only if one does not already exist. We create the
+	    // methods in a closure to avoid creating global variables.
+
+	    if (typeof JSON !== 'object') {
+	        JSON = {};
+	    }
+
+	    (function () {
+	        'use strict';
+
+	        function f(n) {
+	            // Format integers to have at least two digits.
+	            return n < 10 ? '0' + n : n;
+	        }
+
+	        if (typeof Date.prototype.toJSON !== 'function') {
+
+	            Date.prototype.toJSON = function () {
+
+	                return isFinite(this.valueOf()) ? this.getUTCFullYear() + '-' + f(this.getUTCMonth() + 1) + '-' + f(this.getUTCDate()) + 'T' + f(this.getUTCHours()) + ':' + f(this.getUTCMinutes()) + ':' + f(this.getUTCSeconds()) + 'Z' : null;
+	            };
+
+	            String.prototype.toJSON = Number.prototype.toJSON = Boolean.prototype.toJSON = function () {
+	                return this.valueOf();
+	            };
+	        }
+
+	        var cx, escapable, gap, indent, meta, rep;
+
+	        function quote(string) {
+
+	            // If the string contains no control characters, no quote characters, and no
+	            // backslash characters, then we can safely slap some quotes around it.
+	            // Otherwise we must also replace the offending characters with safe escape
+	            // sequences.
+
+	            escapable.lastIndex = 0;
+	            return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+	                var c = meta[a];
+	                return typeof c === 'string' ? c : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+	            }) + '"' : '"' + string + '"';
+	        }
+
+	        function str(key, holder) {
+
+	            // Produce a string from holder[key].
+
+	            var i,
+	                // The loop counter.
+	            k,
+	                // The member key.
+	            v,
+	                // The member value.
+	            length,
+	                mind = gap,
+	                partial,
+	                value = holder[key];
+
+	            // If the value has a toJSON method, call it to obtain a replacement value.
+
+	            if (value && typeof value === 'object' && typeof value.toJSON === 'function') {
+	                value = value.toJSON(key);
+	            }
+
+	            // If we were called with a replacer function, then call the replacer to
+	            // obtain a replacement value.
+
+	            if (typeof rep === 'function') {
+	                value = rep.call(holder, key, value);
+	            }
+
+	            // What happens next depends on the value's type.
+
+	            switch (typeof value) {
+	                case 'string':
+	                    return quote(value);
+
+	                case 'number':
+
+	                    // JSON numbers must be finite. Encode non-finite numbers as null.
+
+	                    return isFinite(value) ? String(value) : 'null';
+
+	                case 'boolean':
+	                case 'null':
+
+	                    // If the value is a boolean or null, convert it to a string. Note:
+	                    // typeof null does not produce 'null'. The case is included here in
+	                    // the remote chance that this gets fixed someday.
+
+	                    return String(value);
+
+	                // If the type is 'object', we might be dealing with an object or an array or
+	                // null.
+
+	                case 'object':
+
+	                    // Due to a specification blunder in ECMAScript, typeof null is 'object',
+	                    // so watch out for that case.
+
+	                    if (!value) {
+	                        return 'null';
+	                    }
+
+	                    // Make an array to hold the partial results of stringifying this object value.
+
+	                    gap += indent;
+	                    partial = [];
+
+	                    // Is the value an array?
+
+	                    if (Object.prototype.toString.apply(value) === '[object Array]') {
+
+	                        // The value is an array. Stringify every element. Use null as a placeholder
+	                        // for non-JSON values.
+
+	                        length = value.length;
+	                        for (i = 0; i < length; i += 1) {
+	                            partial[i] = str(i, value) || 'null';
+	                        }
+
+	                        // Join all of the elements together, separated with commas, and wrap them in
+	                        // brackets.
+
+	                        v = partial.length === 0 ? '[]' : gap ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']' : '[' + partial.join(',') + ']';
+	                        gap = mind;
+	                        return v;
+	                    }
+
+	                    // If the replacer is an array, use it to select the members to be stringified.
+
+	                    if (rep && typeof rep === 'object') {
+	                        length = rep.length;
+	                        for (i = 0; i < length; i += 1) {
+	                            if (typeof rep[i] === 'string') {
+	                                k = rep[i];
+	                                v = str(k, value);
+	                                if (v) {
+	                                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+	                                }
+	                            }
+	                        }
+	                    } else {
+
+	                        // Otherwise, iterate through all of the keys in the object.
+
+	                        for (k in value) {
+	                            if (Object.prototype.hasOwnProperty.call(value, k)) {
+	                                v = str(k, value);
+	                                if (v) {
+	                                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+	                                }
+	                            }
+	                        }
+	                    }
+
+	                    // Join all of the member texts together, separated with commas,
+	                    // and wrap them in braces.
+
+	                    v = partial.length === 0 ? '{}' : gap ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}' : '{' + partial.join(',') + '}';
+	                    gap = mind;
+	                    return v;
+	            }
+	        }
+
+	        // If the JSON object does not yet have a stringify method, give it one.
+
+	        if (typeof JSON.stringify !== 'function') {
+	            escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+	            meta = { // table of character substitutions
+	                '\b': '\\b',
+	                '\t': '\\t',
+	                '\n': '\\n',
+	                '\f': '\\f',
+	                '\r': '\\r',
+	                '"': '\\"',
+	                '\\': '\\\\'
+	            };
+	            JSON.stringify = function (value, replacer, space) {
+
+	                // The stringify method takes a value and an optional replacer, and an optional
+	                // space parameter, and returns a JSON text. The replacer can be a function
+	                // that can replace values, or an array of strings that will select the keys.
+	                // A default replacer method can be provided. Use of the space parameter can
+	                // produce text that is more easily readable.
+
+	                var i;
+	                gap = '';
+	                indent = '';
+
+	                // If the space parameter is a number, make an indent string containing that
+	                // many spaces.
+
+	                if (typeof space === 'number') {
+	                    for (i = 0; i < space; i += 1) {
+	                        indent += ' ';
+	                    }
+
+	                    // If the space parameter is a string, it will be used as the indent string.
+	                } else if (typeof space === 'string') {
+	                        indent = space;
+	                    }
+
+	                // If there is a replacer, it must be a function or an array.
+	                // Otherwise, throw an error.
+
+	                rep = replacer;
+	                if (replacer && typeof replacer !== 'function' && (typeof replacer !== 'object' || typeof replacer.length !== 'number')) {
+	                    throw new Error('JSON.stringify');
+	                }
+
+	                // Make a fake root object containing our value under the key of ''.
+	                // Return the result of stringifying the value.
+
+	                return str('', { '': value });
+	            };
+	        }
+
+	        // If the JSON object does not yet have a parse method, give it one.
+
+	        if (typeof JSON.parse !== 'function') {
+	            cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
+	            JSON.parse = function (text, reviver) {
+
+	                // The parse method takes a text and an optional reviver function, and returns
+	                // a JavaScript value if the text is a valid JSON text.
+
+	                var j;
+
+	                function walk(holder, key) {
+
+	                    // The walk method is used to recursively walk the resulting structure so
+	                    // that modifications can be made.
+
+	                    var k,
+	                        v,
+	                        value = holder[key];
+	                    if (value && typeof value === 'object') {
+	                        for (k in value) {
+	                            if (Object.prototype.hasOwnProperty.call(value, k)) {
+	                                v = walk(value, k);
+	                                if (v !== undefined) {
+	                                    value[k] = v;
+	                                } else {
+	                                    delete value[k];
+	                                }
+	                            }
+	                        }
+	                    }
+	                    return reviver.call(holder, key, value);
+	                }
+
+	                // Parsing happens in four stages. In the first stage, we replace certain
+	                // Unicode characters with escape sequences. JavaScript handles many characters
+	                // incorrectly, either silently deleting them, or treating them as line endings.
+
+	                text = String(text);
+	                cx.lastIndex = 0;
+	                if (cx.test(text)) {
+	                    text = text.replace(cx, function (a) {
+	                        return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+	                    });
+	                }
+
+	                // In the second stage, we run the text against regular expressions that look
+	                // for non-JSON patterns. We are especially concerned with '()' and 'new'
+	                // because they can cause invocation, and '=' because it can cause mutation.
+	                // But just to be safe, we want to reject all unexpected forms.
+
+	                // We split the second stage into 4 regexp operations in order to work around
+	                // crippling inefficiencies in IE's and Safari's regexp engines. First we
+	                // replace the JSON backslash pairs with '@' (a non-JSON character). Second, we
+	                // replace all simple value tokens with ']' characters. Third, we delete all
+	                // open brackets that follow a colon or comma or that begin the text. Finally,
+	                // we look to see that the remaining characters are only whitespace or ']' or
+	                // ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+	                if (/^[\],:{}\s]*$/.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+	                    // In the third stage we use the eval function to compile the text into a
+	                    // JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+	                    // in JavaScript: it can begin a block or an object literal. We wrap the text
+	                    // in parens to eliminate the ambiguity.
+
+	                    j = eval('(' + text + ')');
+
+	                    // In the optional fourth stage, we recursively walk the new structure, passing
+	                    // each name/value pair to a reviver function for possible transformation.
+
+	                    return typeof reviver === 'function' ? walk({ '': j }, '') : j;
+	                }
+
+	                // If the text is not JSON parseable, then a SyntaxError is thrown.
+
+	                throw new SyntaxError('JSON.parse');
+	            };
+	        }
+	    })();
+	}).call(window);
+
+/***/ },
+/* 28 */,
+/* 29 */,
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var require;/* WEBPACK VAR INJECTION */(function(process) {/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    (function (global) {
+
+	        var undef,
+	            DECL_STATES = {
+	            NOT_RESOLVED: 'NOT_RESOLVED',
+	            IN_RESOLVING: 'IN_RESOLVING',
+	            RESOLVED: 'RESOLVED'
+	        },
+
+	        /**
+	         * Creates a new instance of modular system
+	         * @returns {Object}
+	         */
+	        create = function create() {
+	            var curOptions = {
+	                trackCircularDependencies: true,
+	                allowMultipleDeclarations: true
+	            },
+	                modulesStorage = {},
+	                waitForNextTick = false,
+	                pendingRequires = [],
+
+	            /**
+	             * Defines module
+	             * @param {String} name
+	             * @param {String[]} [deps]
+	             * @param {Function} declFn
+	             */
+	            define = function define(name, deps, declFn) {
+	                if (!declFn) {
+	                    declFn = deps;
+	                    deps = [];
+	                }
+
+	                var module = modulesStorage[name];
+	                if (!module) {
+	                    module = modulesStorage[name] = {
+	                        name: name,
+	                        decl: undef
+	                    };
+	                }
+
+	                module.decl = {
+	                    name: name,
+	                    prev: module.decl,
+	                    fn: declFn,
+	                    state: DECL_STATES.NOT_RESOLVED,
+	                    deps: deps,
+	                    dependents: [],
+	                    exports: undef
+	                };
+	            },
+
+	            /**
+	             * Requires modules
+	             * @param {String|String[]} modules
+	             * @param {Function} cb
+	             * @param {Function} [errorCb]
+	             */
+	            require = function require(modules, _cb, errorCb) {
+	                if (typeof modules === 'string') {
+	                    modules = [modules];
+	                }
+
+	                if (!waitForNextTick) {
+	                    waitForNextTick = true;
+	                    nextTick(onNextTick);
+	                }
+
+	                pendingRequires.push({
+	                    deps: modules,
+	                    cb: function cb(exports, error) {
+	                        if (error) {
+	                            (errorCb || onError)(error);
+	                        } else if (_cb !== undefined) {
+	                            _cb.apply(global, exports);
+	                        }
+	                    }
+	                });
+	            },
+
+	            /**
+	             * Returns state of module
+	             * @param {String} name
+	             * @returns {String} state, possible values are NOT_DEFINED, NOT_RESOLVED, IN_RESOLVING, RESOLVED
+	             */
+	            getState = function getState(name) {
+	                var module = modulesStorage[name];
+	                return module ? DECL_STATES[module.decl.state] : 'NOT_DEFINED';
+	            },
+
+	            /**
+	             * Returns whether the module is defined
+	             * @param {String} name
+	             * @returns {Boolean}
+	             */
+	            isDefined = function isDefined(name) {
+	                return !!modulesStorage[name];
+	            },
+
+	            /**
+	             * Sets options
+	             * @param {Object} options
+	             */
+	            setOptions = function setOptions(options) {
+	                for (var name in options) {
+	                    if (options.hasOwnProperty(name)) {
+	                        curOptions[name] = options[name];
+	                    }
+	                }
+	            },
+	                onNextTick = function onNextTick() {
+	                waitForNextTick = false;
+	                applyRequires();
+	            },
+	                applyRequires = function applyRequires() {
+	                var requiresToProcess = pendingRequires,
+	                    i = 0,
+	                    require;
+
+	                pendingRequires = [];
+	                while (require = requiresToProcess[i++]) {
+	                    requireDeps(null, require.deps, [], require.cb);
+	                }
+	            },
+	                requireDeps = function requireDeps(fromDecl, deps, path, cb) {
+	                var unresolvedDepsCnt = deps.length;
+	                if (!unresolvedDepsCnt) {
+	                    cb([]);
+	                }
+
+	                var decls = [],
+	                    onDeclResolved = function onDeclResolved(_, error) {
+	                    if (error) {
+	                        cb(null, error);
+	                        return;
+	                    }
+
+	                    if (! --unresolvedDepsCnt) {
+	                        var exports = [],
+	                            i = 0,
+	                            decl;
+	                        while (decl = decls[i++]) {
+	                            exports.push(decl.exports);
+	                        }
+	                        cb(exports);
+	                    }
+	                },
+	                    i = 0,
+	                    len = unresolvedDepsCnt,
+	                    dep,
+	                    decl;
+
+	                while (i < len) {
+	                    dep = deps[i++];
+	                    if (typeof dep === 'string') {
+	                        if (!modulesStorage[dep]) {
+	                            cb(null, buildModuleNotFoundError(dep, fromDecl));
+	                            return;
+	                        }
+
+	                        decl = modulesStorage[dep].decl;
+	                    } else {
+	                        decl = dep;
+	                    }
+
+	                    decls.push(decl);
+
+	                    startDeclResolving(decl, path, onDeclResolved);
+	                }
+	            },
+	                startDeclResolving = function startDeclResolving(decl, path, cb) {
+	                if (decl.state === DECL_STATES.RESOLVED) {
+	                    cb(decl.exports);
+	                    return;
+	                } else if (decl.state === DECL_STATES.IN_RESOLVING) {
+	                    curOptions.trackCircularDependencies && isDependenceCircular(decl, path) ? cb(null, buildCircularDependenceError(decl, path)) : decl.dependents.push(cb);
+	                    return;
+	                }
+
+	                decl.dependents.push(cb);
+
+	                if (decl.prev && !curOptions.allowMultipleDeclarations) {
+	                    provideError(decl, buildMultipleDeclarationError(decl));
+	                    return;
+	                }
+
+	                curOptions.trackCircularDependencies && (path = path.slice()).push(decl);
+
+	                var isProvided = false,
+	                    deps = decl.prev ? decl.deps.concat([decl.prev]) : decl.deps;
+
+	                decl.state = DECL_STATES.IN_RESOLVING;
+	                requireDeps(decl, deps, path, function (depDeclsExports, error) {
+	                    if (error) {
+	                        provideError(decl, error);
+	                        return;
+	                    }
+
+	                    depDeclsExports.unshift(function (exports, error) {
+	                        if (isProvided) {
+	                            cb(null, buildDeclAreadyProvidedError(decl));
+	                            return;
+	                        }
+
+	                        isProvided = true;
+	                        error ? provideError(decl, error) : provideDecl(decl, exports);
+	                    });
+
+	                    decl.fn.apply({
+	                        name: decl.name,
+	                        deps: decl.deps,
+	                        global: global
+	                    }, depDeclsExports);
+	                });
+	            },
+	                provideDecl = function provideDecl(decl, exports) {
+	                decl.exports = exports;
+	                decl.state = DECL_STATES.RESOLVED;
+
+	                var i = 0,
+	                    dependent;
+	                while (dependent = decl.dependents[i++]) {
+	                    dependent(exports);
+	                }
+
+	                decl.dependents = undef;
+	            },
+	                provideError = function provideError(decl, error) {
+	                decl.state = DECL_STATES.NOT_RESOLVED;
+
+	                var i = 0,
+	                    dependent;
+	                while (dependent = decl.dependents[i++]) {
+	                    dependent(null, error);
+	                }
+
+	                decl.dependents = [];
+	            };
+
+	            return {
+	                create: create,
+	                define: define,
+	                require: require,
+	                getState: getState,
+	                isDefined: isDefined,
+	                setOptions: setOptions
+	            };
+	        },
+	            onError = function onError(e) {
+	            nextTick(function () {
+	                throw e;
+	            });
+	        },
+	            buildModuleNotFoundError = function buildModuleNotFoundError(name, decl) {
+	            return Error(decl ? 'Module "' + decl.name + '": can\'t resolve dependence "' + name + '"' : 'Required module "' + name + '" can\'t be resolved');
+	        },
+	            buildCircularDependenceError = function buildCircularDependenceError(decl, path) {
+	            var strPath = [],
+	                i = 0,
+	                pathDecl;
+	            while (pathDecl = path[i++]) {
+	                strPath.push(pathDecl.name);
+	            }
+	            strPath.push(decl.name);
+
+	            return Error('Circular dependence has been detected: "' + strPath.join(' -> ') + '"');
+	        },
+	            buildDeclAreadyProvidedError = function buildDeclAreadyProvidedError(decl) {
+	            return Error('Declaration of module "' + decl.name + '" has already been provided');
+	        },
+	            buildMultipleDeclarationError = function buildMultipleDeclarationError(decl) {
+	            return Error('Multiple declarations of module "' + decl.name + '" have been detected');
+	        },
+	            isDependenceCircular = function isDependenceCircular(decl, path) {
+	            var i = 0,
+	                pathDecl;
+	            while (pathDecl = path[i++]) {
+	                if (decl === pathDecl) {
+	                    return true;
+	                }
+	            }
+	            return false;
+	        },
+	            nextTick = (function () {
+	            var fns = [],
+	                enqueueFn = function enqueueFn(fn) {
+	                return fns.push(fn) === 1;
+	            },
+	                callFns = function callFns() {
+	                var fnsToCall = fns,
+	                    i = 0,
+	                    len = fns.length;
+	                fns = [];
+	                while (i < len) {
+	                    fnsToCall[i++]();
+	                }
+	            };
+
+	            if (typeof process === 'object' && process.nextTick) {
+	                // nodejs
+	                return function (fn) {
+	                    enqueueFn(fn) && process.nextTick(callFns);
+	                };
+	            }
+
+	            if (global.setImmediate) {
+	                // ie10
+	                return function (fn) {
+	                    enqueueFn(fn) && global.setImmediate(callFns);
+	                };
+	            }
+
+	            if (global.postMessage && !global.opera) {
+	                // modern browsers
+	                var isPostMessageAsync = true;
+	                if (global.attachEvent) {
+	                    var checkAsync = function checkAsync() {
+	                        isPostMessageAsync = false;
+	                    };
+	                    global.attachEvent('onmessage', checkAsync);
+	                    global.postMessage('__checkAsync', '*');
+	                    global.detachEvent('onmessage', checkAsync);
+	                }
+
+	                if (isPostMessageAsync) {
+	                    var msg = '__modules' + +new Date(),
+	                        onMessage = function onMessage(e) {
+	                        if (e.data === msg) {
+	                            e.stopPropagation && e.stopPropagation();
+	                            callFns();
+	                        }
+	                    };
+
+	                    global.addEventListener ? global.addEventListener('message', onMessage, true) : global.attachEvent('onmessage', onMessage);
+
+	                    return function (fn) {
+	                        enqueueFn(fn) && global.postMessage(msg, '*');
+	                    };
+	                }
+	            }
+
+	            var doc = global.document;
+	            if ('onreadystatechange' in doc.createElement('script')) {
+	                // ie6-ie8
+	                var head = doc.getElementsByTagName('head')[0],
+	                    createScript = function createScript() {
+	                    var script = doc.createElement('script');
+	                    script.onreadystatechange = function () {
+	                        script.parentNode.removeChild(script);
+	                        script = script.onreadystatechange = null;
+	                        callFns();
+	                    };
+	                    head.appendChild(script);
+	                };
+
+	                return function (fn) {
+	                    enqueueFn(fn) && createScript();
+	                };
+	            }
+
+	            return function (fn) {
+	                // old browsers
+	                enqueueFn(fn) && setTimeout(callFns, 0);
+	            };
+	        })();
+
+	        window.modules = create();
+	    })(this);
+	}).call(window);
+
+	/**
+	 * Modules
+	 *
+	 * Copyright (c) 2013 Filatov Dmitry (dfilatov@yandex-team.ru)
+	 * Dual licensed under the MIT and GPL licenses:
+	 * http://www.opensource.org/licenses/mit-license.php
+	 * http://www.gnu.org/licenses/gpl.html
+	 *
+	 * @version 0.1.0
+	 */
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)))
+
+/***/ },
+/* 31 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 32 */,
+/* 33 */,
+/* 34 */,
+/* 35 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Создание и расширение неймспейса. Создание модулей tools, features, modules
+	     */
+
+	    (function (window, document, modules, undefined) {
+
+	        var
+	        /**
+	         * Функция расширения нэймспейса проекта
+	         *
+	         * @alias   BM.tools.extendApp
+	         * 
+	         * @param   {string}    ns_string    Строка отображающая глубину вложенности модуля
+	         * @return  {Object}                 Созданный модуль в нэймспейсе
+	         */
+	        extendApp = function extendApp(ns_string) {
+	            window.BM = window.BM || {};
+
+	            var parts = ns_string.split('.'),
+	                parent = window.BM,
+	                pl,
+	                i;
+	            // end of vars
+
+	            if (parts[0] === 'BM') {
+	                parts = parts.slice(1);
+	            }
+
+	            pl = parts.length;
+
+	            for (i = 0; i < pl; i++) {
+	                //create a property if it doesnt exist 
+	                if (typeof parent[parts[i]] === 'undefined') {
+	                    parent[parts[i]] = {};
+	                }
+
+	                parent = parent[parts[i]];
+	            }
+
+	            return parent;
+	        },
+	            moduleBM = function moduleBM(provide) {
+	            var
+	            /**
+	             * Bookmate root namespace
+	             * 
+	             * @namespace BM
+	             */
+	            BM = extendApp('BM');
+	            // end of vars
+
+	            provide(BM);
+	        },
+
+	        /**
+	         * Bookmate config namespace
+	         *
+	         * @alias       BM.config
+	         * @memberOf    BM
+	         * @namespace   BM.config
+	         */
+	        config = extendApp('BM.config'),
+	            moduleConfig = function moduleConfig(provide) {
+	            provide(config);
+	        },
+
+	        /**
+	         * Bookmate features namespace
+	         *
+	         * @alias       BM.features
+	         * @memberOf    BM
+	         * @namespace   BM.features
+	         */
+	        features = extendApp('BM.features'),
+	            moduleFeatures = function moduleFeatures(provide) {
+	            provide(features);
+	        },
+
+	        /**
+	         * Bookmate modules namespace
+	         *
+	         * @alias       BM.modules
+	         * @memberOf    BM
+	         * @namespace   BM.modules
+	         */
+	        modulesNs = extendApp('BM.modules'),
+	            moduleModules = function moduleModules(provide) {
+	            provide(modulesNs);
+	        },
+
+	        /**
+	         * Bookmate tools namespace
+	         *
+	         * @alias       BM.tools
+	         * @memberOf    BM
+	         * @namespace   BM.tools
+	         */
+	        tools = extendApp('BM.tools'),
+	            moduleTools = function moduleTools(provide) {
+	            provide(tools);
+	        };
+	        // end of vars
+
+	        tools.extendApp = extendApp;
+
+	        /**
+	         * Bookmate root namespace
+	         */
+	        modules.define('BM', // Module name
+	        [], // Dependies
+	        moduleBM // Module realization
+	        );
+
+	        /**
+	         * Bookmate tools namespace
+	         */
+	        modules.define('tools', // Module name
+	        [], // Dependies
+	        moduleTools // Module realization
+	        );
+
+	        /**
+	         * Bookmate features namespace
+	         */
+	        modules.define('features', // Module name
+	        [], // Dependies
+	        moduleFeatures // Module realization
+	        );
+
+	        /**
+	         * Bookmate modules namespace
+	         */
+	        modules.define('modules', // Module name
+	        [], // Dependies
+	        moduleModules // Module realization
+	        );
+
+	        /**
+	         * Bookmate configuratiuon namespace
+	         */
+	        modules.define('config', // Module name
+	        [], // Dependies
+	        moduleConfig // Module realization
+	        );
+	    })(this, this.document, this.modules);
+	}).call(window);
+	/**
+	 * @param       {Object}     window     Ссылка на window
+	 * @param       {Object}     document   Ссылка на document
+	 * @param       {Object}     modules    Ссылка на модульную систему YModules
+	 */
+
+/***/ },
+/* 36 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Первоначальные настройки AJAX jQuery
+	     */
+
+	    (function (window, document, $) {
+	        /**
+	         * Общие настройки AJAX
+	         *
+	         * @requires    jQuery
+	         */
+	        $.ajaxSetup({
+
+	            timeout: 30000,
+
+	            statusCode: {
+	                404: function _() {
+	                    var ajaxUrl = this.url,
+	                        data = {
+	                        event: 'ajax_error',
+	                        type: '404 ошибка',
+	                        ajaxUrl: ajaxUrl
+	                    };
+	                    // end of vars
+
+	                    /** log error */
+	                },
+
+	                401: function _() {
+	                    /** auth log error */
+	                },
+
+	                500: function _() {
+	                    var ajaxUrl = this.url,
+	                        data = {
+	                        event: 'ajax_error',
+	                        type: '500 ошибка',
+	                        ajaxUrl: ajaxUrl
+	                    };
+	                    // end of vars
+
+	                    /** log error */
+	                },
+
+	                503: function _() {
+	                    var ajaxUrl = this.url,
+	                        data = {
+	                        event: 'ajax_error',
+	                        type: '503 ошибка',
+	                        ajaxUrl: ajaxUrl
+	                    };
+	                    // end of vars
+
+	                    /** log error */
+	                },
+
+	                504: function _() {
+	                    var ajaxUrl = this.url,
+	                        data = {
+	                        event: 'ajax_error',
+	                        type: '504 ошибка',
+	                        ajaxUrl: ajaxUrl
+	                    };
+	                    // end of vars
+
+	                    /** log error */
+	                }
+	            },
+
+	            error: function error(jqXHR, textStatus, errorThrown) {
+	                var ajaxUrl = this.url,
+	                    data = {
+	                    event: 'ajax_error',
+	                    type: 'неизвестная ajax ошибка',
+	                    ajaxUrl: ajaxUrl
+	                };
+	                // end of vars
+
+	                if (jqXHR.statusText === 'error') {
+	                    /** log error */
+	                } else if (textStatus === 'timeout') {
+	                        return;
+	                    }
+	            }
+	        });
+	    })(this, this.document, this.jQuery);
+	}).call(window);
+	/**
+	 *
+	 * @param       {Object}     window     Ссылка на window
+	 * @param       {Object}     document   Ссылка на document
+	 * @param       {function}   $          Ссылка на jQuery
+	 */
+
+/***/ },
+/* 37 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	    /**
+	     * @fileOverview Конфигурация пришедшая с сервера
+	     */
+
+	    (function (window, document, BM, JSON) {
+	        var
+	        /**
+	         * @alias BM.config
+	         */
+	        config = BM.config = BM.config || {},
+	            mainConfig = document.body.getAttribute('data-config'),
+
+	        /**
+	         * Конфигурация с сервера
+	         *
+	         * @alias       BM.config.mainConfig
+	         * @requires    JSON
+	         * @type        {Object}
+	         */
+	        parsedMainConfig = JSON.parse(mainConfig) || {},
+
+	        /**
+	         * Конфигурация с сервера
+	         *
+	         * @alias       BM.config.updateMainConfig
+	         *
+	         * @param       {callback} [callback] Колбек, в который сработает после получения ответа от сервера
+	         * @type        {Object}
+	         */
+	        updateMainConfig = function updateMainConfig(callback) {
+	            var updateCallback = BM.tools.isFunction(callback) ? callback : function () {};
+	            // end of vars
+
+	            $.ajax({
+	                url: '/frontend_config',
+	                dataType: 'json',
+	                success: function success(response) {
+	                    try {
+	                        document.body.setAttribute('data-config', JSON.strigify(response));
+	                    } catch (e) {}
+
+	                    config.mainConfig = response;
+
+	                    updateCallback(response);
+	                },
+	                error: function error() {
+	                    updateCallback(false);
+	                }
+	            });
+	        };
+	        // end of vars
+
+	        config.updateMainConfig = updateMainConfig;
+	        config.mainConfig = parsedMainConfig;
+
+	        config.isDevelopment = function () {
+	            return config.mainConfig.environment === 'development';
+	        };
+
+	        config.isProduction = function () {
+	            return config.mainConfig.environment === 'production';
+	        };
+
+	        config.isStaging = function () {
+	            return config.mainConfig.environment === 'staging';
+	        };
+	    })(this, this.document, this.BM || {}, this.JSON);
+	}).call(window);
+	/**
+	 * @param       {Object}    window      Ссылка на window
+	 * @param       {Object}    document    Ссылка на document
+	 * @param       {Object}    BM          Ссылка на Bookmate namespace
+	 * @param       {Object}    JSON        Ссылка JSON библиотеку
+	 */
+
+/***/ },
+/* 38 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+	    (function (window, document, BM) {
+	        var features = BM.features = BM.features || {},
+	            browserDetection = (function () {
+	            var ua = navigator.userAgent,
+	                gecko = /Gecko\//.test(ua) ? ua.match(/; rv:1\.(\d+?)\.(\d)/) : 0,
+	                webkit = /AppleWebKit/.test(ua),
+	                safari = webkit && /Safari\//.test(ua),
+	                ie = 0 /*@cc_on + @_jscript_version * 10 % 10 @*/;
+	            // end of vars
+
+	            return {
+	                ie: ie >= 5 ? ie : 0,
+	                gecko: gecko ? '1.' + gecko.slice(1).join('.') : 0,
+	                firefox: gecko ? gecko[1] == 9 ? 3 : gecko[1] == 8 && gecko[2] > 0 ? 2 : 0 : 0,
+	                opera: window.opera && opera.version ? opera.version()[0] : 0,
+	                webkit: webkit ? 0 : 0, //ua.match(/AppleWebKit\/(\d+?\.\d+?\s)/)[1] : 0,
+	                safari: safari && /Version\//.test(ua) ? ua.match(/Version\/(\d{1})/)[1] : 0,
+	                chrome: safari && /Chrome\//.test(ua) ? ua.match(/Chrome\/(\d+?\.\d)/)[1] : 0
+	            };
+	        })();
+	        // end of vars
+
+	        /**
+	         * Модуль для опредления бразуера
+	         *
+	         * @memberOf    BM.features
+	         * @see         {@link module:browser}  Описание модуля browser
+	         */
+	        features.browser = {
+
+	            /**
+	             * Является ли клиент Internet Explorer'ом. Можно указать точную версию браузера.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isIE: function isIE(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.ie === ver : browserDetection.ie !== 0;
+	            },
+
+	            /**
+	             * Клиент работает на движке Gecko, или нет. Можно указать точную версию движка.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isGecko: function isGecko(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.gecko === ver : browserDetection.gecko !== 0;
+	            },
+
+	            /**
+	             * Является ли клиент Firefix'ом. Можно указать точную версию браузера.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isFirefox: function isFirefox(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.firefox === ver : browserDetection.firefox !== 0;
+	            },
+
+	            /**
+	             * Является ли клиент Opera. Можно указать точную версию браузера.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isOpera: function isOpera(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.opera === ver : browserDetection.opera !== 0;
+	            },
+
+	            /**
+	             * Клиент работает на движке WebKit, или нет. Можно указать точную версию движка.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isWebKit: function isWebKit(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.webkit === ver : browserDetection.webkit !== 0;
+	            },
+
+	            /**
+	             * Является ли клиент Safari. Можно указать точную версию браузера.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isSafari: function isSafari(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.safari === ver : browserDetection.safari !== 0;
+	            },
+
+	            /**
+	             * Является ли клиент Chrome'ом. Можно указать точную версию браузера.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @param       {Number}    [ver]
+	             * @return      {Boolean}
+	             */
+	            isChrome: function isChrome(ver) {
+	                return !BM.tools.isUndefined(ver) ? browserDetection.chrome === ver : browserDetection.chrome !== 0;
+	            },
+
+	            /**
+	             * Клиент работает на движке Blink, или нет.
+	             *
+	             * @memberof    module:browser#
+	             *
+	             * @return      {Boolean}
+	             */
+	            isBlink: function isBlink() {
+	                return features.browser.isChrome && browserDetection.chrome >= 28;
+	            }
+	        };
+	    })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+	/**
+	 * Модуль для опредления бразуера
+	 *
+	 * @module      browser
+	 *
+	 * @param    {Object}    window     Ссылка на window
+	 * @param    {Object}    document   Ссылка на document
+	 * @param    {Object}    BM         Ссылка на Bookmate namespace
+	 */
+
+/***/ },
+/* 39 */
+/***/ function(module, exports) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  (function (window, document, BM, undefined) {
+	    "use strict";
+
+	    var user = BM.user = BM.user || {},
+	        isUserPresent = function isUserPresent() {
+	      return BM.config.mainConfig.userInfo.hasOwnProperty('login');
+	    },
+	        getUserLogin = function getUserLogin() {
+	      if (!isUserPresent()) {
+	        return null;
+	      }
+	      return BM.config.mainConfig.userInfo.login;
+	    },
+	        avatarUrl = function avatarUrl() {
+	      if (!isUserPresent()) {
+	        return null;
+	      }
+	      return BM.config.mainConfig.userInfo.avatar_url;
+	    },
+	        api4Attributes = function api4Attributes() {
+	      if (!isUserPresent()) {
+	        return null;
+	      }
+	      return BM.config.mainConfig.userInfo;
+	    },
+	        getViewingUserLogin = function getViewingUserLogin() {
+	      var login = BM.config.mainConfig.viewingUser.login;
+	      if (BM.config && BM.config.mainConfig && login) {
+	        return window.location.href.indexOf(login) >= 0 ? login : undefined;
+	      }
+	    },
+	        _isSubscription = function _isSubscription(type) {
+	      var config = BM.config.mainConfig,
+	          result = false;
+
+	      if (config && config.userInfo && config.userInfo.subscriptions) {
+	        config.userInfo.subscriptions.forEach(function (subscription) {
+	          if (subscription['kind'] === type && subscription['expires_at'] * 1000 > new Date().getTime()) {
+	            result = true;
+	          }
+	        });
+	      }
+
+	      return result;
+	    },
+	        _isSubscriptionExisted = function _isSubscriptionExisted(type) {
+	      return type !== undefined ? getSubscription(type) !== null : false;
+	    },
+	        isSubscriptionDefaultExisted = function isSubscriptionDefaultExisted() {
+	      return _isSubscriptionExisted('default');
+	    },
+	        isSubscriptionPremiumExisted = function isSubscriptionPremiumExisted() {
+	      return _isSubscriptionExisted('premium');
+	    },
+	        getSubscription = function getSubscription(type) {
+	      var config = BM.config.mainConfig,
+	          result = null;
+
+	      if (config && config.userInfo && config.userInfo.subscriptions) {
+	        config.userInfo.subscriptions.forEach(function (subscription) {
+	          if (subscription.kind === type) {
+	            result = subscription;
+	          }
+	        });
+	      }
+	      return result;
+	    },
+	        getHighestSubscription = function getHighestSubscription() {
+	      var config = BM.config.mainConfig,
+	          levels = [],
+	          result = null;
+
+	      if (BM.user.isUserPresent() && config.userInfo && config.userInfo.subscriptions) {
+	        levels = $.map(config.userInfo.subscriptions, function (subscription) {
+	          if (subscription['expires_at'] * 1000 > new Date().getTime()) {
+	            return subscription['kind'];
+	          }
+	        });
+	      } else {
+	        return null;
+	      }
+
+	      if (levels.indexOf('premium') !== -1) {
+	        result = 'premium';
+	      } else if (levels.indexOf('default') !== -1) {
+	        result = 'default';
+	      } else {
+	        result = 'any';
+	      }
+
+	      return result;
+	    },
+	        isSubscriptionPremium = function isSubscriptionPremium() {
+	      return _isSubscription('premium') || _isSubscription('default') && _isSubscription('booster');
+	    },
+	        isSubscriptionBooster = function isSubscriptionBooster() {
+	      return _isSubscription('booster');
+	    },
+	        isSubscriptionDefault = function isSubscriptionDefault() {
+	      return _isSubscription('default') || _isSubscription('booster');
+	    },
+	        isSubscriptionDefaultIOS = function isSubscriptionDefaultIOS() {
+	      return _isSubscription('default-ios');
+	    },
+	        anySubscriptionPresent = function anySubscriptionPresent() {
+	      return isSubscriptionDefault() || isSubscriptionPremium();
+	    },
+	        isRecurrentDefaultActive = function isRecurrentDefaultActive() {
+	      return isRecurrentActive('default');
+	    },
+	        isRecurrentPremiumActive = function isRecurrentPremiumActive() {
+	      return isRecurrentActive('premium');
+	    },
+	        isRecurrentActive = function isRecurrentActive(kind) {
+	      var config = BM.config.mainConfig,
+	          result = false;
+
+	      if (config && config.userInfo && config.userInfo.subscriptions) {
+	        config.userInfo.subscriptions.forEach(function (level) {
+	          if (level['kind'] === kind && level['active_recurrent'] === true) {
+	            result = true;
+	          }
+	        });
+	      }
+	      return result;
+	    },
+	        getSubscriptionCoutryCode = function getSubscriptionCoutryCode() {
+	      var config = BM.config.mainConfig;
+	      if (config && config.userInfo) {
+	        return config.userInfo.subscriptionCountryCode;
+	      }
+	    },
+	        getLocale = function getLocale() {
+	      if (BM && BM.config && BM.config.mainConfig) {
+	        return BM.config.mainConfig.locale;
+	      }
+	    },
+	        isLocaleRu = function isLocaleRu() {
+	      return user.getLocale() === 'ru';
+	    },
+	        isLocaleEn = function isLocaleEn() {
+	      return user.getLocale() === 'en';
+	    };
+
+	    user.isUserPresent = isUserPresent;
+	    user.getLogin = getUserLogin;
+	    user.getViewingUserLogin = getViewingUserLogin;
+	    user.avatarUrl = avatarUrl;
+	    user.api4Attributes = api4Attributes;
+
+	    user.getSubscription = getSubscription;
+	    user.isSubscriptionPremium = isSubscriptionPremium;
+	    user.isSubscriptionBooster = isSubscriptionBooster;
+	    user.isSubscriptionDefault = isSubscriptionDefault;
+	    user.isSubscriptionDefaultExisted = isSubscriptionDefaultExisted;
+	    user.isSubscriptionPremiumExisted = isSubscriptionPremiumExisted;
+	    user.isSubscriptionDefaultIOS = isSubscriptionDefaultIOS;
+	    user.isRecurrentDefaultActive = isRecurrentDefaultActive;
+	    user.isRecurrentPremiumActive = isRecurrentPremiumActive;
+	    user.getHighestSubscription = getHighestSubscription;
+	    user.anySubscriptionPresent = anySubscriptionPresent;
+
+	    user.getSubscriptionCoutryCode = getSubscriptionCoutryCode;
+	    user.getLocale = getLocale;
+	    user.isLocaleRu = isLocaleRu;
+	    user.isLocaleEn = isLocaleEn;
+	  })(this, this.document, this.BM = this.BM || {});
+	}).call(window);
+
+/***/ },
+/* 40 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*** IMPORTS FROM imports-loader ***/
+	'use strict';
+
+	(function () {
+
+	  function requireAll(r) {
+	    r.keys().forEach(r);
+	  }
+
+	  __webpack_require__(22);
+	  __webpack_require__(23);
+
+	  window.$ = __webpack_require__(1);
+	  window.jQuery = __webpack_require__(1);
+
+	  __webpack_require__(25);
+	  __webpack_require__(27);
+	  __webpack_require__(4);
+	  __webpack_require__(30);
+
+	  __webpack_require__(35);
+
+	  __webpack_require__(36);
+	  __webpack_require__(37);
+
+	  requireAll(__webpack_require__(5));
+
+	  __webpack_require__(38);
+	  __webpack_require__(39);
+	}).call(window);
+
+/***/ }
+/******/ ]);
