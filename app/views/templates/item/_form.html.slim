@@ -26,7 +26,6 @@ ruby:
         .bm-item-form-order-amount-item-amount role="bm-item-form-order-amount-item-amount"
           | #{amount[:amount]} грамм
         .bm-item-form-order-amount-item-price role="bm-item-form-order-amount-item-price" data-text=" рублей"
-          | 500 рублей
 
   .bm-item-form-order-step-header
     | 2. Выберите помол
@@ -40,19 +39,9 @@ ruby:
 
   .bm-item-form-order-button-add-wrapper
     .bm-item-form-order-button-add role="bm-item-form-order-button-add" data-text-template="добавить ${amount} грамм, ${grind}"
-      | добавить 250 грамм в зерне
 
-  .bm-item-form-order-selected-items-wrapper
-    .bm-item-form-order-selected-item
-      .bm-item-form-order-selected-item-content
-        .bm-item-form-order-selected-item-text
-          | 1 упаковка «Никарагуа» 250&nbsp;грамм, в&nbsp;зерне
-          span.bm-item-form-order-selected-item-text-price
-            |, 150 рублей
-        .buttons-wrapper
-          .button.m-plus
-          .button.m-remove
-          .button.m-minus
-      .bm-item-form-order-selected-item-aside
-        .bm-item-form-order-selected-item-aside-label
-          | 150 рублей
+  .bm-item-form-order-added-items-wrapper role="bm-item-form-order-added-items"
+
+  .bm-item-form-order-button-wrapper.m-hidden role="bm-item-form-order-order-button-wrapper"
+    button.bm-button-default
+      | Оформить заказ

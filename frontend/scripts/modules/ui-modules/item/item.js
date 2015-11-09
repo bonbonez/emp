@@ -9,6 +9,8 @@
       'ItemFormOrder',
       'ItemSpecsItem',
       'ItemBrewingMethodItem',
+      'CartActions',
+      'StateActions'
     ],
     function(
       provide,
@@ -17,7 +19,8 @@
       ItemModel,
       FormOrder,
       ItemSpecsItem,
-      ItemBrewingMethodItem
+      ItemBrewingMethodItem,
+      CartActions
     ) {
 
     var Item = extend(BaseView),
@@ -34,22 +37,22 @@
           return;
         }
 
-        this._config           = BM.tools.mixin({}, config);
-        this._item             = new ItemModel({ data: this._config.data });
+        this._config            = BM.tools.mixin({}, config);
+        this._item              = new ItemModel({ data: this._config.data });
 
-        this._formOrder        = null;
-        this.$elemFormOrder    = this.$elem.find('@bm-item-form-order');
+        this._formOrder         = null;
+        this.$elemFormOrder     = this.$elem.find('@bm-item-form-order');
 
-        this.$name             = this.el.find('@bm-item-name');
-        this.$descriptionShort = this.el.find('@bm-item-description-short');
-        this.$rating           = this.el.find('@bm-item-rating');
-        this.$price            = this.el.find('@bm-item-price');
-        this.$specsWrapper     = this.el.find('@bm-item-specs');
-        this.$description      = this.el.find('@bm-item-description');
-        this.$imageWrapper     = this.el.find('@bm-item-image-wrapper');
-        this.$image            = this.el.find('@bm-item-image');
-        this.$imagePlantation  = this.el.find('@bm-item-image-plantation');
-        this.$methodsWrapper   = this.el.find('@bm-item-methods-wrapper');
+        this.$name              = this.el.find('@bm-item-name');
+        this.$descriptionShort  = this.el.find('@bm-item-description-short');
+        this.$rating            = this.el.find('@bm-item-rating');
+        this.$price             = this.el.find('@bm-item-price');
+        this.$specsWrapper      = this.el.find('@bm-item-specs');
+        this.$description       = this.el.find('@bm-item-description');
+        this.$imageWrapper      = this.el.find('@bm-item-image-wrapper');
+        this.$image             = this.el.find('@bm-item-image');
+        this.$imagePlantation   = this.el.find('@bm-item-image-plantation');
+        this.$methodsWrapper    = this.el.find('@bm-item-methods-wrapper');
 
 
         this._timeoutZoom      = null;
@@ -181,10 +184,18 @@
             this._formOrder = new FormOrder({
               element: this.$elemFormOrder
             });
-            this._formOrder.on('add', function(obj) {
-              console.log(obj);
+            this._formOrder.on('add', (obj) => {
+              this._addItemToCart(obj);
             });
           }
+      },
+
+      _addItemToCart(data) {
+        CartActions.addItem(
+          this._config.data.id,
+          data.amount,
+          data.grind
+        );
       },
 
       _updateFormOrder : function() {

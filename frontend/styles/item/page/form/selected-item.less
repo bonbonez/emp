@@ -1,13 +1,8 @@
-.bm-item-form-order-selected-items-wrapper {
+.bm-item-form-order-added-items-wrapper {
   width: 100%;
-
-  .bm-item-form-order-selected-item:not(:last-of-type) {
-    border-top: 0;
-  }
 }
 
-.bm-item-form-order-selected-item {
-  border-bottom: 1px solid #f1f1f1;
+.bm-item-form-order-added-item {
   border-top: 1px solid #f1f1f1;
   box-sizing: border-box;
   height: 69px;
@@ -15,15 +10,20 @@
   padding-right: 140px;
   position: relative;
   width: 100%;
+
+  &:last-of-type {
+    border-bottom: 1px solid #f1f1f1;
+  }
 }
 
-.bm-item-form-order-selected-item-content {
+.bm-item-form-order-added-item-content {
   box-sizing: border-box;
   padding-left: 50px;
   white-space: nowrap;
   width: 100%;
 
   .buttons-wrapper {
+    .user-select(none);
     .vertical-align-middle();
     display: inline-block;
     white-space: nowrap;
@@ -102,7 +102,7 @@
   }
 }
 
-.bm-item-form-order-selected-item-text {
+.bm-item-form-order-added-item-text {
   .bm-font-pt(18px, 22px, normal);
   .vertical-align-middle();
   display: inline-block;
@@ -112,11 +112,11 @@
   max-width: 346px;
 }
 
-.bm-item-form-order-selected-item-text-price {
+.bm-item-form-order-added-item-text-price {
   display: none;
 }
 
-.bm-item-form-order-selected-item-aside {
+.bm-item-form-order-added-item-aside {
   border-left: 1px solid #f1f1f1;
   box-sizing: border-box;
   height: 69px;
@@ -126,23 +126,32 @@
   top: 0;
   width: 140px;
 }
-.bm-item-form-order-selected-item-aside-label {
+.bm-item-form-order-added-item-aside-label {
   .bm-font-pt(18px, 18px, normal);
   .vertical-align-middle();
   color: #000000;
 }
 
+.bm-item-form-order-button-wrapper {
+  padding-top: 30px;
+  text-align: center;
+
+  &.m-hidden {
+    display: none;
+  }
+}
+
 @media screen and (max-width: @breakpoint-mobile) {
-  .bm-item-form-order-selected-item {
+  .bm-item-form-order-added-item {
     height: auto;
     padding: 11px 0 14px 0;
   }
 
-  .bm-item-form-order-selected-item-aside {
+  .bm-item-form-order-added-item-aside {
     display: none
   }
 
-  .bm-item-form-order-selected-item-content {
+  .bm-item-form-order-added-item-content {
     padding-left: 20px;
     padding-right: 20px;
 
@@ -153,7 +162,7 @@
     }
   }
 
-  .bm-item-form-order-selected-item-text {
+  .bm-item-form-order-added-item-text {
     display: block;
     margin-bottom: 10px;
     margin-left: auto;
@@ -161,7 +170,7 @@
     text-align: center;
   }
 
-  .bm-item-form-order-selected-item-text-price {
+  .bm-item-form-order-added-item-text-price {
     display: inline;
   }
 }

@@ -6,14 +6,17 @@
       'extend',
       'popupBaseClass',
       'dynamicContent',
-      'Item'
+      'Item',
+
+      'StateActions'
     ],
     function(
       provide,
       extend,
       BasePopup,
       DynamicContent,
-      Item
+      Item,
+      StateActions
       ) {
 
     var PopupItem = extend(BasePopup),
@@ -71,12 +74,14 @@
         }
       },
 
-      show : function() {
+      show() {
+        StateActions.setViewingItem(this._config.data);
         $super.show.apply(this, arguments);
-        /*setTimeout(function() {
-          this._dynamicContent.showStep('content');
-        }.bind(this), 200);*/
-        //this._dynamicContent.showStep('content');
+      },
+
+      hide() {
+        StateActions.setViewingItem(null);
+        $super.hide.apply(this, arguments);
       },
 
       _getTemplateName : function() {

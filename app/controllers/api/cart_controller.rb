@@ -1,6 +1,4 @@
-class Api::CartController < ActionController::Base
-
-  include CartHelper
+class Api::CartController < Api::ApiController
 
   def get_cart
     cart = get_user_cart
@@ -27,10 +25,18 @@ class Api::CartController < ActionController::Base
     render_cart
   end
 
+  def delete_item
+    cart = get_user_cart
+    render status: 400 if !cart
+    render status: 400 if !params[:item_id] || !params[:weight] || !params[:grind]
+
+    cart.delete_item(params[:item_id], params[:weight], params[:grind])
+    render_cart
+  end
+
   def render_cart
     cart = get_user_cart
     render json: cart.to_json(include: {order_items: {include: :item}})
   end
-
 
 end

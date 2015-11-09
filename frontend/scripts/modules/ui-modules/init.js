@@ -2,7 +2,10 @@
 
   modules.define('beforeUIModulesInit', [
     'InitGlobalStylesModifiers',
-    'InitEventDispatcher'
+    'InitEventDispatcher',
+    'ReactSetup',
+    'CartInit',
+    'ClientDataInit'
   ], function( provide ){
 
     provide();
@@ -11,7 +14,8 @@
   modules.define('ui-modules', [
     'beforeUIModulesInit',
     'initTransformOriginDependentElements',
-    'SideMenuInit'
+    'SideMenuInit',
+    'HeaderInit'
     /*'initFixedHeader'
     'beforeUIModulesInit',
     'initCartHeader',

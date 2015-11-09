@@ -4,12 +4,16 @@
     'ItemFormOrder',
     [
       'extend',
-      'baseView'
+      'baseView',
+      'ItemAddedItems',
+      'CartStore'
     ],
     function(
       provide,
       extend,
-      BaseView
+      BaseView,
+      ItemAddedItems,
+      CartStore
     ) {
 
     var ItemFormOrder = extend(BaseView),
@@ -29,13 +33,17 @@
         this._amount = null;
         this._grind  = null;
 
-        this.$amountItems = this.el.find('@bm-item-form-order-amount-item');
-        this.$grindItems  = this.el.find('@bm-item-form-order-grind-item');
-        this.$buttonAdd   = this.el.find('@bm-item-form-order-button-add');
+        this.$amountItems        = this.el.find('@bm-item-form-order-amount-item');
+        this.$grindItems         = this.el.find('@bm-item-form-order-grind-item');
+        this.$buttonAdd          = this.el.find('@bm-item-form-order-button-add');
+        this.$addedItemsWrapper  = this.el.find('@bm-item-form-order-added-items');
+        this.$orderButtonWrapper = this.el.find('@bm-item-form-order-order-button-wrapper');
 
         this._updateAmount();
         this._updateGrind();
         this._updateButton();
+
+        this._renderAddedItems();
 
         this._bindEvents();
       },
@@ -52,7 +60,11 @@
         }.bind(this));
         this.$grindItems.on(clickName, function(event) {
           this._onGrindItemClick(event);
-        }.bind(this))
+        }.bind(this));
+
+        CartStore.addChangeListener(function() {
+          this._onCartStoreUpdate();
+        }.bind(this));
       },
 
       _onButtonAddClick : function() {
@@ -85,6 +97,10 @@
 
         this._updateButton();
         this._updateGrind();
+      },
+
+      _onCartStoreUpdate : function() {
+        this._updateButtonOrder();
       },
 
       setPrices : function(pricesArr) {
@@ -130,6 +146,25 @@
         textTemplate = textTemplate.replace('${grind}', grind.label_full.toLowerCase());
 
         this.$buttonAdd.html(textTemplate);
+      },
+
+      _updateButtonOrder : function() {
+        var cart = CartStore.getCart();
+
+        if (cart && _.isArray(cart.order_items) && cart.order_items.length > 0) {
+          this.$orderButtonWrapper.removeClass('m-hidden');
+        } else {
+          this.$orderButtonWrapper.addClass('m-hidden');
+        }
+      },
+
+      _renderAddedItems() {
+        React.render(
+          <div>
+            <ItemAddedItems />
+          </div>,
+          this.$addedItemsWrapper.get(0)
+        );
       },
 
       _notifyAdd : function() {

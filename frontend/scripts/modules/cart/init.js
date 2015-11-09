@@ -1,3 +1,4 @@
+/*
 (function(window, modules, $, radio){
 
     modules.define('pageCartInit', ['pageCartItem', 'CartProcessor'], function(provide, CartItem, cart) {
@@ -18,4 +19,4 @@
         provide();
     });
 
-}(this, this.modules, this.jQuery, this.radio));
+}(this, this.modules, this.jQuery, this.radio));*/

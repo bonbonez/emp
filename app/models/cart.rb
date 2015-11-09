@@ -14,6 +14,7 @@ class Cart < ActiveRecord::Base
       else
         item = OrderItem.new(weight: weight, grind: grind)
         item.item = Item.find(item_id)
+        item.quantity = 1
         item.save
         order_items.push(item)
         save

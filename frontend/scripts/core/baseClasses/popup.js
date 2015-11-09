@@ -278,7 +278,7 @@
       },
 
       _onOverlayClick : function(event) {
-        if (this._backgroundClickHide) {
+        if (this._backgroundClickHide && $(event.target).hasClass('bm-popup-content-wrapper')) {
           this.hide();
 
           if (this._stopHistoryOnClose) {
@@ -302,7 +302,7 @@
       },
 
       _onContentClick : function(event) {
-        event.stopPropagation();
+        //event.stopPropagation();
       },
 
       _onButtonCloseClick : function(event) {

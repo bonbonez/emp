@@ -84,6 +84,17 @@ module ApplicationHelper
     brewing_methods.find{|m|m[:name] == kind}
   end
 
+  def grind_types
+    ret = [
+      grind_meta(:extrafine),
+      grind_meta(:fine),
+      grind_meta(:medium),
+      grind_meta(:coarse),
+      grind_meta(:beans)
+    ]
+    ret
+  end
+
   def grind_meta(kind)
     ret = {}
     if kind == :extrafine

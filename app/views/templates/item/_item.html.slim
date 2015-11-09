@@ -44,6 +44,10 @@ script type="text/template" id="bm-item-template"
       .bm-page-item-grid-item
         = render partial: "templates/item/form"
 
+    .bm-page-item-grind.m-single
+      .bm-page-item-grind-item
+        .bm-page-item-added-items-wrapper role="bm-item-added-items-wrapper"
+
 
           /= render partial: 'templates/item/specs/all'
         /button.bm-button-default.bm-page-item-button-pick-coffee ="Найти кофе по параметрам"

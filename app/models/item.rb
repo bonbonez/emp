@@ -94,19 +94,20 @@ class Item < ActiveRecord::Base
 
   def api_attributes
     rtn = {
+      id:                self.id,
       name:              self.name,
       methods:           self.methods,
       methodsWithLabels: self.methods_with_labels,
       price:             [
         {
           amount: 250,
-          value:  self.price
+          value:  self.get_price_250
         }, {
           amount: 500,
-          value:  get_price_500
+          value:  self.get_price_500
         }, {
           amount: 1000,
-          value:  get_price_1000
+          value:  self.get_price_1000
         }
       ],
       isPublished:       self.is_published,
