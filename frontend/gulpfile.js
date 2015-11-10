@@ -86,6 +86,7 @@ var paths = {
     'scripts/core/vendor/react-dom-0.14.2.js',
     'scripts/core/vendor/mcfly.js',
     'scripts/core/vendor/plurals.js',
+    'scripts/core/vendor/localforage.min.js',
 
     'scripts/core/namespace/*.js',
     'scripts/core/configs/*.js',

@@ -39,8 +39,10 @@
         },
 
         _onCartStoreChange() {
-          let cart = CartStore.getCart();
-          this._setOrderHeaderVisible(cart && _.isArray(cart.order_items) && cart.order_items.length > 0);
+          if (BM.config.mainConfig.show_header_order) {
+            let cart = CartStore.getCart();
+            this._setOrderHeaderVisible(cart && _.isArray(cart.order_items) && cart.order_items.length > 0);
+          }
         },
 
         _setOrderHeaderVisible(bool) {

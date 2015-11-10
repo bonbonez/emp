@@ -92,6 +92,11 @@ class Cart < ActiveRecord::Base
     end
   end
 
+  def is_empty?
+    empty = self.order_items.count == 0
+    empty
+  end
+
   def data_dummy
     return {
       "items" => [],

@@ -7,26 +7,11 @@
 
   BM.tools.mixin(BM.helper.link, {
 
-    book: function (bookUuid) {
-      return '/books/' + bookUuid;
+    root: function() {
+      return '/';
     },
 
-    quote: function (quoteUuid, userLogin) {
-      if (BM.tools.isUndefined(userLogin)) {
-        userLogin = BM.user.getLogin();
-      }
-      return '/' + userLogin + '/quotes/' + quoteUuid;
-    },
-
-    userQuotes: function (userLogin) {
-      return '/' + userLogin + '/quotes';
-    },
-
-    libraryCard : function(login, uuid) {
-      return '/' + login + '/' + uuid;
-    },
-
-    toAbsolute: function (link) {
+    toAbsolute: function(link) {
       if (!BM.tools.isString(link)) {
         return null;
       }

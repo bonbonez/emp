@@ -1,201 +1,3 @@
-var $__cart_47_init_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "cart/init.js";
-  return {};
-})();
-
-var $__cart_47_item_46_js__ = (function() {
-  "use strict";
-  var __moduleName = "cart/item.js";
-  (function(window, modules, $) {
-    modules.define('pageCartItem', ['basePubSub', 'extend'], function(provide, PubSub, extend) {
-      var CartItem = extend(PubSub),
-          $class = CartItem,
-          $super = $class.superclass;
-      BM.tools.mixin($class.prototype, {
-        initialize: function(config) {
-          $super.initialize.apply(this, arguments);
-          this.$elem = config.element;
-          this.$elemButtonRemove = this.$elem.find('@b-cart-item-button-remove');
-          this.$elemButtonMinus = this.$elem.find('@b-cart-item-button-minus');
-          this.$elemButtonPlus = this.$elem.find('@b-cart-item-button-plus');
-          this.$elemAmount = this.$elem.find('@b-cart-item-amount');
-          this.$elemPrice = this.$elem.find('@b-cart-item-price');
-          this.$elemPriceTotal = this.$elem.find('@b-cart-item-price-total');
-          this._config = {item: {id: null}};
-          this._parseConfig();
-          this._updateLayout();
-          this._setupEvents();
-        },
-        _parseConfig: function() {
-          try {
-            this._config = JSON.parse(this.$elem.attr('data-config'));
-          } catch (e) {}
-        },
-        _setupEvents: function() {
-          var me = this;
-          this.$elemButtonRemove.on('click', function() {
-            me._onButtonCloseClick();
-          });
-          this.$elemButtonMinus.on('click', function() {
-            me._onButtonMinusClick();
-          });
-          this.$elemButtonPlus.on('click', function() {
-            me._onButtonPlusClick();
-          });
-        },
-        _onButtonCloseClick: function() {
-          var me = this;
-          this._setStateWait(true);
-          $.ajax({
-            url: '/api/cart/item/remove',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestItemRemoveSuccess(data);
-              }, 300);
-            },
-            error: function() {
-              setTimeout(function() {
-                me._onRequestAddToCartError();
-              }, 300);
-            }
-          });
-        },
-        _onButtonMinusClick: function() {
-          if (this._getCurrentAmount() > 1) {
-            this._sendRequestDecItem();
-          }
-        },
-        _sendRequestDecItem: function() {
-          var me = this;
-          $.ajax({
-            url: '/api/cart/item/dec',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestDecItemSuccess();
-                radio('b-cart-update').broadcast(data);
-              }, 300);
-            },
-            error: function() {
-              me._onRequestDecItemError();
-            }
-          });
-        },
-        _onRequestDecItemSuccess: function() {
-          this._setStateWait(false);
-          this._decItemAmount();
-          this._updatePrice();
-        },
-        _onRequestDecItemError: function() {
-          this._setStateWait(false);
-        },
-        _onButtonPlusClick: function() {
-          this._sendRequestIncItem();
-        },
-        _sendRequestIncItem: function() {
-          var me = this;
-          $.ajax({
-            url: '/api/cart/item/inc',
-            type: 'post',
-            dataType: 'json',
-            data: {item: {id: this._config.item.id}},
-            success: function(data) {
-              setTimeout(function() {
-                me._onRequestIncItemSuccess(data);
-              }, 300);
-            },
-            error: function() {
-              me._onRequestIncItemError();
-            }
-          });
-        },
-        _onRequestIncItemSuccess: function(data) {
-          this._setStateWait(false);
-          this._incItemAmount();
-          this._updatePrice();
-          radio('b-cart-update').broadcast(data);
-        },
-        _onRequestIncItemError: function() {
-          this._setStateWait(false);
-        },
-        _onRequestItemRemoveSuccess: function(data) {
-          var me = this;
-          setTimeout(function() {
-            me.hide();
-            radio('b-cart-update').broadcast(data);
-          }.bind(this), 300);
-        },
-        _onRequestItemRemoveError: function() {
-          setTimeout(function() {
-            this._setStateWait(false);
-          }.bind(this), 300);
-        },
-        _slideOut: function(callback) {},
-        hide: function() {
-          this.$elem.attr('data-visible', 'false');
-        },
-        _updateLayout: function() {},
-        _setStateWait: function(bool) {
-          if (bool) {
-            this.$elem.attr('data-wait', 'true');
-          } else {
-            this.$elem.attr('data-wait', 'fasle');
-          }
-        },
-        _getCurrentAmount: function() {
-          var amount = this.$elemAmount.html();
-          amount = parseInt(amount, 10);
-          return amount;
-        },
-        _incItemAmount: function() {
-          var amount = this._getCurrentAmount();
-          this._showButtonMinus();
-          return this.$elemAmount.html(amount + 1);
-        },
-        _decItemAmount: function() {
-          var amount = this._getCurrentAmount();
-          if (amount <= 2) {
-            this._hideButtonMinus();
-          }
-          return this.$elemAmount.html(amount - 1);
-        },
-        _showButtonMinus: function() {
-          this.$elemButtonMinus.attr('data-visible', 'true');
-        },
-        _hideButtonMinus: function() {
-          this.$elemButtonMinus.attr('data-visible', 'false');
-        },
-        _updatePrice: function() {
-          var amount = this._getCurrentAmount();
-          if (amount > 1) {
-            this._showPriceTotal();
-          } else {
-            this._hidePriceTotal();
-          }
-        },
-        _showPriceTotal: function() {
-          this.$elemPriceTotal.html(this._getCurrentAmount() * this._config.item.price);
-          this.$elemPrice.attr('data-total-visible', 'true');
-        },
-        _hidePriceTotal: function() {
-          this.$elemPrice.attr('data-total-visible', 'false');
-        },
-        destroy: function() {
-          $super.destroy.apply(this, arguments);
-        }
-      });
-      provide(CartItem);
-    });
-  }(this, this.modules, this.jQuery));
-  return {};
-}).call(Reflect.global);
-
 var $__catalogue_47_init_46_js__ = (function() {
   "use strict";
   var __moduleName = "catalogue/init.js";
@@ -535,6 +337,204 @@ var $__catalogue_47_menu_46_js__ = (function() {
       provide(CatalogueMenu);
     });
   }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
+var $__cart_47_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "cart/init.js";
+  return {};
+})();
+
+var $__cart_47_item_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "cart/item.js";
+  (function(window, modules, $) {
+    modules.define('pageCartItem', ['basePubSub', 'extend'], function(provide, PubSub, extend) {
+      var CartItem = extend(PubSub),
+          $class = CartItem,
+          $super = $class.superclass;
+      BM.tools.mixin($class.prototype, {
+        initialize: function(config) {
+          $super.initialize.apply(this, arguments);
+          this.$elem = config.element;
+          this.$elemButtonRemove = this.$elem.find('@b-cart-item-button-remove');
+          this.$elemButtonMinus = this.$elem.find('@b-cart-item-button-minus');
+          this.$elemButtonPlus = this.$elem.find('@b-cart-item-button-plus');
+          this.$elemAmount = this.$elem.find('@b-cart-item-amount');
+          this.$elemPrice = this.$elem.find('@b-cart-item-price');
+          this.$elemPriceTotal = this.$elem.find('@b-cart-item-price-total');
+          this._config = {item: {id: null}};
+          this._parseConfig();
+          this._updateLayout();
+          this._setupEvents();
+        },
+        _parseConfig: function() {
+          try {
+            this._config = JSON.parse(this.$elem.attr('data-config'));
+          } catch (e) {}
+        },
+        _setupEvents: function() {
+          var me = this;
+          this.$elemButtonRemove.on('click', function() {
+            me._onButtonCloseClick();
+          });
+          this.$elemButtonMinus.on('click', function() {
+            me._onButtonMinusClick();
+          });
+          this.$elemButtonPlus.on('click', function() {
+            me._onButtonPlusClick();
+          });
+        },
+        _onButtonCloseClick: function() {
+          var me = this;
+          this._setStateWait(true);
+          $.ajax({
+            url: '/api/cart/item/remove',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestItemRemoveSuccess(data);
+              }, 300);
+            },
+            error: function() {
+              setTimeout(function() {
+                me._onRequestAddToCartError();
+              }, 300);
+            }
+          });
+        },
+        _onButtonMinusClick: function() {
+          if (this._getCurrentAmount() > 1) {
+            this._sendRequestDecItem();
+          }
+        },
+        _sendRequestDecItem: function() {
+          var me = this;
+          $.ajax({
+            url: '/api/cart/item/dec',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestDecItemSuccess();
+                radio('b-cart-update').broadcast(data);
+              }, 300);
+            },
+            error: function() {
+              me._onRequestDecItemError();
+            }
+          });
+        },
+        _onRequestDecItemSuccess: function() {
+          this._setStateWait(false);
+          this._decItemAmount();
+          this._updatePrice();
+        },
+        _onRequestDecItemError: function() {
+          this._setStateWait(false);
+        },
+        _onButtonPlusClick: function() {
+          this._sendRequestIncItem();
+        },
+        _sendRequestIncItem: function() {
+          var me = this;
+          $.ajax({
+            url: '/api/cart/item/inc',
+            type: 'post',
+            dataType: 'json',
+            data: {item: {id: this._config.item.id}},
+            success: function(data) {
+              setTimeout(function() {
+                me._onRequestIncItemSuccess(data);
+              }, 300);
+            },
+            error: function() {
+              me._onRequestIncItemError();
+            }
+          });
+        },
+        _onRequestIncItemSuccess: function(data) {
+          this._setStateWait(false);
+          this._incItemAmount();
+          this._updatePrice();
+          radio('b-cart-update').broadcast(data);
+        },
+        _onRequestIncItemError: function() {
+          this._setStateWait(false);
+        },
+        _onRequestItemRemoveSuccess: function(data) {
+          var me = this;
+          setTimeout(function() {
+            me.hide();
+            radio('b-cart-update').broadcast(data);
+          }.bind(this), 300);
+        },
+        _onRequestItemRemoveError: function() {
+          setTimeout(function() {
+            this._setStateWait(false);
+          }.bind(this), 300);
+        },
+        _slideOut: function(callback) {},
+        hide: function() {
+          this.$elem.attr('data-visible', 'false');
+        },
+        _updateLayout: function() {},
+        _setStateWait: function(bool) {
+          if (bool) {
+            this.$elem.attr('data-wait', 'true');
+          } else {
+            this.$elem.attr('data-wait', 'fasle');
+          }
+        },
+        _getCurrentAmount: function() {
+          var amount = this.$elemAmount.html();
+          amount = parseInt(amount, 10);
+          return amount;
+        },
+        _incItemAmount: function() {
+          var amount = this._getCurrentAmount();
+          this._showButtonMinus();
+          return this.$elemAmount.html(amount + 1);
+        },
+        _decItemAmount: function() {
+          var amount = this._getCurrentAmount();
+          if (amount <= 2) {
+            this._hideButtonMinus();
+          }
+          return this.$elemAmount.html(amount - 1);
+        },
+        _showButtonMinus: function() {
+          this.$elemButtonMinus.attr('data-visible', 'true');
+        },
+        _hideButtonMinus: function() {
+          this.$elemButtonMinus.attr('data-visible', 'false');
+        },
+        _updatePrice: function() {
+          var amount = this._getCurrentAmount();
+          if (amount > 1) {
+            this._showPriceTotal();
+          } else {
+            this._hidePriceTotal();
+          }
+        },
+        _showPriceTotal: function() {
+          this.$elemPriceTotal.html(this._getCurrentAmount() * this._config.item.price);
+          this.$elemPrice.attr('data-total-visible', 'true');
+        },
+        _hidePriceTotal: function() {
+          this.$elemPrice.attr('data-total-visible', 'false');
+        },
+        destroy: function() {
+          $super.destroy.apply(this, arguments);
+        }
+      });
+      provide(CartItem);
+    });
+  }(this, this.modules, this.jQuery));
   return {};
 }).call(Reflect.global);
 
@@ -887,6 +887,47 @@ var $__mvc_47_item_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__order_47_order_45_init_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "order/order-init.js";
+  (function(window, modules, $, BM) {
+    modules.define('OrderInit', ['extend', 'baseView', 'PageOrder', 'CartStore'], function(provide, extend, BaseView, PageOrder, CartStore) {
+      var OrderInit = extend(BaseView),
+          $class = OrderInit,
+          $super = $class.superclass,
+          $window = $(window);
+      BM.tools.mixin($class.prototype, {
+        initialize: function() {
+          $super.initialize.apply(this, arguments);
+          if (!this.el) {
+            return;
+          }
+          this._renderReact();
+          this._bindEvents();
+        },
+        _bindEvents: function() {
+          var $__1 = this;
+          CartStore.addChangeListener(function() {
+            $__1._onCartStoreChange();
+          });
+        },
+        _onCartStoreChange: function() {
+          var cart = CartStore.getCart();
+          if (cart && _.isArray(cart.order_items) && cart.order_items.length === 0) {
+            window.location.href = BM.helper.link.root();
+          }
+        },
+        _renderReact: function() {
+          React.render(React.createElement(PageOrder, null), this.el.get(0));
+        }
+      });
+      new OrderInit({element: $(document.body).find('@bm-page-order-wrapper')});
+      provide(OrderInit);
+    });
+  }(this, this.modules, this.jQuery, this.BM));
+  return {};
+}).call(Reflect.global);
+
 var $__react_47_flux_46_js__ = (function() {
   "use strict";
   var __moduleName = "react/flux.js";
@@ -963,6 +1004,33 @@ var $__react_47_actions_47_CartActions_46_js__ = (function() {
         }
       });
       provide(CartActions);
+    });
+  }(this, this.modules));
+  return {};
+}).call(Reflect.global);
+
+var $__react_47_actions_47_OrderActions_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/actions/OrderActions.js";
+  (function(window, modules) {
+    var OrderActions;
+    modules.define('OrderActions', ['Flux', 'OrderConstants'], function(provide, Flux, OrderConstants) {
+      if (OrderActions) {
+        provide(OrderActions);
+        return;
+      }
+      OrderActions = Flux.createActions({
+        setSummaryViewMode: function(mode) {
+          return {
+            actionType: OrderConstants.SETSUMMARYVIEWMODE,
+            mode: mode
+          };
+        },
+        toggleSummaryViewMode: function() {
+          return {actionType: OrderConstants.TOGGLESUMMARYVIEWMODE};
+        }
+      });
+      provide(OrderActions);
     });
   }(this, this.modules));
   return {};
@@ -1089,6 +1157,45 @@ var $__react_47_components_47_AddedItems_46_js__ = (function() {
   return {};
 }).call(Reflect.global);
 
+var $__react_47_components_47_PageOrder_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/components/PageOrder.js";
+  (function(window, modules, $) {
+    modules.define('PageOrder', ['CartActions', 'CartStore', 'OrderActions', 'OrderStore', 'OrderConstants', 'OrderSummarySimple', 'OrderSummaryTable'], function(provide, CartActions, CartStore, OrderActions, OrderStore, OrderConstants, OrderSummarySimple, OrderSummaryTable) {
+      function getPageOrderInitialState() {
+        return {
+          cart: CartStore.getCart(),
+          summaryView: OrderStore.summaryView()
+        };
+      }
+      var PageOrder = React.createClass({
+        displayName: "PageOrder",
+        mixins: [CartStore.mixin, OrderStore.mixin],
+        getInitialState: function() {
+          return getPageOrderInitialState();
+        },
+        storeDidChange: function() {
+          this.setState(getPageOrderInitialState());
+        },
+        onSummaryViewToggleClick: function() {
+          OrderActions.toggleSummaryViewMode();
+        },
+        isSummaryViewModeSimple: function() {
+          return this.state.summaryView === OrderConstants.SUMMARY_VIEW_MODE_SIMPLE;
+        },
+        render: function() {
+          return (React.createElement("div", {className: "bm-page-order"}, React.createElement("div", {className: "bm-page-order-content"}, React.createElement("div", {className: "bm-page-order-header m-offset-30"}, "Ваш заказ", React.createElement("span", {className: "bm-page-order-header-aside"}, React.createElement("span", {
+            className: "bm-page-order-summary-view-toggle",
+            onClick: this.onSummaryViewToggleClick
+          }, this.isSummaryViewModeSimple() ? 'в виде таблицы' : 'списком'))), this.isSummaryViewModeSimple() ? React.createElement(OrderSummarySimple, {cart: this.state.cart}) : React.createElement(OrderSummaryTable, {cart: this.state.cart}))));
+        }
+      });
+      provide(PageOrder);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
 var $__react_47_constants_47_CartConstants_46_js__ = (function() {
   "use strict";
   var __moduleName = "react/constants/CartConstants.js";
@@ -1106,6 +1213,28 @@ var $__react_47_constants_47_CartConstants_46_js__ = (function() {
         DELETEITEM: 'DELETE ITEM'
       };
       provide(CartConstants);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__react_47_constants_47_OrderConstants_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/constants/OrderConstants.js";
+  (function(window, modules, $) {
+    var OrderConstants;
+    modules.define('OrderConstants', [], function(provide) {
+      if (OrderConstants) {
+        provide(OrderConstants);
+        return;
+      }
+      OrderConstants = {
+        SETSUMMARYVIEWMODE: 'SET SUMMARY VIEW MODE',
+        TOGGLESUMMARYVIEWMODE: 'TOGGLE SUMMARY VIEW MODE',
+        SUMMARY_VIEW_MODE_SIMPLE: 'SUMMARY_VIEW_MODE_SIMPLE',
+        SUMMARY_VIEW_MODE_TABLE: 'SUMMARY_VIEW_MODE_TABLE'
+      };
+      provide(OrderConstants);
     });
   }(this, this.modules, this.jQuery));
   return {};
@@ -1217,6 +1346,64 @@ var $__react_47_stores_47_CartStore_46_js__ = (function() {
         }
       });
       provide(CartStore);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__react_47_stores_47_OrderStore_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/stores/OrderStore.js";
+  (function(window, modules, $) {
+    var OrderStore;
+    modules.define('OrderStore', ['Flux', 'OrderConstants'], function(provide, Flux, OrderConstants) {
+      if (OrderStore) {
+        provide(OrderStore);
+        return;
+      }
+      var _summaryViewMode = OrderConstants.SUMMARY_VIEW_MODE_SIMPLE;
+      function _setFromForage() {
+        localforage.getItem('orderStore').then(function(data) {
+          if (data) {
+            if (data._summaryViewMode) {
+              _summaryViewMode = data._summaryViewMode;
+            }
+          }
+          if (OrderStore) {
+            OrderStore.emitChange();
+          }
+        });
+      }
+      function _saveToForage() {
+        localforage.setItem('orderStore', {_summaryViewMode: _summaryViewMode});
+      }
+      function setSummaryViewMode(item) {
+        _summaryViewMode = item;
+        _saveToForage();
+      }
+      function toggleSummaryViewMode() {
+        if (_summaryViewMode === OrderConstants.SUMMARY_VIEW_MODE_TABLE) {
+          _summaryViewMode = OrderConstants.SUMMARY_VIEW_MODE_SIMPLE;
+        } else {
+          _summaryViewMode = OrderConstants.SUMMARY_VIEW_MODE_TABLE;
+        }
+        OrderStore.emitChange();
+        _saveToForage();
+      }
+      _setFromForage();
+      OrderStore = Flux.createStore({summaryView: function() {
+          return _summaryViewMode;
+        }}, function(payload) {
+        switch (payload.actionType) {
+          case OrderConstants.SETSUMMARYVIEWMODE:
+            setSummaryViewMode(payload.mode);
+            break;
+          case OrderConstants.TOGGLESUMMARYVIEWMODE:
+            toggleSummaryViewMode();
+            break;
+        }
+      });
+      provide(OrderStore);
     });
   }(this, this.modules, this.jQuery));
   return {};
@@ -1786,8 +1973,10 @@ var $__ui_45_modules_47_init_47_header_45_init_46_js__ = (function() {
           });
         },
         _onCartStoreChange: function() {
-          var cart = CartStore.getCart();
-          this._setOrderHeaderVisible(cart && _.isArray(cart.order_items) && cart.order_items.length > 0);
+          if (BM.config.mainConfig.show_header_order) {
+            var cart = CartStore.getCart();
+            this._setOrderHeaderVisible(cart && _.isArray(cart.order_items) && cart.order_items.length > 0);
+          }
         },
         _setOrderHeaderVisible: function(bool) {
           if (bool) {
@@ -1820,7 +2009,7 @@ var $__ui_45_modules_47_init_47_react_45_setup_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/init/react-setup.js";
   (function(window, modules, $) {
-    modules.define('ReactSetup', ['CartConstants', 'CartActions', 'CartStore', 'StateConstants', 'StateActions', 'StateStore'], function(provide) {
+    modules.define('ReactSetup', ['CartConstants', 'CartActions', 'CartStore', 'StateConstants', 'StateActions', 'StateStore', 'OrderConstants', 'OrderActions', 'OrderStore'], function(provide) {
       provide();
     });
   }(this, this.modules, this.jQuery));
@@ -2450,6 +2639,151 @@ var $__ui_45_modules_47_transform_45_origin_45_dependent_47_transform_45_origin_
   return {};
 }).call(Reflect.global);
 
+var $__react_47_components_47_PageOrder_47_OrderSummarySimple_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/components/PageOrder/OrderSummarySimple.js";
+  (function(window, modules, $) {
+    modules.define('OrderSummarySimple', ['CartActions', 'CartStore', 'OrderSummarySimpleItem'], function(provide, CartActions, CartStore, OrderSummarySimpleItem) {
+      var OrderSummary = React.createClass({
+        displayName: "OrderSummary",
+        propTypes: {cart: React.PropTypes.object},
+        getGroups: function() {
+          var groups = {
+            'mono': [],
+            'aroma': [],
+            'espresso': [],
+            'exotic': []
+          };
+          var res = [];
+          this.props.cart.order_items.forEach(function(item) {
+            groups[item.item.kind].push(item);
+          });
+          Object.keys(groups).forEach(function(key) {
+            if (groups[key].length > 0) {
+              res.push({
+                kind: key,
+                objects: groups[key]
+              });
+            }
+          });
+          return res;
+        },
+        render: function() {
+          if (!this.props.cart) {
+            return null;
+          }
+          var itemsByGroups = this.getGroups();
+          return (React.createElement("div", {className: "bm-page-order-summary"}, itemsByGroups.map(function(group) {
+            return (React.createElement("div", {className: "bm-page-order-summary-group"}, React.createElement("div", {className: ("bm-page-order-summary-subheader m-" + group.kind)}, React.createElement("div", {className: "bm-page-order-summary-subheader-icon"}), React.createElement("div", {className: "bm-page-order-summary-subheader-text"}, BM.helper.coffeeKinds.getWordByKind(group.kind))), React.createElement("div", {className: "bm-page-order-summary-items-wrapper"}, group.objects.map(function(orderItem, i) {
+              return (React.createElement(OrderSummarySimpleItem, React.__spread({}, orderItem, {counter: i + 1})));
+            }))));
+          })));
+        }
+      });
+      provide(OrderSummary);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__react_47_components_47_PageOrder_47_OrderSummarySimpleItem_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/components/PageOrder/OrderSummarySimpleItem.js";
+  (function(window, modules, $) {
+    modules.define('OrderSummarySimpleItem', ['CartActions', 'CartStore'], function(provide, CartActions, CartStore) {
+      var OrderSummary = React.createClass({
+        displayName: "OrderSummary",
+        propTypes: {
+          item: React.PropTypes.object,
+          weight: React.PropTypes.number,
+          quantity: React.PropTypes.number,
+          grind: React.PropTypes.string,
+          counter: React.PropTypes.number
+        },
+        handleAddItemClick: function() {
+          CartActions.addItem(this.props.item.id, this.props.weight, this.props.grind);
+        },
+        handleRemoveItemClick: function() {
+          CartActions.removeItem(this.props.item.id, this.props.weight, this.props.grind);
+        },
+        handleDeleteItemClick: function() {
+          CartActions.deleteItem(this.props.item.id, this.props.weight, this.props.grind);
+        },
+        getTotalPriceForItem: function() {
+          var $__2 = this.props,
+              item = $__2.item,
+              weight = $__2.weight,
+              quantity = $__2.quantity;
+          var price = weight === 250 ? item.price : item[("price_" + weight)];
+          return quantity * price;
+        },
+        render: function() {
+          var name = this.props.item.name;
+          var weight = this.props.weight;
+          var quantity = this.props.quantity;
+          var grind = this.props.grind;
+          var wordPack = BM.helper.pluralize.getWordPack(quantity);
+          return (React.createElement("div", {className: "bm-page-order-summary-item-simple"}, React.createElement("div", {className: "bm-page-order-summary-item-simple-counter"}, this.props.counter), React.createElement("div", {className: "bm-page-order-summary-item-simple-content"}, React.createElement("div", {className: "bm-page-order-summary-item-simple-content-text"}, "«", name, "», ", weight, " грамм, ", BM.helper.grind.getGrindTextFull(grind).toLowerCase(), ", ", quantity, " ", wordPack), React.createElement("div", {className: "bm-page-order-summary-item-simple-content-aside"}, React.createElement("div", {className: "bm-page-order-summary-item-simple-content-aside-content"}, React.createElement("div", {className: "bm-page-order-summary-item-simple-content-aside-content-text"}, this.getTotalPriceForItem(), " руб."))), React.createElement("div", {className: "bm-page-order-summary-item-simple-side-controls"}, React.createElement("div", {className: "buttons-wrapper"}, React.createElement("div", {
+            className: "button m-minus",
+            onClick: this.handleRemoveItemClick
+          }), React.createElement("div", {
+            className: "button m-plus",
+            onClick: this.handleAddItemClick
+          }), React.createElement("div", {
+            className: "button m-delete",
+            onClick: this.handleDeleteItemClick
+          }))))));
+        }
+      });
+      provide(OrderSummary);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
+var $__react_47_components_47_PageOrder_47_OrderSummaryTable_46_js__ = (function() {
+  "use strict";
+  var __moduleName = "react/components/PageOrder/OrderSummaryTable.js";
+  (function(window, modules, $) {
+    modules.define('OrderSummaryTable', ['CartActions', 'CartStore'], function(provide, CartActions, CartStore, OrderSummaryTableItem) {
+      var OrderSummary = React.createClass({
+        displayName: "OrderSummary",
+        propTypes: {cart: React.PropTypes.object},
+        getGroups: function() {
+          var groups = {
+            'mono': [],
+            'aroma': [],
+            'espresso': [],
+            'exotic': []
+          };
+          var res = [];
+          this.props.cart.order_items.forEach(function(item) {
+            groups[item.item.kind].push(item);
+          });
+          Object.keys(groups).forEach(function(key) {
+            if (groups[key].length > 0) {
+              res.push({
+                kind: key,
+                objects: groups[key]
+              });
+            }
+          });
+          return res;
+        },
+        render: function() {
+          if (!this.props.cart) {
+            return null;
+          }
+          var itemsByGroups = this.getGroups();
+          return (React.createElement("div", {className: "bm-page-order-summary-table"}, React.createElement("div", {className: "bm-page-order-summary-table-row m-header"}, React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Название"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Вес"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Помол"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Количоство"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Сумма")), React.createElement("div", {className: "bm-page-order-summary-table-row"}, React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "Классический сорт «Никарагуа марагоджиб»"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "250г"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "В зерне"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "1 уп"), React.createElement("div", {className: "bm-page-order-summary-table-cell"}, "400 руб"), React.createElement("div", {className: "bm-page-order-summary-table-row-aside"}, React.createElement("span", {className: "bm-page-order-summary-table-remove-item"}, "удалить")))));
+        }
+      });
+      provide(OrderSummary);
+    });
+  }(this, this.modules, this.jQuery));
+  return {};
+}).call(Reflect.global);
+
 var $__ui_45_modules_47_item_47_form_47_grind_95_old_46_js__ = (function() {
   "use strict";
   var __moduleName = "ui-modules/item/form/grind_old.js";
@@ -2575,6 +2909,10 @@ var $__loadScriptsConfig_46_js__ = (function() {
       'catalogue-index': function() {
         modules.require('ui-modules');
         modules.require('CatalogueInit');
+      },
+      'order-index': function() {
+        modules.require('ui-modules');
+        modules.require('OrderInit');
       }
     };
   }(this, this.document, this.modules, this.BM = this.BM || {}));

@@ -60,6 +60,11 @@
         }
         var res = _.find(grindTypes, (g) => {return g.kind === kind});
         return res;
+      },
+
+      getGrindTextFull(kind) {
+        var grindMeta = BM.helper.grind.getTypeMeta(kind);
+        return grindMeta.label_full.toLowerCase();
       }
 
     });

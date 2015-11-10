@@ -9,7 +9,11 @@
 
       'StateConstants',
       'StateActions',
-      'StateStore'
+      'StateStore',
+
+      'OrderConstants',
+      'OrderActions',
+      'OrderStore'
     ],
     (
       provide

@@ -23,5 +23,6 @@ Empressa::Application.routes.draw do
 
   #get "/" => "index#index"
   get "/" => "catalogue#index"
+  get "/order" => "order#index"
   #get "/catalogue" => "catalogue#index"
 end

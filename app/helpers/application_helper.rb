@@ -158,4 +158,13 @@ module ApplicationHelper
     ret
   end
 
+  def get_frontend_config
+    show_header_order = params[:controller] != 'order'
+
+    config = {
+      show_header_order: show_header_order
+    }
+    config
+  end
+
 end

@@ -1,7 +1,9 @@
 class ApplicationController < ActionController::Base
   include CartHelper
+  include ApplicationHelper
 
-  before_filter :load_cart
+  before_filter :load_cart, :set_frontend_config
+  after_filter :set_frontend_config
   protect_from_forgery with: :exception
 
   def load_cart
@@ -15,5 +17,9 @@ class ApplicationController < ActionController::Base
     end
 
     save_cart_id_to_cookie(@cart.cookie_id)
+  end
+
+  def set_frontend_config
+    @frontend_config = get_frontend_config
   end
 end
