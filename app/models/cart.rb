@@ -29,6 +29,8 @@ class Cart < ActiveRecord::Base
       if item.quantity > 1
         item.quantity -= 1
         item.save
+        update_props
+        save
       else
         delete_item(item_id, weight, grind)
       end
@@ -43,6 +45,8 @@ class Cart < ActiveRecord::Base
       item.destroy
       save
     end
+
+    save
 
     #update_props
   end

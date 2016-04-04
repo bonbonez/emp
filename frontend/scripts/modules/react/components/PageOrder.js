@@ -57,6 +57,28 @@
         },
 
         render() {
+          if (!this.state.cart) {
+            return null;
+          }
+
+          let { cart } = this.state;
+
+          let summaryTotalInfo = [{
+            label: 'Итого за кофе:',
+            value: `${cart.amount} руб.`
+          }];
+
+          if (_.isNumber(cart.discount) && cart.discount > 0) {
+            summaryTotalInfo.push({
+              label: 'Скидка:',
+              value: `${cart.discount}%`
+            });
+            summaryTotalInfo.push({
+              label: 'Итого со скидкой:',
+              value: `${cart.total_amount} руб.`
+            });
+          }
+
           return (
             <div className="bm-page-order">
               <div className="bm-page-order-content">
@@ -68,12 +90,21 @@
                     </span>
                   </span>
                 </div>
-                {this.isSummaryViewModeSimple() ?
-                  <OrderSummarySimple cart={this.state.cart} />
+                { this.isSummaryViewModeSimple() ?
+                  <OrderSummarySimple cart={cart} />
                   :
-                  <OrderSummaryTable cart={this.state.cart} />
+                  <OrderSummaryTable cart={cart} />
                 }
-
+                <div className="bm-page-order-summary-total">
+                  {summaryTotalInfo.map((item) => {
+                    return (
+                      <div className="bm-page-order-summary-total-row">
+                        <div className="bm-page-order-summary-total-label">{item.label}</div>
+                        <div className="bm-page-order-summary-total-value">{item.value}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );
