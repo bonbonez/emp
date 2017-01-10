@@ -1,0 +1,12 @@
+<% if @bootstrapped_data.present? %>
+    <script>
+        (function(window) {
+            window.BM = window.BM || {};
+            BM.bootstrappedData = BM.bootstrappedData || {};
+
+            if ('<%= @bootstrapped_data[:order_data].present?.to_s %>' === 'true') {
+                BM.bootstrappedData.orderData = JSON.parse('<%= raw(@bootstrapped_data[:order_data].to_json) %>');
+            }
+        }(this));
+    </script>
+<% end %>

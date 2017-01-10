@@ -163,3 +163,9 @@ DEPENDENCIES
   slim
   terminal-notifier
   uglifier (>= 1.0.3)
+
+RUBY VERSION
+   ruby 2.3.1p112
+
+BUNDLED WITH
+   1.13.7

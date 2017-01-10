@@ -32,6 +32,27 @@
           return {
             actionType: OrderConstants.TOGGLESUMMARYVIEWMODE
           }
+        },
+
+        setOrderData(data) {
+          return {
+            actionType: OrderConstants.SETORDERDATA,
+            data: data
+          }
+        },
+        
+        setSelectedDeliveryRegion(value) {
+          return {
+            actionType: OrderConstants.SETSELECTEDDELIVERYREGION,
+            value: value
+          }
+        },
+
+        setSelectedDeliveryOption(value) {
+          return {
+            actionType: OrderConstants.SETSELECTEDDELIVERYOPTION,
+            value: value
+          }
         }
 
       });

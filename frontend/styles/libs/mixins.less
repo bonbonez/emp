@@ -226,6 +226,12 @@
     -o-transition: @prop @duration @ease;
     transition: @prop @duration @ease;
 }
+.transition-none() {
+  -webkit-transition: none;
+  -moz-transition: none;
+  -o-transition: none;
+  transition: none;
+}
 .transition-delay (@delay) {
   -webkit-transition-delay:@delay;
   -moz-transition-delay:@delay;

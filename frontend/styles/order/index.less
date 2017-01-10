@@ -287,7 +287,7 @@
 .bm-page-order-summary-total {
   display: block;
   padding: 30px @layout-padding 0 @layout-padding;
-  margin: 0 auto;
+  margin: 0 auto 50px auto;
   max-width: @bm-page-order-width-1;
   text-align: right;
   width: 100%;
@@ -313,4 +313,114 @@
   padding-left: 20px;
   text-align: left;
   width: 100px;
+}
+
+.bm-page-order-delivery-method {
+  margin-bottom: 100px;
+}
+
+.bm-page-order-delivery-method-header {
+  margin-bottom: 30px;
+}
+
+.bm-page-order-delivery-method-region-select {
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.bm-page-order-delivery-method-option-select {
+  margin: 0 auto;
+  max-width: @bm-page-order-width-1;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.bm-page-order-delivery-method-option {
+  .box-sizing(border-box);
+  .transition-prop(background-color, 0.15s);
+  background-color: @color-gray-light;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-block;
+  height: 137px;
+  overflow: hidden;
+  padding-top: 32px;
+  text-align: center;
+  vertical-align: top;
+  width: 230px;
+
+  &:not(:last-of-type) {
+    margin-right: 20px;
+  }
+
+  .delivery-option-label {
+    .bm-font-pt(18px, 21px);
+    .box-sizing(border-box);
+    .transition(0.15s);
+    color: #000000;
+    padding: 0 10px;
+
+  }
+  .delivery-option-note {
+    .bm-font-pt(13px, 14px);
+    .transition(0.15s);
+    color: #000000;
+    margin-top: 3px;
+    text-transform: lowercase;
+  }
+  .delivery-option-link-to-more {
+    .bm-font-pt(15px, 15px);
+    .transition(0.15s);
+
+    color: @color-gray-dark;
+    position: relative;
+    text-decoration: underline;
+    top: 10px;
+
+    .m-desktop &:hover {
+      text-decoration: none;
+    }
+  }
+
+  &:not(.m-selected) {
+    .m-desktop &:hover,
+    .m-touch &:active {
+      background-color: @color-blue-lighter;
+      color: #ffffff;
+
+      .delivery-option-label,
+      .delivery-option-note,
+      .delivery-option-link-to-more {
+        color: #ffffff;
+      }
+    }
+  }
+
+  &.m-selected {
+    background-color: @color-blue;
+
+    .delivery-option-label,
+    .delivery-option-note,
+    .delivery-option-link-to-more {
+      color: #ffffff;
+    }
+  }
+
+  &.m-option-other {
+    width: 100%;
+
+    &:not(last-of-type) {
+      margin-right: 0;
+    }
+  }
+}
+
+.bm-page-order-delivery-address {
+
+}
+
+.bm-page-order-delivery-address-header {
+  margin-bottom: 50px;
 }

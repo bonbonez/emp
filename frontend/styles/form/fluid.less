@@ -1,0 +1,37 @@
+.form-fluid {
+  .box-sizing(border-box);
+  width: 100%;
+}
+
+.form-fluid-item {
+  .box-sizing(border-box);
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  width: 315px;
+
+  &:not(:last-of-type) {
+    margin-bottom: 15px;
+  }
+}
+
+.form-fluid-input {
+  .box-sizing(border-box);
+  .bm-text-15();
+  background-color: @color-gray-light;
+  border: 0;
+  border-radius: 2px;
+  height: 40px;
+  padding: 11px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.form-fluid-label {
+  .bm-text-15();
+  position: absolute;
+  right: 104%;
+  top: 10px;
+  white-space: nowrap;
+}

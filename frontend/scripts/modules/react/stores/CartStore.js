@@ -118,6 +118,8 @@
         }
 
       });
+      
+      window.CartStore = CartStore;
 
       provide(CartStore);
 

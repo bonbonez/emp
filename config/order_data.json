@@ -1,0 +1,53 @@
+{
+  "deliveryRegions": [
+    {
+      "name": "moscow",
+      "label": "Москва",
+      "default": true,
+      "options": [
+        {
+          "name": "courier_free",
+          "label": "Бесплатный&nbsp;курьер, каждый&nbsp;вторник",
+          "linkToMore": "http://google.com"
+        },
+        {
+          "name": "courier",
+          "label": "Курьер, 2-3&nbsp;дня, 250&nbsp;рублей",
+          "linkToMore": "http://google.com"
+        },
+        {
+          "name": "postomat",
+          "label": "Почтомат, 3-5&nbsp;дней, 200&nbsp;рублей",
+          "linkToMore": "http://google.com"
+        }
+      ]
+    },
+    {
+      "name": "moscow_region",
+      "label": "Московская область",
+      "options": [
+        {
+          "name": "courier",
+          "label": "Курьер, от 250 рублей",
+          "linkToMore": "http://google.com",
+          "note": "Точную&nbsp;стоимость<br/>уточнит&nbsp;менеджер"
+        },
+        {
+          "name": "postomat",
+          "label": "Почтомат, от&nbsp;3&nbsp;дней, 200&nbsp;рублей",
+          "linkToMore": "http://google.com"
+        }
+      ]
+    },
+    {
+      "name": "rest",
+      "label": "Остальные регионы России",
+      "options": [
+        {
+          "name": "other",
+          "label": "Стоимость доставки в&nbsp;другие регионы расчитывается индивидуально. После&nbsp;оформления&nbsp;заказа, менеджер с&nbsp;вами свяжется и&nbsp;уточнит стоимость&nbsp;и&nbsp;сроки&nbsp;доставки"
+        }
+      ]
+    }
+  ]
+}

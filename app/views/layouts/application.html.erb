@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="/styles/global.css?<%= frontend_version %>" />
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
 
+    <% if content_for?(:head) %>
+        <%= yield(:head) %>
+    <% end %>
+
 </head>
 <body class="<%= @css_class_layout if @css_class_layout.present? %>" data-scripts="<%= @scripts_id if @scripts_id.present? %>" data-config="<%= @frontend_config.to_json %>">
 <%#= render partial: 'templates/item_popup_preview' %>

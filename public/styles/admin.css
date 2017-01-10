@@ -573,23 +573,6 @@ th {
   font-weight: normal;
   src: url('/fonts/icons/icons.woff') format('woff');
 }
-/*
-@color-brown-lighter : #a58755;
-@color-brown : #78643A;
-@color-brown-darker : #745829;
-@color-brown-dark : #533503;
-
-@color-orange-lighter: #ee9600;
-@color-orange: #e48f00;
-@color-orange-darker: #d0880b;
-
-@color-blue-dark: #439aa1;
-@color-blue-dark-lighter: #45a5ac;
-@color-blue: #88CCD2;
-@color-blue-light: #B0F7F5;
-
-
-@*/
 html {
   margin: 0;
   height: 100%;

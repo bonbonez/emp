@@ -1,3 +1,5 @@
+@ui-button-height: 40px;
+
 .bm-button-base() {
   .box-sizing(border-box);
   .transition(0.15s);
@@ -8,8 +10,8 @@
   cursor: pointer;
   font-family: @font-ptsans;
   font-size: 18px;
-  height: 40px;
-  line-height: 40px;
+  height: @ui-button-height;
+  line-height: @ui-button-height;
   padding: 0 30px;
 
   &.m-bold {

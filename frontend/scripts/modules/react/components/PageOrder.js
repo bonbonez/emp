@@ -11,10 +11,14 @@
       'OrderConstants',
 
       'OrderSummarySimple',
-      'OrderSummaryTable'
+      'OrderSummaryTable',
+
+      'OrderDeliveryMethod',
+      'OrderDeliveryAddress'
     ],
     (
       provide,
+
       CartActions,
       CartStore,
 
@@ -23,13 +27,19 @@
       OrderConstants,
 
       OrderSummarySimple,
-      OrderSummaryTable
+      OrderSummaryTable,
+
+      OrderDeliveryMethod,
+      OrderDeliveryAddress
     ) => {
 
       function getPageOrderInitialState() {
         return {
           cart: CartStore.getCart(),
-          summaryView: OrderStore.summaryView()
+          summaryView: OrderStore.summaryView(),
+          orderData: OrderStore.orderData(),
+          selectedDeliveryRegion: OrderStore.selectedDeliveryRegion(),
+          selectedDeliveryOption: OrderStore.selectedDeliveryOption()
         };
       }
       
@@ -42,6 +52,12 @@
 
         getInitialState() {
           return getPageOrderInitialState();
+        },
+
+        componentDidMount() {
+          if (BM.bootstrappedData && BM.bootstrappedData.orderData) {
+            OrderActions.setOrderData(BM.bootstrappedData.orderData);
+          }
         },
 
         storeDidChange() {
@@ -105,6 +121,15 @@
                     );
                   })}
                 </div>
+                <OrderDeliveryMethod
+                    orderData={this.state.orderData}
+                    selectedDeliveryRegion={this.state.selectedDeliveryRegion}
+                    selectedDeliveryOption={this.state.selectedDeliveryOption}
+                />
+                <OrderDeliveryAddress
+                    selectedDeliveryRegion={this.state.selectedDeliveryRegion}
+                    selectedDeliveryOption={this.state.selectedDeliveryOption}
+                />
               </div>
             </div>
           );

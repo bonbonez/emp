@@ -1,0 +1,39 @@
+
+
+.ui-tabs {
+  display: block;
+  height: @ui-button-height;
+  line-height: @ui-button-height;
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.ui-tabs-item {
+  .bm-text-18();
+  .vertical-align-middle();
+  .transition(0.15s);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: @color-gray-dark;
+  cursor: pointer;
+  height: @ui-button-height;
+  line-height: @ui-button-height;
+  padding: 0 17px;
+
+  &:not(:last-of-type) {
+    margin-right: 20px;
+  }
+
+  &.m-selected,
+  .m-desktop &:not(.m-selected):hover,
+  .m-touch &:not(.m-selected):active {
+    background-color: #ffffff;
+    border-color: @color-blue;
+    color: @color-blue;
+  }
+
+  &.m-selected {
+    cursor: default;
+  }
+}
